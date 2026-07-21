@@ -9,26 +9,40 @@ type SteeringWheelProps = {
 
 const MAX_WHEEL_ROTATION = 450
 const DRAG_PIXELS_FOR_FULL_LOCK = 180
+const TOUCH_DRAG_RATIO = 0.65
+const MIN_TOUCH_DRAG_PIXELS = 72
 
 export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWheelProps) {
-  const dragRef = useRef<{ pointerId: number; startX: number; startAngle: number } | null>(null)
+  const dragRef = useRef<{
+    pointerId: number
+    startX: number
+    startAngle: number
+    pixelsForFullLock: number
+  } | null>(null)
   const maxSteeringAngle = DEFAULT_VEHICLE_CONFIG.maxSteeringAngle
   const wheelRotation = steeringAngle / maxSteeringAngle * MAX_WHEEL_ROTATION
   const steeringDegrees = Math.round(radiansToDegrees(steeringAngle))
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (!event.isPrimary || event.button !== 0) return
+    event.preventDefault()
     event.currentTarget.setPointerCapture(event.pointerId)
+    const touchWidth = event.currentTarget.getBoundingClientRect().width * TOUCH_DRAG_RATIO
     dragRef.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
       startAngle: steeringAngle,
+      pixelsForFullLock: event.pointerType === 'touch'
+        ? Math.max(MIN_TOUCH_DRAG_PIXELS, touchWidth)
+        : DRAG_PIXELS_FOR_FULL_LOCK,
     }
   }
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
     const drag = dragRef.current
     if (!drag || drag.pointerId !== event.pointerId) return
-    const delta = (event.clientX - drag.startX) / DRAG_PIXELS_FOR_FULL_LOCK
+    event.preventDefault()
+    const delta = (event.clientX - drag.startX) / drag.pixelsForFullLock
     onChange(drag.startAngle + delta * maxSteeringAngle)
   }
 
@@ -72,6 +86,7 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
         onPointerMove={handlePointerMove}
         onPointerUp={finishDrag}
         onPointerCancel={finishDrag}
+        onLostPointerCapture={finishDrag}
         onKeyDown={handleKeyDown}
       >
         <div className="steering-wheel" style={{ transform: `rotate(${wheelRotation}deg)` }}>

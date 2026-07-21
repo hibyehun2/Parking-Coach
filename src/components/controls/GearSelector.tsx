@@ -2,11 +2,13 @@ import type { Gear } from '../../engine/vehiclePhysics'
 
 type GearSelectorProps = {
   gear: Gear
+  braking: boolean
   canShift: boolean
   onChange: (gear: Gear) => void
+  onBrakeChange: (braking: boolean) => void
 }
 
-export function GearSelector({ gear, canShift, onChange }: GearSelectorProps) {
+export function GearSelector({ gear, braking, canShift, onChange, onBrakeChange }: GearSelectorProps) {
   return (
     <div className="gear-module">
       <span className="dashboard-label">기어</span>
@@ -32,8 +34,18 @@ export function GearSelector({ gear, canShift, onChange }: GearSelectorProps) {
         >
           <strong>D</strong><small>전진</small>
         </button>
+        <button
+          type="button"
+          className={`stop-control${braking ? ' active' : ''}`}
+          aria-label={braking ? '브레이크 해제' : '차량 정지'}
+          aria-pressed={braking}
+          onClick={() => onBrakeChange(!braking)}
+          onContextMenu={(event) => event.preventDefault()}
+        >
+          <strong>■</strong><small>{braking ? '정지 해제' : '정지'}</small>
+        </button>
       </div>
-      <small className="shift-help">브레이크 작동 후 변경</small>
+      <small className="shift-help">정지 후 기어 변경</small>
     </div>
   )
 }

@@ -122,13 +122,13 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .brake-control.active { color: #7d2d27; border-color: #e6bbb7; background: #f8dcda; }
 .reset-control { align-self: end; color: var(--brand-dark); }
 .keyboard-help { margin: 10px 4px 0; color: var(--muted); font-size: .78rem; text-align: right; }
-.driving-console { position: relative; min-height: 290px; margin-top: 14px; padding: 20px 24px; border: 1px solid #25332e; border-radius: 24px; display: grid; grid-template-columns: minmax(230px, 1.35fr) minmax(150px, .75fr) minmax(150px, .75fr) minmax(145px, .7fr); align-items: center; gap: 24px; color: #edf6f2; background: linear-gradient(150deg, #26332e, #121a17); box-shadow: 0 16px 34px rgba(20, 35, 30, .18); }
-.gear-module, .pedal-module, .gear-module button, .pedal-module button { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.driving-console { position: relative; min-height: 290px; margin-top: 14px; padding: 20px 24px; border: 1px solid #25332e; border-radius: 24px; display: grid; grid-template-columns: minmax(230px, 1.35fr) minmax(150px, .75fr) minmax(150px, .75fr); align-items: center; gap: 24px; color: #edf6f2; background: linear-gradient(150deg, #26332e, #121a17); box-shadow: 0 16px 34px rgba(20, 35, 30, .18); }
+.gear-module, .gear-module button { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .dashboard-label { color: #96aaa2; font-size: .72rem; font-weight: 800; letter-spacing: .08em; }
 .steering-module { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto 1fr auto; align-items: center; justify-items: center; }
 .steering-readout { width: 100%; grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; color: #96aaa2; font-size: .78rem; }
 .steering-readout strong { color: white; font-size: 1rem; font-variant-numeric: tabular-nums; }
-.steering-wheel-touch-area { width: 210px; height: 210px; grid-column: 1 / -1; display: grid; place-items: center; cursor: grab; touch-action: none; user-select: none; }
+.steering-wheel-touch-area { width: 210px; height: 210px; grid-column: 1 / -1; display: grid; place-items: center; cursor: grab; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .steering-wheel-touch-area:active { cursor: grabbing; }
 .steering-wheel-touch-area:focus-visible { outline: 3px solid #83d0b5; outline-offset: 2px; border-radius: 50%; }
 .steering-wheel { position: relative; width: 180px; height: 180px; border-radius: 50%; transition: transform 45ms linear; }
@@ -141,7 +141,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .wheel-center-mark { position: absolute; z-index: 3; left: 50%; top: 6px; width: 5px; height: 23px; border-radius: 4px; background: #d9b853; transform: translateX(-50%); }
 .center-steering-button { grid-column: 1 / -1; padding: 5px 10px; border: 1px solid #43534d; border-radius: 7px; color: #b8c9c2; background: transparent; font-size: .73rem; cursor: pointer; }
 
-.instrument-panel, .gear-module, .pedal-module { min-height: 220px; padding-left: 22px; border-left: 1px solid #394740; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 11px; }
+.instrument-panel, .gear-module { min-height: 220px; padding-left: 22px; border-left: 1px solid #394740; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 11px; }
 .instrument-panel .gear-display { width: 72px; height: 72px; border: 2px solid #4f675e; border-radius: 50%; display: grid; place-items: center; color: #69d8b1; background: #0b110f; box-shadow: inset 0 0 18px rgba(105,216,177,.12); font-size: 2.2rem; font-weight: 900; }
 .instrument-panel > strong { font-size: 1.35rem; font-variant-numeric: tabular-nums; }
 .instrument-panel > strong small { color: #96aaa2; font-size: .65rem; }
@@ -153,17 +153,13 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .gear-gate button strong { font-size: 1.3rem; }
 .gear-gate button small { margin-top: 2px; font-size: .65rem; }
 .gear-gate button.active { color: white; background: rgba(22,115,87,.38); box-shadow: inset 0 0 0 1px #47b78f; }
+.gear-gate .stop-control { margin-top: 3px; color: #ffc7c1; background: rgba(130,49,42,.22); box-shadow: inset 0 0 0 1px #71423e; }
+.gear-gate .stop-control.active { color: white; background: #a34239; box-shadow: inset 0 0 0 1px #e19790; }
 .gear-gate button:disabled { cursor: not-allowed; opacity: .42; }
 .gear-lever { position: absolute; z-index: 1; right: -13px; width: 18px; height: 51px; border-radius: 9px; background: linear-gradient(90deg, #77817d, #252d2a); transition: top 180ms ease; }
 .gear-r { top: 16px; }
 .gear-d { top: 91px; }
-.shift-help, .pedal-module > small { color: #83968e; font-size: .65rem; text-align: center; }
-
-.brake-pedal { width: 116px; height: 154px; padding: 14px; border: 0; border-radius: 18px 18px 28px 28px; color: #aebbb6; background: linear-gradient(145deg, #46504c, #181e1c); box-shadow: 0 13px 0 #090d0c, 0 17px 20px rgba(0,0,0,.38); cursor: pointer; touch-action: manipulation; transition: transform 80ms ease, box-shadow 80ms ease; }
-.brake-pedal.pressed { color: #ffd2cd; background: linear-gradient(145deg, #78423e, #2b1c1a); box-shadow: 0 4px 0 #090d0c, 0 7px 10px rgba(0,0,0,.4); transform: translateY(9px); }
-.pedal-face { margin-bottom: 10px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-.pedal-face i { height: 34px; border-radius: 4px; background: repeating-linear-gradient(0deg, #202825 0 4px, #515d58 4px 7px); }
-.brake-pedal strong { font-size: .75rem; letter-spacing: .1em; }
+.shift-help { color: #83968e; font-size: .65rem; text-align: center; }
 .driving-help { margin: 12px 4px 0; color: var(--brand-dark); font-size: .82rem; font-weight: 700; text-align: center; }
 .result-placeholder { padding: 40px; border: 1px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; gap: 10px; background: var(--surface); }
 .result-placeholder span { color: var(--muted); }
@@ -174,10 +170,10 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 @media (max-width: 960px) {
   .home-hero { grid-template-columns: minmax(0, 1fr) minmax(320px, .8fr); gap: 40px; }
   .scenario-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .driving-console { grid-template-columns: minmax(210px, 1.15fr) repeat(3, minmax(125px, .7fr)); gap: 12px; padding-inline: 16px; }
+  .driving-console { grid-template-columns: minmax(210px, 1.15fr) repeat(2, minmax(125px, .7fr)); gap: 12px; padding-inline: 16px; }
   .steering-wheel-touch-area { width: 190px; height: 190px; }
   .steering-wheel { width: 165px; height: 165px; }
-  .instrument-panel, .gear-module, .pedal-module { padding-left: 12px; }
+  .instrument-panel, .gear-module { padding-left: 12px; }
 }
 
 @media (max-width: 720px) {
@@ -216,7 +212,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .keyboard-help { display: none; }
   .driving-console { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 18px; }
   .steering-module { grid-row: span 2; }
-  .instrument-panel, .gear-module, .pedal-module { min-height: 190px; }
+  .instrument-panel, .gear-module { min-height: 190px; }
   .result-placeholder { padding: 28px 22px; }
 }
 
@@ -243,21 +239,18 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .control-row { flex-wrap: nowrap; }
   .control-row button, .gear-selector button, .brake-control, .reset-control { min-height: 40px; }
   .brake-control { min-width: 110px; }
-  .driving-console { min-height: 0; height: 100%; margin: 0; grid-template-columns: minmax(185px, 1.2fr) minmax(105px, .65fr) minmax(100px, .6fr) minmax(105px, .65fr); gap: 8px; padding: 5px 12px; border-radius: 12px; }
+  .driving-console { min-height: 0; height: 100%; margin: 0; grid-template-columns: minmax(185px, 1.2fr) minmax(105px, .65fr) minmax(100px, .6fr); gap: 8px; padding: 5px 12px; border-radius: 12px; }
   .steering-module { grid-row: auto; }
   .steering-wheel-touch-area { width: 145px; height: 132px; }
   .steering-wheel { width: 122px; height: 122px; }
   .wheel-rim { border-width: 15px; }
   .wheel-spoke { width: 49px; height: 14px; }
   .wheel-hub { width: 48px; height: 48px; }
-  .instrument-panel, .gear-module, .pedal-module { min-height: 0; height: 100%; padding-left: 7px; gap: 4px; }
+  .instrument-panel, .gear-module { min-height: 0; height: 100%; padding-left: 7px; gap: 4px; }
   .instrument-panel .gear-display { width: 50px; height: 50px; font-size: 1.5rem; }
   .gear-gate { width: 78px; }
   .gear-gate button { height: 52px; }
   .gear-d { top: 75px; }
-  .brake-pedal { width: 78px; height: 100px; padding: 8px; }
-  .pedal-face { margin-bottom: 5px; gap: 5px; }
-  .pedal-face i { height: 18px; }
   .driving-help, .keyboard-help { display: none; }
 }
 
