@@ -4,15 +4,24 @@ import { SteeringWheel } from '../controls/SteeringWheel'
 import { useVehicleSimulation } from '../../hooks/useVehicleSimulation'
 import { ParkingLotCanvas } from './ParkingLotCanvas'
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
+}
+
 export function VehicleSimulator() {
-  const fullscreenAttemptedRef = useRef(false)
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  const [showInstallGuide, setShowInstallGuide] = useState(false)
   const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean }
   const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent)
     || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  const isAndroid = /Android/.test(navigator.userAgent)
+  const isMobile = isIos || isAndroid
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     || navigatorWithStandalone.standalone === true
+  const fullscreenAttemptedRef = useRef(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isInstalled, setIsInstalled] = useState(isStandalone)
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
+  const [showInstallGuide, setShowInstallGuide] = useState(false)
   const canUseFullscreen = !isIos && document.fullscreenEnabled
   const {
     vehicle,
@@ -37,9 +46,19 @@ export function VehicleSimulator() {
       setIsFullscreen(fullscreen)
       if (!fullscreen) fullscreenAttemptedRef.current = false
     }
+    const captureInstallPrompt = (event: Event) => {
+      event.preventDefault()
+      setInstallPrompt(event as BeforeInstallPromptEvent)
+    }
+    const markInstalled = () => {
+      setIsInstalled(true)
+      setInstallPrompt(null)
+    }
 
     document.addEventListener('fullscreenchange', syncFullscreenState)
     document.addEventListener('webkitfullscreenchange', syncFullscreenState)
+    window.addEventListener('beforeinstallprompt', captureInstallPrompt)
+    window.addEventListener('appinstalled', markInstalled)
     syncFullscreenState()
 
     return () => {
@@ -47,6 +66,8 @@ export function VehicleSimulator() {
       document.body.classList.remove('simulator-active')
       document.removeEventListener('fullscreenchange', syncFullscreenState)
       document.removeEventListener('webkitfullscreenchange', syncFullscreenState)
+      window.removeEventListener('beforeinstallprompt', captureInstallPrompt)
+      window.removeEventListener('appinstalled', markInstalled)
     }
   }, [])
 
@@ -69,27 +90,44 @@ export function VehicleSimulator() {
     requestImmersiveMode()
   }
 
+  const installToHomeScreen = async () => {
+    if (!installPrompt) {
+      setShowInstallGuide(true)
+      return
+    }
+
+    try {
+      await installPrompt.prompt()
+      const choice = await installPrompt.userChoice
+      if (choice.outcome === 'accepted') setIsInstalled(true)
+      setInstallPrompt(null)
+    } catch {
+      setInstallPrompt(null)
+      setShowInstallGuide(true)
+    }
+  }
+
   return (
     <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
       <ParkingLotCanvas vehicle={vehicle} />
-      {canUseFullscreen && !isFullscreen && (
+      {canUseFullscreen && !isFullscreen && (!isMobile || isInstalled) && (
         <button
           type="button"
-          className="immersive-control ios-install-control"
+          className="immersive-control"
           onPointerUp={(event) => event.stopPropagation()}
           onClick={requestImmersiveMode}
         >
           ⛶ 전체화면
         </button>
       )}
-      {isIos && !isStandalone && (
+      {isMobile && !isInstalled && (
         <button
           type="button"
-          className="immersive-control"
+          className="immersive-control mobile-install-control"
           onPointerUp={(event) => event.stopPropagation()}
-          onClick={() => setShowInstallGuide(true)}
+          onClick={() => void installToHomeScreen()}
         >
-          Safari 공유 □↑ → 홈 화면에 추가
+          {isIos ? '공유 □↑ → 홈 화면에 추가' : '홈 화면에 앱 설치'}
         </button>
       )}
       {showInstallGuide && (
@@ -99,12 +137,20 @@ export function VehicleSimulator() {
           onPointerUp={(event) => event.stopPropagation()}
         >
           <section className="install-guide" role="dialog" aria-modal="true" aria-labelledby="install-guide-title">
-            <strong id="install-guide-title">아이폰 전체 화면 사용</strong>
-            <ol>
-              <li>Safari 하단의 공유 버튼 <b>□↑</b>을 누르세요.</li>
-              <li><b>홈 화면에 추가</b>를 선택하세요.</li>
-              <li>홈 화면에 생긴 Parking Coach 아이콘으로 실행하세요.</li>
-            </ol>
+            <strong id="install-guide-title">홈 화면에서 앱으로 사용</strong>
+            {isIos ? (
+              <ol>
+                <li>현재 브라우저의 공유 버튼 <b>□↑</b> 또는 공유 메뉴를 여세요.</li>
+                <li><b>홈 화면에 추가</b>를 선택하고, 표시되면 <b>웹 앱으로 열기</b>를 켜세요.</li>
+                <li>홈 화면의 Parking Coach 아이콘으로 실행하세요.</li>
+              </ol>
+            ) : (
+              <ol>
+                <li>브라우저의 메뉴 <b>⋮</b>를 여세요.</li>
+                <li><b>앱 설치</b> 또는 <b>홈 화면에 추가</b>를 선택하세요.</li>
+                <li>홈 화면의 Parking Coach 아이콘으로 실행하세요.</li>
+              </ol>
+            )}
             <button type="button" onClick={() => setShowInstallGuide(false)}>확인</button>
           </section>
         </div>
