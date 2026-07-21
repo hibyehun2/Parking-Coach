@@ -1,9 +1,11 @@
-import { lazy, Suspense, useEffect, useRef, useState, type PointerEvent } from 'react'
+import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { GearSelector } from '../controls/GearSelector'
 import { SteeringWheel } from '../controls/SteeringWheel'
 import { useVehicleSimulation } from '../../hooks/useVehicleSimulation'
 import { LearningHintPanel } from './LearningHintPanel'
+import { ParkingLotCanvas } from './ParkingLotCanvas'
+import { CornerAssistance } from './CornerAssistance'
 import { detectCollision } from '../../engine/collisionDetection'
 import { evaluateParking } from '../../engine/parkingEvaluation'
 import type { PracticeMode, ScenarioId } from '../../types/practice'
@@ -18,8 +20,6 @@ type VehicleSimulatorProps = {
   scenarioId: ScenarioId
   mode: PracticeMode
 }
-
-const ThreeDrivingView = lazy(() => import('./ThreeDrivingView').then((module) => ({ default: module.ThreeDrivingView })))
 
 export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimulatorProps) {
   const navigate = useNavigate()
@@ -130,10 +130,11 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
 
   return (
     <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
-      <Suspense fallback={<div className="parking-canvas-frame three-loading">3D 주차장을 준비하고 있습니다…</div>}>
-        <ThreeDrivingView vehicle={vehicle} danger={danger}>
+      <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions}>
+        <CornerAssistance vehicle={vehicle} />
         {learningMode && <LearningHintPanel vehicle={vehicle} scenarioId={scenarioId} />}
-        <div className="driving-console" aria-label="차량 운전 조작부">
+      </ParkingLotCanvas>
+      <div className="driving-console separate-console" aria-label="차량 운전 조작부">
           <SteeringWheel
             steeringAngle={vehicle.steeringAngle}
             onChange={setSteeringAngle}
@@ -159,9 +160,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
             onChange={setGear}
             onBrakeChange={setBraking}
           />
-        </div>
-        </ThreeDrivingView>
-      </Suspense>
+      </div>
       {canUseFullscreen && !isFullscreen && (!isMobile || isInstalled) && (
         <button
           type="button"

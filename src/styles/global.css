@@ -103,13 +103,10 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .simulator-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .parking-canvas-frame { position: relative; width: 100%; height: clamp(480px, 59vw, 720px); border: 1px solid #cbd7d1; border-radius: 22px; overflow: hidden; background: #303936; box-shadow: var(--shadow); }
 .parking-canvas { width: 100%; height: 100%; display: block; }
-.three-driving-frame { background: #151d1a; }
-.three-loading { display: grid; place-items: center; color: white; font-weight: 800; }
-.three-driving-canvas { width: 100%; height: calc(100% - 274px); display: block; touch-action: none; }
-.three-view-label { position: absolute; z-index: 3; top: 2.5%; padding: 4px 7px; border-radius: 5px; color: white; background: rgba(7,14,12,.78); font-size: .68rem; font-weight: 850; pointer-events: none; }
-.left-mirror-label { left: 2.2%; }
-.right-mirror-label { right: 2.2%; }
-.rear-camera-label { top: 40%; right: 3.2%; }
+.corner-assistance { position: absolute; z-index: 4; top: 10px; right: 10px; left: 10px; display: flex; justify-content: space-between; pointer-events: none; }
+.corner-view { position: relative; width: min(220px, 25%); padding: 4px; border: 1px solid rgba(255,255,255,.55); border-radius: 10px; overflow: hidden; background: #29332f; box-shadow: 0 5px 16px rgba(0,0,0,.3); }
+.corner-view span { position: absolute; z-index: 1; top: 7px; left: 7px; padding: 3px 5px; border-radius: 5px; color: white; background: rgba(8,17,14,.82); font-size: .65rem; font-weight: 850; }
+.corner-view canvas { width: 100%; height: 105px; border-radius: 6px; display: block; }
 .canvas-legend { position: absolute; top: 16px; left: 16px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; display: flex; flex-wrap: wrap; gap: 12px; color: white; background: rgba(20, 29, 26, .78); backdrop-filter: blur(6px); font-size: .78rem; font-weight: 700; }
 .canvas-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .canvas-legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
@@ -223,6 +220,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .reset-control { align-self: end; color: var(--brand-dark); }
 .keyboard-help { margin: 10px 4px 0; color: var(--muted); font-size: .78rem; text-align: right; }
 .driving-console { position: absolute; z-index: 5; right: 12px; bottom: 12px; left: 12px; min-height: 250px; padding: 16px 20px; border: 1px solid rgba(255,255,255,.22); border-radius: 24px; display: grid; grid-template-columns: minmax(230px, 1.35fr) minmax(150px, .75fr) minmax(210px, .9fr); align-items: center; gap: 24px; color: #edf6f2; background: linear-gradient(150deg, rgba(38,51,46,.94), rgba(18,26,23,.94)); box-shadow: 0 16px 34px rgba(20,35,30,.3); touch-action: none; overscroll-behavior: contain; }
+.driving-console.separate-console { position: relative; right: auto; bottom: auto; left: auto; min-height: 250px; margin-top: 10px; }
 .gear-module, .gear-module button { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .dashboard-label { color: #96aaa2; font-size: .72rem; font-weight: 800; letter-spacing: .08em; }
 .steering-module { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto 1fr auto; align-items: center; justify-items: center; }
@@ -375,13 +373,14 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .page { padding: 5px 0; }
   .simulator-shell { position: fixed; z-index: 10; inset: 0; width: 100%; height: 100vh; height: 100dvh; padding: max(5px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(5px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); overflow: hidden; background: #f5f8f6; }
   .simulator-heading, .simulator-shell > .page-description { display: none; }
-  .vehicle-simulator { position: relative; width: 100%; height: 100%; overflow: hidden; touch-action: none; }
+  .vehicle-simulator { position: relative; width: 100%; height: 100%; display: grid; grid-template-rows: minmax(0, 62fr) minmax(0, 38fr); gap: 5px; overflow: hidden; touch-action: none; }
   .immersive-control { position: absolute; z-index: 6; top: max(10px, env(safe-area-inset-top)); right: 50%; min-height: 38px; padding: 0 12px; border: 1px solid rgba(255,255,255,.35); border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; color: white; background: rgba(10,18,15,.82); backdrop-filter: blur(6px); font-size: .75rem; font-weight: 800; cursor: pointer; touch-action: manipulation; transform: translateX(50%); }
   .mobile-install-control { max-width: 245px; text-align: center; }
   .parking-canvas-frame { height: 100%; min-height: 0; border-radius: 12px; }
-  .three-driving-canvas { height: calc(100% - clamp(145px, 38vh, 185px) - 4px); }
-  .three-view-label { top: 2.5%; padding: 3px 5px; font-size: .58rem; }
-  .rear-camera-label { top: 39%; }
+  .corner-assistance { top: 5px; right: 5px; left: 5px; }
+  .corner-view { width: min(190px, 27%); padding: 2px; border-radius: 7px; }
+  .corner-view canvas { height: clamp(54px, 14vh, 70px); }
+  .corner-view span { top: 4px; left: 4px; font-size: .55rem; }
   .driver-assistance { inset: 5px 6px auto; }
   .driver-view-list { justify-content: space-between; gap: 5px; }
   .driver-view { width: min(220px, 31%); padding: 2px; cursor: default; }
@@ -404,6 +403,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .control-row button, .gear-selector button, .brake-control, .reset-control { min-height: 40px; }
   .brake-control { min-width: 110px; }
   .driving-console { right: 6px; bottom: 5px; left: 6px; min-height: 0; height: clamp(145px, 38vh, 185px); grid-template-columns: minmax(185px, 1.2fr) minmax(105px, .65fr) minmax(160px, .85fr); gap: 8px; padding: 5px 12px; border-radius: 12px; background: linear-gradient(150deg, rgba(38,51,46,.84), rgba(18,26,23,.9)); backdrop-filter: blur(5px); }
+  .driving-console.separate-console { position: relative; right: auto; bottom: auto; left: auto; width: 100%; height: 100%; margin: 0; }
   .steering-module { grid-row: auto; }
   .steering-wheel-touch-area { width: 145px; height: 132px; }
   .steering-wheel { width: 122px; height: 122px; }

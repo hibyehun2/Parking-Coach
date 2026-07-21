@@ -18,11 +18,11 @@ function parkingAxisError(heading: number) {
   return Math.abs(((difference + Math.PI / 2) % Math.PI + Math.PI) % Math.PI - Math.PI / 2)
 }
 
-function mirrorName(scenarioId: ScenarioId, steeringAngle: number) {
-  if (scenarioId === 'pillar-side') return '기둥 쪽 미러'
-  if (scenarioId === 'left-side') return '좌측 미러'
-  if (scenarioId === 'right-side') return '우측 미러'
-  return steeringAngle < 0 ? '좌측 미러' : '우측 미러'
+function clearanceViewName(scenarioId: ScenarioId, steeringAngle: number) {
+  if (scenarioId === 'pillar-side') return '기둥 쪽 간격 화면'
+  if (scenarioId === 'left-side') return '왼쪽 간격 화면'
+  if (scenarioId === 'right-side') return '오른쪽 간격 화면'
+  return steeringAngle < 0 ? '왼쪽 간격 화면' : '오른쪽 간격 화면'
 }
 
 export function getLearningHint(vehicle: VehicleState, scenarioId: ScenarioId): LearningHint | null {
@@ -51,8 +51,8 @@ export function getLearningHint(vehicle: VehicleState, scenarioId: ScenarioId): 
   }
 
   if (vehicle.gear === 'R' && Math.abs(vehicle.steeringAngle) >= 0.18) {
-    const mirror = mirrorName(scenarioId, vehicle.steeringAngle)
-    return { id: `mirror-${mirror}`, level: 'info', title: `${mirror} 확인`, message: '뒤 모서리 간격과 반대편으로 움직이는 앞부분을 번갈아 확인하세요.' }
+    const clearanceView = clearanceViewName(scenarioId, vehicle.steeringAngle)
+    return { id: `clearance-view-${clearanceView}`, level: 'info', title: `${clearanceView} 확인`, message: '뒤 모서리 간격과 반대편으로 움직이는 앞부분을 번갈아 확인하세요.' }
   }
 
   if (vehicle.y < TARGET_PARKING_BAY.top - 1.6 && vehicle.x < TARGET_PARKING_BAY.right + 1.5) {

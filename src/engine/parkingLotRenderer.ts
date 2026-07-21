@@ -4,6 +4,7 @@ export const PARKING_WORLD = {
 } as const
 
 import type { VehicleState } from './vehiclePhysics'
+import { DEFAULT_VEHICLE_CONFIG } from './vehiclePhysics'
 import {
   PARKED_VEHICLES,
   PILLARS,
@@ -164,6 +165,37 @@ function drawStructure(context: CanvasRenderingContext2D) {
   context.fillText('기둥', 15.025, 6.47)
 }
 
+function drawReverseGuide(context: CanvasRenderingContext2D, vehicle: VehicleState) {
+  if (vehicle.gear !== 'R') return
+  const paths: { x: number; y: number }[][] = [[], []]
+  let x = vehicle.x
+  let y = vehicle.y
+  let heading = vehicle.heading
+  for (let step = 0; step <= 30; step += 1) {
+    const sideX = -Math.sin(heading) * 0.82
+    const sideY = Math.cos(heading) * 0.82
+    paths[0].push({ x: x + sideX, y: y + sideY })
+    paths[1].push({ x: x - sideX, y: y - sideY })
+    const distance = -0.1
+    const headingDelta = distance / DEFAULT_VEHICLE_CONFIG.wheelbase * Math.tan(vehicle.steeringAngle)
+    const middleHeading = heading + headingDelta / 2
+    x += Math.cos(middleHeading) * distance
+    y += Math.sin(middleHeading) * distance
+    heading += headingDelta
+  }
+  context.save()
+  context.strokeStyle = 'rgba(255,216,98,.95)'
+  context.lineWidth = 0.08
+  context.setLineDash([0.16, 0.1])
+  for (const path of paths) {
+    context.beginPath()
+    path.forEach((point, index) => index ? context.lineTo(point.x, point.y) : context.moveTo(point.x, point.y))
+    context.stroke()
+  }
+  context.setLineDash([])
+  context.restore()
+}
+
 export function renderParkingLot(
   context: CanvasRenderingContext2D,
   viewportWidth: number,
@@ -172,17 +204,20 @@ export function renderParkingLot(
   options: {
     danger?: Collision | null
     collisions?: Collision[]
+    focus?: { x: number; y: number; span: number }
   } = {},
 ) {
   context.clearRect(0, 0, viewportWidth, viewportHeight)
 
   const padding = Math.max(12, Math.min(viewportWidth, viewportHeight) * 0.035)
-  const scale = Math.min(
-    (viewportWidth - padding * 2) / PARKING_WORLD.width,
-    (viewportHeight - padding * 2) / PARKING_WORLD.height,
-  )
-  const offsetX = (viewportWidth - PARKING_WORLD.width * scale) / 2
-  const offsetY = (viewportHeight - PARKING_WORLD.height * scale) / 2
+  const scale = options.focus
+    ? Math.max(viewportWidth, viewportHeight) / options.focus.span
+    : Math.min(
+      (viewportWidth - padding * 2) / PARKING_WORLD.width,
+      (viewportHeight - padding * 2) / PARKING_WORLD.height,
+    )
+  const offsetX = options.focus ? viewportWidth / 2 - options.focus.x * scale : (viewportWidth - PARKING_WORLD.width * scale) / 2
+  const offsetY = options.focus ? viewportHeight / 2 - options.focus.y * scale : (viewportHeight - PARKING_WORLD.height * scale) / 2
 
   context.save()
   context.translate(offsetX, offsetY)
@@ -202,6 +237,7 @@ export function renderParkingLot(
 
   drawStructure(context)
   drawParkingLines(context)
+  drawReverseGuide(context, vehicle)
 
   const [leftVehicle, rightVehicle] = PARKED_VEHICLES
   drawVehicle(context, leftVehicle.x, leftVehicle.y, leftVehicle.heading, {

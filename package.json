@@ -11,12 +11,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@types/three": "^0.185.1",
     "@vitejs/plugin-react": "latest",
     "react": "latest",
     "react-dom": "latest",
     "react-router-dom": "latest",
-    "three": "^0.185.1",
     "typescript": "latest",
     "vite": "latest"
   },
