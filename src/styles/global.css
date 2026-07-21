@@ -162,6 +162,8 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .instrument-panel .collision-count { min-height: auto; color: #91a39c; font-weight: 800; }
 .instrument-panel .collision-count.active { color: #ff8d84; }
 .instrument-panel .reset-control { width: auto; min-height: 34px; color: #b9cbc4; border-color: #43534d; background: transparent; font-size: .72rem; }
+.instrument-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.instrument-panel .result-control { min-height: 34px; padding: 0 10px; border: 1px solid #4d9d80; border-radius: 8px; color: #dff8ef; background: #17684f; font-size: .72rem; font-weight: 800; cursor: pointer; }
 
 .gear-control-cluster { display: flex; align-items: stretch; gap: 9px; }
 .integrated-brake { width: 88px; border: 1px solid #71423e; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; color: #ffc7c1; background: rgba(130,49,42,.22); cursor: pointer; touch-action: none; }
@@ -182,6 +184,16 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .driving-help { margin: 12px 4px 0; color: var(--brand-dark); font-size: .82rem; font-weight: 700; text-align: center; }
 .result-placeholder { padding: 40px; border: 1px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; gap: 10px; background: var(--surface); }
 .result-placeholder span { color: var(--muted); }
+.result-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.result-card { padding: 22px; border: 1px solid var(--border); border-radius: 18px; display: flex; flex-direction: column; gap: 8px; background: var(--surface); }
+.result-card > span { color: var(--muted); font-size: .78rem; font-weight: 800; }
+.result-card > strong { font-size: 1.14rem; }
+.result-card > p { margin: 0; color: var(--muted); line-height: 1.55; }
+.result-card.good { border-color: #a7dbc7; background: #f5fcf9; }
+.result-card.needs-work { border-color: #efb5af; background: #fff8f7; }
+.result-card.collision-result { grid-column: 1 / -1; }
+.result-actions { margin-top: 22px; display: flex; gap: 10px; }
+.result-start-link { width: fit-content; }
 
 .orientation-notice { display: none; }
 .site-footer { padding: 24px 0; border-top: 1px solid var(--border); color: var(--muted); }
@@ -233,6 +245,8 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .steering-module { grid-row: span 2; }
   .instrument-panel, .gear-module { min-height: 190px; }
   .result-placeholder { padding: 28px 22px; }
+  .result-summary-grid { grid-template-columns: minmax(0, 1fr); }
+  .result-card.collision-result { grid-column: auto; }
 }
 
 @media (max-width: 900px) and (orientation: portrait) {

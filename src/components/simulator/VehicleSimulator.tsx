@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { GearSelector } from '../controls/GearSelector'
 import { SteeringWheel } from '../controls/SteeringWheel'
 import { useVehicleSimulation } from '../../hooks/useVehicleSimulation'
 import { ParkingLotCanvas } from './ParkingLotCanvas'
 import { detectCollision } from '../../engine/collisionDetection'
+import { evaluateParking } from '../../engine/parkingEvaluation'
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
@@ -15,6 +17,7 @@ type VehicleSimulatorProps = {
 }
 
 export function VehicleSimulator({ learningMode }: VehicleSimulatorProps) {
+  const navigate = useNavigate()
   const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean }
   const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent)
     || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
@@ -41,6 +44,7 @@ export function VehicleSimulator({ learningMode }: VehicleSimulatorProps) {
     reset,
   } = useVehicleSimulation()
   const danger = learningMode ? detectCollision(vehicle, 0.42) : null
+  const parkingEvaluation = evaluateParking(vehicle, collisions)
 
   useEffect(() => {
     document.documentElement.classList.add('simulator-active')
@@ -115,6 +119,10 @@ export function VehicleSimulator({ learningMode }: VehicleSimulatorProps) {
     }
   }
 
+  const showParkingResult = () => {
+    navigate('/result', { state: { result: parkingEvaluation } })
+  }
+
   return (
     <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
       <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions} />
@@ -176,7 +184,10 @@ export function VehicleSimulator({ learningMode }: VehicleSimulatorProps) {
           <strong>{Math.abs(vehicle.speed).toFixed(1)} <small>m/s</small></strong>
           <span>{braking ? '브레이크 작동' : `${vehicle.gear === 'R' ? '후진' : '전진'} 크리프`}</span>
           <span className={collisionCount ? 'collision-count active' : 'collision-count'}>충돌 {collisionCount}회</span>
-          <button type="button" className="reset-control" onClick={reset}>처음 위치</button>
+          <div className="instrument-actions">
+            <button type="button" className="reset-control" onClick={reset}>처음 위치</button>
+            <button type="button" className="result-control" onClick={showParkingResult}>결과 확인</button>
+          </div>
         </div>
 
         <GearSelector

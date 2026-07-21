@@ -11,6 +11,7 @@ import {
   WALLS,
   type Collision,
 } from './collisionDetection'
+import { TARGET_PARKING_BAY } from './parkingEvaluation'
 
 type VehicleStyle = {
   body: string
@@ -125,15 +126,25 @@ function drawParkingLines(context: CanvasRenderingContext2D) {
   context.setLineDash([0.18, 0.16])
   context.strokeStyle = '#71dbb6'
   context.lineWidth = 0.1
-  context.strokeRect(7.82, 5.72, 2.36, 5.48)
+  context.strokeRect(
+    TARGET_PARKING_BAY.left,
+    TARGET_PARKING_BAY.top,
+    TARGET_PARKING_BAY.right - TARGET_PARKING_BAY.left,
+    TARGET_PARKING_BAY.bottom - TARGET_PARKING_BAY.top,
+  )
   context.restore()
 
   context.fillStyle = 'rgba(113, 219, 182, 0.14)'
-  context.fillRect(7.82, 5.72, 2.36, 5.48)
+  context.fillRect(
+    TARGET_PARKING_BAY.left,
+    TARGET_PARKING_BAY.top,
+    TARGET_PARKING_BAY.right - TARGET_PARKING_BAY.left,
+    TARGET_PARKING_BAY.bottom - TARGET_PARKING_BAY.top,
+  )
   context.fillStyle = '#8be2c4'
   context.font = '700 0.34px sans-serif'
   context.textAlign = 'center'
-  context.fillText('연습 주차칸', 9, 10.92)
+  context.fillText('연습 주차칸', TARGET_PARKING_BAY.center.x, TARGET_PARKING_BAY.bottom - 0.28)
 }
 
 function drawStructure(context: CanvasRenderingContext2D) {
