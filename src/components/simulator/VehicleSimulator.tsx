@@ -1,10 +1,8 @@
-import { useEffect, useRef, useState, type PointerEvent } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type PointerEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { GearSelector } from '../controls/GearSelector'
 import { SteeringWheel } from '../controls/SteeringWheel'
 import { useVehicleSimulation } from '../../hooks/useVehicleSimulation'
-import { ParkingLotCanvas } from './ParkingLotCanvas'
-import { DriverAssistance } from './DriverAssistance'
 import { LearningHintPanel } from './LearningHintPanel'
 import { detectCollision } from '../../engine/collisionDetection'
 import { evaluateParking } from '../../engine/parkingEvaluation'
@@ -20,6 +18,8 @@ type VehicleSimulatorProps = {
   scenarioId: ScenarioId
   mode: PracticeMode
 }
+
+const ThreeDrivingView = lazy(() => import('./ThreeDrivingView').then((module) => ({ default: module.ThreeDrivingView })))
 
 export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimulatorProps) {
   const navigate = useNavigate()
@@ -130,8 +130,8 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
 
   return (
     <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
-      <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions}>
-        <DriverAssistance vehicle={vehicle} />
+      <Suspense fallback={<div className="parking-canvas-frame three-loading">3D 주차장을 준비하고 있습니다…</div>}>
+        <ThreeDrivingView vehicle={vehicle} danger={danger}>
         {learningMode && <LearningHintPanel vehicle={vehicle} scenarioId={scenarioId} />}
         <div className="driving-console" aria-label="차량 운전 조작부">
           <SteeringWheel
@@ -160,7 +160,8 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
             onBrakeChange={setBraking}
           />
         </div>
-      </ParkingLotCanvas>
+        </ThreeDrivingView>
+      </Suspense>
       {canUseFullscreen && !isFullscreen && (!isMobile || isInstalled) && (
         <button
           type="button"
