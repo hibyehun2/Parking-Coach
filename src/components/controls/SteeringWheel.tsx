@@ -8,16 +8,27 @@ type SteeringWheelProps = {
 }
 
 const MAX_WHEEL_ROTATION = 450
-const DRAG_PIXELS_FOR_FULL_LOCK = 180
-const TOUCH_DRAG_RATIO = 0.65
-const MIN_TOUCH_DRAG_PIXELS = 72
+
+function pointerAngle(event: PointerEvent<HTMLDivElement>) {
+  const bounds = event.currentTarget.getBoundingClientRect()
+  const centerX = bounds.left + bounds.width / 2
+  const centerY = bounds.top + bounds.height / 2
+  return Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180 / Math.PI
+}
+
+function shortestAngleDelta(previous: number, current: number) {
+  return (current - previous + 540) % 360 - 180
+}
+
+function clamp(value: number, minimum: number, maximum: number) {
+  return Math.min(maximum, Math.max(minimum, value))
+}
 
 export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWheelProps) {
   const dragRef = useRef<{
     pointerId: number
-    startX: number
-    startAngle: number
-    pixelsForFullLock: number
+    pointerAngle: number
+    wheelRotation: number
   } | null>(null)
   const maxSteeringAngle = DEFAULT_VEHICLE_CONFIG.maxSteeringAngle
   const wheelRotation = steeringAngle / maxSteeringAngle * MAX_WHEEL_ROTATION
@@ -27,14 +38,10 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
     if (!event.isPrimary || event.button !== 0) return
     event.preventDefault()
     event.currentTarget.setPointerCapture(event.pointerId)
-    const touchWidth = event.currentTarget.getBoundingClientRect().width * TOUCH_DRAG_RATIO
     dragRef.current = {
       pointerId: event.pointerId,
-      startX: event.clientX,
-      startAngle: steeringAngle,
-      pixelsForFullLock: event.pointerType === 'touch'
-        ? Math.max(MIN_TOUCH_DRAG_PIXELS, touchWidth)
-        : DRAG_PIXELS_FOR_FULL_LOCK,
+      pointerAngle: pointerAngle(event),
+      wheelRotation,
     }
   }
 
@@ -42,8 +49,15 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
     const drag = dragRef.current
     if (!drag || drag.pointerId !== event.pointerId) return
     event.preventDefault()
-    const delta = (event.clientX - drag.startX) / drag.pixelsForFullLock
-    onChange(drag.startAngle + delta * maxSteeringAngle)
+    const currentPointerAngle = pointerAngle(event)
+    const delta = shortestAngleDelta(drag.pointerAngle, currentPointerAngle)
+    drag.pointerAngle = currentPointerAngle
+    drag.wheelRotation = clamp(
+      drag.wheelRotation + delta,
+      -MAX_WHEEL_ROTATION,
+      MAX_WHEEL_ROTATION,
+    )
+    onChange(drag.wheelRotation / MAX_WHEEL_ROTATION * maxSteeringAngle)
   }
 
   const finishDrag = (event: PointerEvent<HTMLDivElement>) => {

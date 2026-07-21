@@ -42,7 +42,7 @@ export function VehicleSimulator() {
         />
       </div>
       <p className="driving-help">
-        핸들을 좌우로 드래그하세요. 기어 패널의 정지를 탭한 뒤 기어를 선택하고, 정지 해제를 누르면 천천히 움직입니다.
+        핸들을 손가락으로 원을 그리듯 돌리세요. 기어 패널의 정지를 탭한 뒤 기어를 선택하고, 정지 해제를 누르면 천천히 움직입니다.
       </p>
       <p className="keyboard-help">키보드: ←/A · →/D 조향, Space/S 브레이크, F 전진, R 후진, C 중앙</p>
     </div>
