@@ -13,6 +13,9 @@ test('모든 주차 상황에 3단계 미니 레슨이 있다', () => {
   for (const lesson of Object.values(lessons)) {
     assert.equal(lesson.steps.length, 3)
     assert.ok(lesson.steps.every((step) => step.title && step.description && step.cue))
+    assert.deepEqual(lesson.steps.map((step) => step.gear), ['D', 'R', 'R'])
+    assert.deepEqual(lesson.steps.map((step) => step.steering), ['중앙', '우측 끝까지', '중앙'])
+    assert.ok(lesson.steps.every((step) => step.check), `${lesson.scenarioId}: 확인 지점이 필요합니다.`)
   }
 })
 

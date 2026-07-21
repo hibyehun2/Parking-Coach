@@ -135,27 +135,43 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .lesson-header span { color: var(--brand); font-size: .78rem; font-weight: 800; }
 .lesson-header strong { font-size: 1.35rem; }
 .lesson-skip { min-height: 38px; padding: 0 12px; border: 1px solid var(--border); border-radius: 9px; color: var(--muted); background: white; font-weight: 800; }
-.lesson-animation { position: relative; min-height: 230px; border-radius: 17px; overflow: hidden; background: #626c68; }
-.lesson-bay { position: absolute; right: 17%; bottom: -2px; width: 34%; height: 72%; border: 3px solid rgba(255,255,255,.82); border-bottom: 0; }
-.lesson-obstacle { position: absolute; bottom: 7%; width: 19%; height: 57%; border-radius: 8px; background: #d8dfdc; box-shadow: inset 0 0 0 2px rgba(0,0,0,.12); }
-.lesson-obstacle-left { right: 53%; }
-.lesson-obstacle-right { right: 3%; }
-.lesson-car { position: absolute; z-index: 2; left: 16%; top: 13%; width: 19%; height: 38%; border-radius: 9px; display: grid; place-items: center; color: white; background: var(--brand); font-weight: 900; box-shadow: inset 0 0 0 2px rgba(255,255,255,.24); animation: lesson-approach 2.8s ease-in-out infinite alternate; }
-.lesson-guide { position: absolute; z-index: 1; left: 30%; top: 29%; width: 40%; height: 46%; border: 3px dashed #9aefd1; border-left-color: transparent; border-bottom-color: transparent; border-radius: 50%; transform: rotate(22deg); }
-.lesson-turn .lesson-car { animation-name: lesson-turn; }
-.lesson-align .lesson-car { animation-name: lesson-align; }
-.lesson-mirror .lesson-car { animation-name: lesson-mirror; }
-.lesson-clearance .lesson-obstacle-right { background: #d0a759; }
-.lesson-clearance .lesson-car { animation-name: lesson-clearance; }
-@keyframes lesson-approach { to { transform: translate(52px, 18px); } }
-@keyframes lesson-turn { to { transform: translate(105px, 78px) rotate(58deg); } }
-@keyframes lesson-align { from { transform: translate(105px, 78px) rotate(58deg); } to { transform: translate(145px, 103px) rotate(90deg); } }
-@keyframes lesson-mirror { 50% { box-shadow: inset 0 0 0 3px white, -15px 0 20px #8be2c4; } to { transform: translate(65px, 45px) rotate(34deg); } }
-@keyframes lesson-clearance { to { transform: translate(85px, 55px) rotate(42deg); } }
+.lesson-animation { position: relative; min-height: 230px; border-radius: 17px; overflow: hidden; color: white; background: #525d59; }
+.lesson-animation svg { width: 100%; height: 100%; min-height: 230px; display: block; }
+.lesson-road { fill: #555f5b; }
+.lesson-bay-lines { fill: none; stroke: rgba(255,255,255,.88); stroke-width: 3; }
+.lesson-parked rect { fill: #cdd5d2; stroke: #f4f7f6; stroke-width: 1.5; }
+.lesson-parked path { fill: none; stroke: #788581; stroke-width: 5; }
+.lesson-pillar rect { fill: #d1a65c; stroke: #f1d59f; stroke-width: 2; }
+.lesson-pillar path { fill: none; stroke: #8d682d; stroke-width: 2; }
+.lesson-user-car rect { fill: #087858; stroke: #aff0d9; stroke-width: 2; filter: drop-shadow(0 4px 3px rgba(0,0,0,.35)); }
+.lesson-user-car path { fill: none; stroke: #b7e4d5; stroke-width: 7; }
+.lesson-user-car circle { fill: #ff645b; }
+.lesson-motion-path { fill: none; stroke: #9aefd1; stroke-width: 3; stroke-dasharray: 7 5; }
+.lesson-reference { stroke: #ffe078; stroke-width: 2.5; stroke-dasharray: 4 4; }
+.lesson-stage-1 .lesson-path-approach, .lesson-stage-1 .lesson-path-straight,
+.lesson-stage-2 .lesson-path-approach, .lesson-stage-2 .lesson-path-turn,
+.lesson-stage-0 .lesson-path-turn, .lesson-stage-0 .lesson-path-straight { opacity: .18; }
+.lesson-stage-1 .lesson-reference, .lesson-stage-2 .lesson-reference { display: none; }
+.lesson-danger { fill: rgba(255,91,80,.14); stroke: #ff756b; stroke-width: 3; opacity: 0; animation: lesson-danger-pulse 1.2s ease-in-out infinite; }
+.lesson-stage-1.lesson-scene-left-side .lesson-danger-left,
+.lesson-stage-1.lesson-scene-right-side .lesson-danger-right,
+.lesson-stage-1.lesson-scene-both-sides .lesson-danger-left,
+.lesson-stage-1.lesson-scene-both-sides .lesson-danger-right,
+.lesson-stage-1.lesson-scene-pillar-side .lesson-danger-pillar { opacity: 1; }
+.lesson-scene-left-side .lesson-parked-right, .lesson-scene-right-side .lesson-parked-left { opacity: .16; }
+.lesson-scene-pillar-side .lesson-parked-right { opacity: .14; }
+.lesson-scene-both-sides .lesson-pillar, .lesson-scene-left-side .lesson-pillar, .lesson-scene-right-side .lesson-pillar { display: none; }
+.lesson-steering-symbol circle, .lesson-steering-symbol path { fill: none; stroke: rgba(255,255,255,.9); stroke-width: 3; }
+.lesson-steering-symbol .lesson-wheel-arrow { stroke: #ffe078; stroke-width: 3; }
+.lesson-driving-state { position: absolute; right: 8px; top: 8px; display: flex; gap: 6px; }
+.lesson-driving-state span { padding: 5px 7px; border-radius: 7px; color: #dbe6e1; background: rgba(9,20,16,.82); font-size: .68rem; font-weight: 700; }
+.lesson-driving-state b { margin-left: 3px; color: white; }
+@keyframes lesson-danger-pulse { 50% { stroke-width: 6; fill: rgba(255,91,80,.3); } }
 .lesson-copy { align-self: center; display: flex; flex-direction: column; gap: 10px; }
 .lesson-copy > span { color: var(--brand); font-size: .78rem; font-weight: 800; }
 .lesson-copy h2 { font-size: 1.65rem; }
 .lesson-copy p { margin: 0; color: var(--muted); line-height: 1.65; }
+.lesson-copy small { color: #52645d; font-weight: 800; line-height: 1.45; }
 .lesson-copy > strong { padding: 11px 13px; border-radius: 10px; color: var(--brand-dark); background: var(--brand-soft); line-height: 1.45; }
 .lesson-progress { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
 .lesson-progress span { height: 5px; border-radius: 99px; background: #dce6e1; }
@@ -323,6 +339,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .lesson-header span { font-size: .65rem; }
   .lesson-skip { min-height: 30px; }
   .lesson-animation { min-height: 150px; }
+  .lesson-animation svg { min-height: 150px; }
   .lesson-copy { gap: 5px; }
   .lesson-copy h2 { font-size: 1.2rem; }
   .lesson-copy p, .lesson-copy > strong { font-size: .75rem; line-height: 1.35; }
