@@ -1,0 +1,11 @@
+{
+  "name": "Parking Coach",
+  "short_name": "Parking Coach",
+  "description": "초보 운전자를 위한 단계별 후진주차 연습 웹앱",
+  "start_url": "/Parking-Coach/",
+  "scope": "/Parking-Coach/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#f5f8f6",
+  "theme_color": "#17231f"
+}

@@ -107,6 +107,11 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .canvas-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .canvas-legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
 .immersive-control { display: none; }
+.install-guide-backdrop { position: fixed; z-index: 50; inset: 0; padding: 20px; display: grid; place-items: center; color: #17231f; background: rgba(5,12,9,.7); touch-action: none; }
+.install-guide { width: min(390px, 100%); padding: 22px; border-radius: 18px; display: flex; flex-direction: column; gap: 16px; background: white; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
+.install-guide > strong { font-size: 1.15rem; }
+.install-guide ol { margin: 0; padding-left: 22px; display: grid; gap: 10px; line-height: 1.45; }
+.install-guide button { min-height: 44px; border: 0; border-radius: 11px; color: white; background: var(--brand); font-weight: 800; }
 .legend-user { background: #13805f; }
 .legend-parked { background: #d7dedd; }
 .legend-target { border: 2px dashed #71dbb6; background: rgba(113, 219, 182, .2); }

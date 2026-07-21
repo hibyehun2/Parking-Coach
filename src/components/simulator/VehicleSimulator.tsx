@@ -7,6 +7,13 @@ import { ParkingLotCanvas } from './ParkingLotCanvas'
 export function VehicleSimulator() {
   const fullscreenAttemptedRef = useRef(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showInstallGuide, setShowInstallGuide] = useState(false)
+  const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean }
+  const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || navigatorWithStandalone.standalone === true
+  const canUseFullscreen = !isIos && document.fullscreenEnabled
   const {
     vehicle,
     braking,
@@ -44,6 +51,7 @@ export function VehicleSimulator() {
   }, [])
 
   const requestImmersiveMode = () => {
+    if (!canUseFullscreen) return
     const page = document.documentElement as HTMLElement & {
       webkitRequestFullscreen?: () => Promise<void> | void
     }
@@ -57,14 +65,14 @@ export function VehicleSimulator() {
   }
 
   const enterImmersiveMode = (event: PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType !== 'touch' || fullscreenAttemptedRef.current || isFullscreen) return
+    if (!canUseFullscreen || event.pointerType !== 'touch' || fullscreenAttemptedRef.current || isFullscreen) return
     requestImmersiveMode()
   }
 
   return (
     <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
       <ParkingLotCanvas vehicle={vehicle} />
-      {!isFullscreen && (
+      {canUseFullscreen && !isFullscreen && (
         <button
           type="button"
           className="immersive-control"
@@ -73,6 +81,33 @@ export function VehicleSimulator() {
         >
           ⛶ 전체화면
         </button>
+      )}
+      {isIos && !isStandalone && (
+        <button
+          type="button"
+          className="immersive-control"
+          onPointerUp={(event) => event.stopPropagation()}
+          onClick={() => setShowInstallGuide(true)}
+        >
+          ⤴ 전체 화면으로 사용
+        </button>
+      )}
+      {showInstallGuide && (
+        <div
+          className="install-guide-backdrop"
+          role="presentation"
+          onPointerUp={(event) => event.stopPropagation()}
+        >
+          <section className="install-guide" role="dialog" aria-modal="true" aria-labelledby="install-guide-title">
+            <strong id="install-guide-title">아이폰 전체 화면 사용</strong>
+            <ol>
+              <li>Safari 하단의 공유 버튼 <b>□↑</b>을 누르세요.</li>
+              <li><b>홈 화면에 추가</b>를 선택하세요.</li>
+              <li>홈 화면에 생긴 Parking Coach 아이콘으로 실행하세요.</li>
+            </ol>
+            <button type="button" onClick={() => setShowInstallGuide(false)}>확인</button>
+          </section>
+        </div>
       )}
       <div className="driving-console" aria-label="차량 운전 조작부">
         <SteeringWheel
