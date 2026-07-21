@@ -19,7 +19,12 @@ export function GearSelector({ gear, braking, canShift, onChange, onBrakeChange 
           className={gear === 'R' ? 'active' : ''}
           aria-pressed={gear === 'R'}
           disabled={!canShift && gear !== 'R'}
-          onClick={() => onChange('R')}
+          onPointerUp={(event) => {
+            if (event.button === 0) onChange('R')
+          }}
+          onClick={(event) => {
+            if (event.detail === 0) onChange('R')
+          }}
           onContextMenu={(event) => event.preventDefault()}
         >
           <strong>R</strong><small>후진</small>
@@ -29,7 +34,12 @@ export function GearSelector({ gear, braking, canShift, onChange, onBrakeChange 
           className={gear === 'D' ? 'active' : ''}
           aria-pressed={gear === 'D'}
           disabled={!canShift && gear !== 'D'}
-          onClick={() => onChange('D')}
+          onPointerUp={(event) => {
+            if (event.button === 0) onChange('D')
+          }}
+          onClick={(event) => {
+            if (event.detail === 0) onChange('D')
+          }}
           onContextMenu={(event) => event.preventDefault()}
         >
           <strong>D</strong><small>전진</small>
@@ -39,7 +49,12 @@ export function GearSelector({ gear, braking, canShift, onChange, onBrakeChange 
           className={`stop-control${braking ? ' active' : ''}`}
           aria-label={braking ? '브레이크 해제' : '차량 정지'}
           aria-pressed={braking}
-          onClick={() => onBrakeChange(!braking)}
+          onPointerUp={(event) => {
+            if (event.button === 0) onBrakeChange(!braking)
+          }}
+          onClick={(event) => {
+            if (event.detail === 0) onBrakeChange(!braking)
+          }}
           onContextMenu={(event) => event.preventDefault()}
         >
           <strong>■</strong><small>{braking ? '정지 해제' : '정지'}</small>
