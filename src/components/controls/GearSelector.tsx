@@ -18,6 +18,7 @@ export function GearSelector({ gear, canShift, onChange }: GearSelectorProps) {
           aria-pressed={gear === 'R'}
           disabled={!canShift && gear !== 'R'}
           onClick={() => onChange('R')}
+          onContextMenu={(event) => event.preventDefault()}
         >
           <strong>R</strong><small>후진</small>
         </button>
@@ -27,11 +28,12 @@ export function GearSelector({ gear, canShift, onChange }: GearSelectorProps) {
           aria-pressed={gear === 'D'}
           disabled={!canShift && gear !== 'D'}
           onClick={() => onChange('D')}
+          onContextMenu={(event) => event.preventDefault()}
         >
           <strong>D</strong><small>전진</small>
         </button>
       </div>
-      <small className="shift-help">브레이크를 밟고 변경</small>
+      <small className="shift-help">브레이크 작동 후 변경</small>
     </div>
   )
 }

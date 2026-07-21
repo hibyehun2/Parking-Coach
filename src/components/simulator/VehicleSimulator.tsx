@@ -38,7 +38,7 @@ export function VehicleSimulator() {
         <BrakePedal active={braking} onChange={setBraking} />
       </div>
       <p className="driving-help">
-        핸들을 좌우로 드래그하세요. 브레이크를 밟은 채 기어를 선택하고, 페달에서 손을 떼면 천천히 움직입니다.
+        핸들을 좌우로 드래그하세요. 브레이크를 탭해 정지한 뒤 기어를 선택하고, 다시 탭하면 천천히 움직입니다.
       </p>
       <p className="keyboard-help">키보드: ←/A · →/D 조향, Space/S 브레이크, F 전진, R 후진, C 중앙</p>
     </div>
