@@ -1,4 +1,4 @@
-import { useEffect, useRef, type PointerEvent } from 'react'
+import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { GearSelector } from '../controls/GearSelector'
 import { SteeringWheel } from '../controls/SteeringWheel'
 import { useVehicleSimulation } from '../../hooks/useVehicleSimulation'
@@ -6,6 +6,7 @@ import { ParkingLotCanvas } from './ParkingLotCanvas'
 
 export function VehicleSimulator() {
   const fullscreenAttemptedRef = useRef(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const {
     vehicle,
     braking,
@@ -20,28 +21,59 @@ export function VehicleSimulator() {
   useEffect(() => {
     document.documentElement.classList.add('simulator-active')
     document.body.classList.add('simulator-active')
+
+    const fullscreenDocument = document as Document & {
+      webkitFullscreenElement?: Element | null
+    }
+    const syncFullscreenState = () => {
+      const fullscreen = Boolean(document.fullscreenElement ?? fullscreenDocument.webkitFullscreenElement)
+      setIsFullscreen(fullscreen)
+      if (!fullscreen) fullscreenAttemptedRef.current = false
+    }
+
+    document.addEventListener('fullscreenchange', syncFullscreenState)
+    document.addEventListener('webkitfullscreenchange', syncFullscreenState)
+    syncFullscreenState()
+
     return () => {
       document.documentElement.classList.remove('simulator-active')
       document.body.classList.remove('simulator-active')
+      document.removeEventListener('fullscreenchange', syncFullscreenState)
+      document.removeEventListener('webkitfullscreenchange', syncFullscreenState)
     }
   }, [])
 
-  const enterImmersiveMode = (event: PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType !== 'touch' || fullscreenAttemptedRef.current || document.fullscreenElement) return
-
+  const requestImmersiveMode = () => {
     const page = document.documentElement as HTMLElement & {
       webkitRequestFullscreen?: () => Promise<void> | void
     }
     const requestFullscreen = page.requestFullscreen ?? page.webkitRequestFullscreen
-    if (!requestFullscreen) return
+    if (!requestFullscreen || document.fullscreenElement) return
 
     fullscreenAttemptedRef.current = true
-    void Promise.resolve(requestFullscreen.call(page)).catch(() => undefined)
+    void Promise.resolve(requestFullscreen.call(page)).catch(() => {
+      fullscreenAttemptedRef.current = false
+    })
+  }
+
+  const enterImmersiveMode = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType !== 'touch' || fullscreenAttemptedRef.current || isFullscreen) return
+    requestImmersiveMode()
   }
 
   return (
     <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
       <ParkingLotCanvas vehicle={vehicle} />
+      {!isFullscreen && (
+        <button
+          type="button"
+          className="immersive-control"
+          onPointerUp={(event) => event.stopPropagation()}
+          onClick={requestImmersiveMode}
+        >
+          ⛶ 전체화면
+        </button>
+      )}
       <div className="driving-console" aria-label="차량 운전 조작부">
         <SteeringWheel
           steeringAngle={vehicle.steeringAngle}

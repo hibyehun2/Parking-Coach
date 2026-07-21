@@ -106,6 +106,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .canvas-legend { position: absolute; top: 16px; left: 16px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; display: flex; flex-wrap: wrap; gap: 12px; color: white; background: rgba(20, 29, 26, .78); backdrop-filter: blur(6px); font-size: .78rem; font-weight: 700; }
 .canvas-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .canvas-legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.immersive-control { display: none; }
 .legend-user { background: #13805f; }
 .legend-parked { background: #d7dedd; }
 .legend-target { border: 2px dashed #71dbb6; background: rgba(113, 219, 182, .2); }
@@ -244,7 +245,9 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .simulator-shell { position: fixed; z-index: 10; inset: 0; width: 100%; height: 100vh; height: 100dvh; padding: max(5px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(5px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); overflow: hidden; background: #f5f8f6; }
   .simulator-heading, .simulator-shell > .page-description { display: none; }
   .vehicle-simulator { width: 100%; height: 100%; display: grid; grid-template-rows: minmax(0, 55fr) minmax(0, 45fr); gap: 5px; overflow: hidden; touch-action: none; }
+  .immersive-control { position: absolute; z-index: 5; top: max(10px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); min-height: 38px; padding: 0 12px; border: 1px solid rgba(255,255,255,.35); border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; color: white; background: rgba(10,18,15,.82); backdrop-filter: blur(6px); font-size: .75rem; font-weight: 800; cursor: pointer; touch-action: manipulation; }
   .parking-canvas-frame { height: 100%; min-height: 0; border-radius: 12px; }
+  .canvas-legend { right: auto; max-width: calc(100% - 125px); }
   .simulation-controls { grid-template-columns: minmax(250px, 1fr) auto auto auto; padding: 10px; gap: 9px; }
   .steering-controls { grid-column: auto; }
   .control-label { display: none; }
