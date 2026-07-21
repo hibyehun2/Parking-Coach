@@ -5,6 +5,7 @@ import { SteeringWheel } from '../controls/SteeringWheel'
 import { useVehicleSimulation } from '../../hooks/useVehicleSimulation'
 import { ParkingLotCanvas } from './ParkingLotCanvas'
 import { DriverAssistance } from './DriverAssistance'
+import { LearningHintPanel } from './LearningHintPanel'
 import { detectCollision } from '../../engine/collisionDetection'
 import { evaluateParking } from '../../engine/parkingEvaluation'
 import type { PracticeMode, ScenarioId } from '../../types/practice'
@@ -131,6 +132,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
     <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
       <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions}>
         <DriverAssistance vehicle={vehicle} />
+        {learningMode && <LearningHintPanel vehicle={vehicle} scenarioId={scenarioId} />}
         <div className="driving-console" aria-label="차량 운전 조작부">
           <SteeringWheel
             steeringAngle={vehicle.steeringAngle}
