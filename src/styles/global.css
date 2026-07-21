@@ -122,7 +122,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .brake-control.active { color: #7d2d27; border-color: #e6bbb7; background: #f8dcda; }
 .reset-control { align-self: end; color: var(--brand-dark); }
 .keyboard-help { margin: 10px 4px 0; color: var(--muted); font-size: .78rem; text-align: right; }
-.driving-console { position: relative; min-height: 290px; margin-top: 14px; padding: 20px 24px; border: 1px solid #25332e; border-radius: 24px; display: grid; grid-template-columns: minmax(230px, 1.35fr) minmax(150px, .75fr) minmax(150px, .75fr); align-items: center; gap: 24px; color: #edf6f2; background: linear-gradient(150deg, #26332e, #121a17); box-shadow: 0 16px 34px rgba(20, 35, 30, .18); }
+.driving-console { position: relative; min-height: 290px; margin-top: 14px; padding: 20px 24px; border: 1px solid #25332e; border-radius: 24px; display: grid; grid-template-columns: minmax(230px, 1.35fr) minmax(150px, .75fr) minmax(210px, .9fr); align-items: center; gap: 24px; color: #edf6f2; background: linear-gradient(150deg, #26332e, #121a17); box-shadow: 0 16px 34px rgba(20, 35, 30, .18); touch-action: none; overscroll-behavior: contain; }
 .gear-module, .gear-module button { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .dashboard-label { color: #96aaa2; font-size: .72rem; font-weight: 800; letter-spacing: .08em; }
 .steering-module { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto 1fr auto; align-items: center; justify-items: center; }
@@ -155,13 +155,17 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .instrument-panel > span:not(.dashboard-label) { min-height: 20px; color: #aec0b9; font-size: .76rem; text-align: center; }
 .instrument-panel .reset-control { width: auto; min-height: 34px; color: #b9cbc4; border-color: #43534d; background: transparent; font-size: .72rem; }
 
+.gear-control-cluster { display: flex; align-items: stretch; gap: 9px; }
+.integrated-brake { width: 88px; border: 1px solid #71423e; border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; color: #ffc7c1; background: rgba(130,49,42,.22); cursor: pointer; touch-action: none; }
+.integrated-brake strong { font-size: .67rem; letter-spacing: .08em; }
+.integrated-brake > span { font-size: 1.55rem; line-height: 1; }
+.integrated-brake small { font-size: .67rem; }
+.integrated-brake.active { color: white; border-color: #e19790; background: #a34239; box-shadow: 0 0 18px rgba(190,75,65,.35), inset 0 0 0 1px #e19790; }
 .gear-gate { position: relative; width: 104px; padding: 8px; border: 2px solid #3b4944; border-radius: 18px; display: flex; flex-direction: column; gap: 7px; background: #0c1210; }
 .gear-gate button { position: relative; z-index: 2; height: 68px; border: 0; border-radius: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #91a39c; background: transparent; cursor: pointer; touch-action: none; }
 .gear-gate button strong { font-size: 1.3rem; }
 .gear-gate button small { margin-top: 2px; font-size: .65rem; }
 .gear-gate button.active { color: white; background: rgba(22,115,87,.38); box-shadow: inset 0 0 0 1px #47b78f; }
-.gear-gate .stop-control { margin-top: 3px; color: #ffc7c1; background: rgba(130,49,42,.22); box-shadow: inset 0 0 0 1px #71423e; }
-.gear-gate .stop-control.active { color: white; background: #a34239; box-shadow: inset 0 0 0 1px #e19790; }
 .gear-gate button:disabled { cursor: not-allowed; opacity: .42; }
 .gear-lever { position: absolute; z-index: 1; right: -13px; width: 18px; height: 51px; border-radius: 9px; background: linear-gradient(90deg, #77817d, #252d2a); transition: top 180ms ease; }
 .gear-r { top: 16px; }
@@ -177,7 +181,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 @media (max-width: 960px) {
   .home-hero { grid-template-columns: minmax(0, 1fr) minmax(320px, .8fr); gap: 40px; }
   .scenario-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .driving-console { grid-template-columns: minmax(210px, 1.15fr) repeat(2, minmax(125px, .7fr)); gap: 12px; padding-inline: 16px; }
+  .driving-console { grid-template-columns: minmax(210px, 1.15fr) minmax(125px, .7fr) minmax(190px, .9fr); gap: 12px; padding-inline: 16px; }
   .steering-wheel-touch-area { width: 190px; height: 190px; }
   .steering-wheel { width: 165px; height: 165px; }
   .instrument-panel, .gear-module { padding-left: 12px; }
@@ -237,7 +241,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .main-content { width: calc(100% - 16px); }
   .page { padding: 5px 0; }
   .simulator-heading, .simulator-shell > .page-description { display: none; }
-  .vehicle-simulator { height: calc(100vh - 10px); display: grid; grid-template-rows: minmax(0, 55fr) minmax(0, 45fr); gap: 5px; }
+  .vehicle-simulator { height: calc(100vh - 10px); height: calc(100dvh - 10px); display: grid; grid-template-rows: minmax(0, 55fr) minmax(0, 45fr); gap: 5px; }
   .parking-canvas-frame { height: 100%; min-height: 0; border-radius: 12px; }
   .simulation-controls { grid-template-columns: minmax(250px, 1fr) auto auto auto; padding: 10px; gap: 9px; }
   .steering-controls { grid-column: auto; }
@@ -246,7 +250,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .control-row { flex-wrap: nowrap; }
   .control-row button, .gear-selector button, .brake-control, .reset-control { min-height: 40px; }
   .brake-control { min-width: 110px; }
-  .driving-console { min-height: 0; height: 100%; margin: 0; grid-template-columns: minmax(185px, 1.2fr) minmax(105px, .65fr) minmax(100px, .6fr); gap: 8px; padding: 5px 12px; border-radius: 12px; }
+  .driving-console { min-height: 0; height: 100%; margin: 0; grid-template-columns: minmax(185px, 1.2fr) minmax(105px, .65fr) minmax(160px, .85fr); gap: 8px; padding: 5px 12px; border-radius: 12px; }
   .steering-module { grid-row: auto; }
   .steering-wheel-touch-area { width: 145px; height: 132px; }
   .steering-wheel { width: 122px; height: 122px; }
@@ -256,6 +260,9 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .instrument-panel, .gear-module { min-height: 0; height: 100%; padding-left: 7px; gap: 4px; }
   .instrument-panel .gear-display { width: 50px; height: 50px; font-size: 1.5rem; }
   .gear-gate { width: 78px; }
+  .gear-control-cluster { gap: 6px; }
+  .integrated-brake { width: 70px; gap: 4px; }
+  .integrated-brake > span { font-size: 1.15rem; }
   .gear-gate button { height: 52px; }
   .gear-d { top: 75px; }
   .driving-help, .keyboard-help { display: none; }
