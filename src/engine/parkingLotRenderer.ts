@@ -205,19 +205,21 @@ export function renderParkingLot(
     danger?: Collision | null
     collisions?: Collision[]
     focus?: { x: number; y: number; span: number; heading?: number }
+    bottomInsetRatio?: number
   } = {},
 ) {
   context.clearRect(0, 0, viewportWidth, viewportHeight)
 
   const padding = Math.max(12, Math.min(viewportWidth, viewportHeight) * 0.035)
+  const usableHeight = viewportHeight * (1 - (options.bottomInsetRatio ?? 0))
   const scale = options.focus
     ? Math.max(viewportWidth, viewportHeight) / options.focus.span
     : Math.min(
       (viewportWidth - padding * 2) / PARKING_WORLD.width,
-      (viewportHeight - padding * 2) / PARKING_WORLD.height,
+      (usableHeight - padding * 2) / PARKING_WORLD.height,
     )
   const offsetX = (viewportWidth - PARKING_WORLD.width * scale) / 2
-  const offsetY = (viewportHeight - PARKING_WORLD.height * scale) / 2
+  const offsetY = (usableHeight - PARKING_WORLD.height * scale) / 2
 
   context.save()
   if (options.focus) {

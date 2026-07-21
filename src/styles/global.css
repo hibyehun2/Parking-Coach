@@ -221,7 +221,9 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .reset-control { align-self: end; color: var(--brand-dark); }
 .keyboard-help { margin: 10px 4px 0; color: var(--muted); font-size: .78rem; text-align: right; }
 .driving-console { position: absolute; z-index: 5; right: 12px; bottom: 12px; left: 12px; min-height: 250px; padding: 16px 20px; border: 1px solid rgba(255,255,255,.22); border-radius: 24px; display: grid; grid-template-columns: minmax(230px, 1.35fr) minmax(150px, .75fr) minmax(210px, .9fr); align-items: center; gap: 24px; color: #edf6f2; background: linear-gradient(150deg, rgba(38,51,46,.94), rgba(18,26,23,.94)); box-shadow: 0 16px 34px rgba(20,35,30,.3); touch-action: none; overscroll-behavior: contain; }
-.driving-console.separate-console { position: relative; right: auto; bottom: auto; left: auto; min-height: 250px; margin-top: 10px; }
+.driving-console.separate-console { position: absolute; right: 12px; bottom: 10px; left: 12px; min-height: 230px; margin: 0; border-color: rgba(255,255,255,.3); background: rgba(15,24,21,.18); box-shadow: 0 5px 14px rgba(0,0,0,.12); backdrop-filter: none; }
+.separate-console .steering-module, .separate-console .instrument-panel, .separate-console .gear-module { border-radius: 16px; background: rgba(12,19,17,.35); }
+.separate-console .steering-module { padding: 6px; }
 .gear-module, .gear-module button { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .dashboard-label { color: #96aaa2; font-size: .72rem; font-weight: 800; letter-spacing: .08em; }
 .steering-module { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto 1fr auto; align-items: center; justify-items: center; }
@@ -374,7 +376,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .page { padding: 5px 0; }
   .simulator-shell { position: fixed; z-index: 10; inset: 0; width: 100%; height: 100vh; height: 100dvh; padding: max(5px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(5px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); overflow: hidden; background: #f5f8f6; }
   .simulator-heading, .simulator-shell > .page-description { display: none; }
-  .vehicle-simulator { position: relative; width: 100%; height: 100%; display: grid; grid-template-rows: minmax(0, 62fr) minmax(0, 38fr); gap: 5px; overflow: hidden; touch-action: none; }
+  .vehicle-simulator { position: relative; width: 100%; height: 100%; overflow: hidden; touch-action: none; }
   .immersive-control { position: absolute; z-index: 6; top: max(10px, env(safe-area-inset-top)); right: 50%; min-height: 38px; padding: 0 12px; border: 1px solid rgba(255,255,255,.35); border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; color: white; background: rgba(10,18,15,.82); backdrop-filter: blur(6px); font-size: .75rem; font-weight: 800; cursor: pointer; touch-action: manipulation; transform: translateX(50%); }
   .mobile-install-control { max-width: 245px; text-align: center; }
   .parking-canvas-frame { height: 100%; min-height: 0; border-radius: 12px; }
@@ -404,7 +406,8 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .control-row button, .gear-selector button, .brake-control, .reset-control { min-height: 40px; }
   .brake-control { min-width: 110px; }
   .driving-console { right: 6px; bottom: 5px; left: 6px; min-height: 0; height: clamp(145px, 38vh, 185px); grid-template-columns: minmax(185px, 1.2fr) minmax(105px, .65fr) minmax(160px, .85fr); gap: 8px; padding: 5px 12px; border-radius: 12px; background: linear-gradient(150deg, rgba(38,51,46,.84), rgba(18,26,23,.9)); backdrop-filter: blur(5px); }
-  .driving-console.separate-console { position: relative; right: auto; bottom: auto; left: auto; width: 100%; height: 100%; margin: 0; }
+  .driving-console.separate-console { position: absolute; right: 6px; bottom: 5px; left: 6px; width: auto; height: clamp(145px, 38vh, 185px); margin: 0; background: rgba(15,24,21,.18); }
+  .separate-console .steering-module, .separate-console .instrument-panel, .separate-console .gear-module { border-radius: 10px; background: rgba(12,19,17,.35); }
   .steering-module { grid-row: auto; }
   .steering-wheel-touch-area { width: 145px; height: 132px; }
   .steering-wheel { width: 122px; height: 122px; }

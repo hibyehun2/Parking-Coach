@@ -133,8 +133,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
       <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions}>
         <CornerAssistance vehicle={vehicle} />
         {learningMode && <LearningHintPanel vehicle={vehicle} scenarioId={scenarioId} />}
-      </ParkingLotCanvas>
-      <div className="driving-console separate-console" aria-label="차량 운전 조작부">
+        <div className="driving-console separate-console" aria-label="차량 운전 조작부">
           <SteeringWheel
             steeringAngle={vehicle.steeringAngle}
             onChange={setSteeringAngle}
@@ -160,7 +159,8 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
             onChange={setGear}
             onBrakeChange={setBraking}
           />
-      </div>
+        </div>
+      </ParkingLotCanvas>
       {canUseFullscreen && !isFullscreen && (!isMobile || isInstalled) && (
         <button
           type="button"

@@ -9,8 +9,8 @@ function rearSideFocus(vehicle: VehicleState, sideName: RearSide) {
   const cosine = Math.cos(vehicle.heading)
   const sine = Math.sin(vehicle.heading)
   return {
-    x: vehicle.x - cosine * 1.35 + -sine * 1.05 * sideSign,
-    y: vehicle.y - sine * 1.35 + cosine * 1.05 * sideSign,
+    x: vehicle.x + cosine * 1.55 + -sine * 2.05 * sideSign,
+    y: vehicle.y + sine * 1.55 + cosine * 2.05 * sideSign,
   }
 }
 
@@ -31,7 +31,7 @@ function RearSideCanvas({ vehicle, sideName }: { vehicle: VehicleState; sideName
       if (!context) return
       context.setTransform(ratio, 0, 0, ratio, 0, 0)
       const focus = rearSideFocus(vehicle, sideName)
-      renderParkingLot(context, width, height, vehicle, { focus: { ...focus, span: 5.6, heading: vehicle.heading } })
+      renderParkingLot(context, width, height, vehicle, { focus: { ...focus, span: 8.2, heading: vehicle.heading } })
     }
     const observer = new ResizeObserver(draw)
     observer.observe(canvas)
