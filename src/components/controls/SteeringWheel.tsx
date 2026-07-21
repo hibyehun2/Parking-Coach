@@ -62,7 +62,7 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
       : `${steeringDegrees > 0 ? '+' : ''}${steeringDegrees}°`
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if (event.button !== 0 || dragRef.current) return
+    if ((event.pointerType !== 'touch' && event.button !== 0) || dragRef.current) return
     event.preventDefault()
     event.currentTarget.setPointerCapture(event.pointerId)
     dragRef.current = {

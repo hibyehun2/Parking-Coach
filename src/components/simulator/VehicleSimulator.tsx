@@ -75,7 +75,7 @@ export function VehicleSimulator() {
       {canUseFullscreen && !isFullscreen && (
         <button
           type="button"
-          className="immersive-control"
+          className="immersive-control ios-install-control"
           onPointerUp={(event) => event.stopPropagation()}
           onClick={requestImmersiveMode}
         >
@@ -89,7 +89,7 @@ export function VehicleSimulator() {
           onPointerUp={(event) => event.stopPropagation()}
           onClick={() => setShowInstallGuide(true)}
         >
-          ⤴ 전체 화면으로 사용
+          Safari 공유 □↑ → 홈 화면에 추가
         </button>
       )}
       {showInstallGuide && (
