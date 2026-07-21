@@ -1,14 +1,18 @@
 import { useEffect, useRef } from 'react'
 import { renderParkingLot } from '../../engine/parkingLotRenderer'
 import type { VehicleState } from '../../engine/vehiclePhysics'
+import type { Collision } from '../../engine/collisionDetection'
 
 type ParkingLotCanvasProps = {
   vehicle: VehicleState
+  danger: Collision | null
+  collisions: Collision[]
 }
 
-export function ParkingLotCanvas({ vehicle }: ParkingLotCanvasProps) {
+export function ParkingLotCanvas({ vehicle, danger, collisions }: ParkingLotCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const vehicleRef = useRef(vehicle)
+  const renderOptionsRef = useRef({ danger, collisions })
 
   const drawRef = useRef<() => void>(() => undefined)
 
@@ -29,7 +33,7 @@ export function ParkingLotCanvas({ vehicle }: ParkingLotCanvasProps) {
       if (!context) return
 
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
-      renderParkingLot(context, width, height, vehicleRef.current)
+      renderParkingLot(context, width, height, vehicleRef.current, renderOptionsRef.current)
     }
     drawRef.current = draw
 
@@ -42,8 +46,9 @@ export function ParkingLotCanvas({ vehicle }: ParkingLotCanvasProps) {
 
   useEffect(() => {
     vehicleRef.current = vehicle
+    renderOptionsRef.current = { danger, collisions }
     drawRef.current()
-  }, [vehicle])
+  }, [collisions, danger, vehicle])
 
   return (
     <div className="parking-canvas-frame">

@@ -159,6 +159,8 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .instrument-panel > strong { font-size: 1.35rem; font-variant-numeric: tabular-nums; }
 .instrument-panel > strong small { color: #96aaa2; font-size: .65rem; }
 .instrument-panel > span:not(.dashboard-label) { min-height: 20px; color: #aec0b9; font-size: .76rem; text-align: center; }
+.instrument-panel .collision-count { min-height: auto; color: #91a39c; font-weight: 800; }
+.instrument-panel .collision-count.active { color: #ff8d84; }
 .instrument-panel .reset-control { width: auto; min-height: 34px; color: #b9cbc4; border-color: #43534d; background: transparent; font-size: .72rem; }
 
 .gear-control-cluster { display: flex; align-items: stretch; gap: 9px; }

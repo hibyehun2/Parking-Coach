@@ -4,6 +4,13 @@ export const PARKING_WORLD = {
 } as const
 
 import type { VehicleState } from './vehiclePhysics'
+import {
+  PARKED_VEHICLES,
+  PILLARS,
+  VEHICLE_DIMENSIONS,
+  WALLS,
+  type Collision,
+} from './collisionDetection'
 
 type VehicleStyle = {
   body: string
@@ -11,11 +18,6 @@ type VehicleStyle = {
   outline: string
   label?: string
 }
-
-const SEDAN = {
-  length: 4.6,
-  width: 1.8,
-} as const
 
 function roundedRect(
   context: CanvasRenderingContext2D,
@@ -36,7 +38,7 @@ function drawVehicle(
   heading: number,
   style: VehicleStyle,
 ) {
-  const { length, width } = SEDAN
+  const { length, width } = VEHICLE_DIMENSIONS
   context.save()
   context.translate(x, y)
   context.rotate(heading)
@@ -136,14 +138,13 @@ function drawParkingLines(context: CanvasRenderingContext2D) {
 
 function drawStructure(context: CanvasRenderingContext2D) {
   context.fillStyle = '#2b3531'
-  context.fillRect(0.55, 0.5, 16.9, 0.35)
-  context.fillRect(0.55, 0.5, 0.35, 10.95)
-  context.fillRect(17.1, 0.5, 0.35, 10.95)
+  for (const wall of WALLS) context.fillRect(wall.x, wall.y, wall.width, wall.height)
 
   context.fillStyle = '#c6a157'
   context.strokeStyle = '#806331'
   context.lineWidth = 0.08
-  roundedRect(context, 14.5, 5.85, 1.05, 1.05, 0.08)
+  const pillar = PILLARS[0]
+  roundedRect(context, pillar.x, pillar.y, pillar.width, pillar.height, 0.08)
   context.fill()
   context.stroke()
   context.fillStyle = '#4b3c21'
@@ -157,6 +158,10 @@ export function renderParkingLot(
   viewportWidth: number,
   viewportHeight: number,
   vehicle: VehicleState,
+  options: {
+    danger?: Collision | null
+    collisions?: Collision[]
+  } = {},
 ) {
   context.clearRect(0, 0, viewportWidth, viewportHeight)
 
@@ -187,22 +192,44 @@ export function renderParkingLot(
   drawStructure(context)
   drawParkingLines(context)
 
-  drawVehicle(context, 6.3, 8.75, Math.PI / 2, {
+  const [leftVehicle, rightVehicle] = PARKED_VEHICLES
+  drawVehicle(context, leftVehicle.x, leftVehicle.y, leftVehicle.heading, {
     body: '#d7dedd',
     roof: '#8e9b98',
     outline: '#eef2f1',
   })
-  drawVehicle(context, 11.7, 8.75, Math.PI / 2, {
+  drawVehicle(context, rightVehicle.x, rightVehicle.y, rightVehicle.heading, {
     body: '#313d49',
     roof: '#667887',
     outline: '#7e8e9a',
   })
   drawVehicle(context, vehicle.x, vehicle.y, vehicle.heading, {
-    body: '#13805f',
-    roof: '#0b5c44',
-    outline: '#8ee0c3',
+    body: options.danger ? '#a86b24' : '#13805f',
+    roof: options.danger ? '#744516' : '#0b5c44',
+    outline: options.danger ? '#ffd275' : '#8ee0c3',
     label: '내 차',
   })
+
+  for (const collision of options.collisions ?? []) {
+    context.save()
+    context.translate(collision.position.x, collision.position.y)
+    context.strokeStyle = '#ff5d52'
+    context.lineWidth = 0.14
+    context.beginPath()
+    context.moveTo(-0.28, -0.28)
+    context.lineTo(0.28, 0.28)
+    context.moveTo(0.28, -0.28)
+    context.lineTo(-0.28, 0.28)
+    context.stroke()
+    context.restore()
+  }
+
+  if (options.danger) {
+    context.fillStyle = '#ffd275'
+    context.font = '800 0.42px sans-serif'
+    context.textAlign = 'center'
+    context.fillText('충돌 위험', vehicle.x, vehicle.y - 1.25)
+  }
 
   context.restore()
 }

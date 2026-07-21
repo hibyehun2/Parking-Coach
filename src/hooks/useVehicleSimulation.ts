@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createSimulationLoop } from '../engine/simulationLoop'
+import { resolveVehicleCollision, type Collision } from '../engine/collisionDetection'
 import {
   INITIAL_VEHICLE_STATE,
   updateVehicle,
@@ -21,11 +22,20 @@ export function useVehicleSimulation() {
   const inputRef = useRef<VehicleInput>({ ...INITIAL_INPUT })
   const [vehicle, setVehicle] = useState<VehicleState>(() => ({ ...INITIAL_VEHICLE_STATE }))
   const [braking, setBrakingState] = useState(INITIAL_INPUT.braking)
+  const [collisions, setCollisions] = useState<Collision[]>([])
 
   useEffect(() => {
     const loop = createSimulationLoop({
       step(deltaTime) {
-        stateRef.current = updateVehicle(stateRef.current, inputRef.current, deltaTime)
+        const previous = stateRef.current
+        const next = updateVehicle(previous, inputRef.current, deltaTime)
+        const resolved = resolveVehicleCollision(previous, next)
+        stateRef.current = resolved.vehicle
+        if (resolved.collision) {
+          inputRef.current = { ...inputRef.current, braking: true }
+          setBrakingState(true)
+          setCollisions((current) => [...current, resolved.collision!])
+        }
       },
       render() {
         setVehicle(stateRef.current)
@@ -70,6 +80,7 @@ export function useVehicleSimulation() {
     stateRef.current = { ...INITIAL_VEHICLE_STATE }
     inputRef.current = { ...INITIAL_INPUT }
     setBrakingState(INITIAL_INPUT.braking)
+    setCollisions([])
     setVehicle(stateRef.current)
   }, [])
 
@@ -103,6 +114,8 @@ export function useVehicleSimulation() {
   return {
     vehicle,
     braking,
+    collisions,
+    collisionCount: collisions.length,
     canShift: braking && Math.abs(vehicle.speed) < 0.05,
     setSteeringDirection,
     setSteeringAngle,

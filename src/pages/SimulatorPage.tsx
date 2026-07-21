@@ -20,9 +20,9 @@ export function SimulatorPage() {
           <Link className="secondary-button" to="/">상황 다시 선택</Link>
         </div>
         <p className="page-description">
-          브레이크를 해제하면 선택한 기어 방향으로 천천히 움직입니다. 충돌 판정은 아직 적용되지 않습니다.
+          브레이크를 해제하면 선택한 기어 방향으로 천천히 움직입니다. 장애물과 충돌하면 차량이 즉시 정지합니다.
         </p>
-        <VehicleSimulator />
+        <VehicleSimulator learningMode={!isPracticeMode} />
       </section>
     </>
   )

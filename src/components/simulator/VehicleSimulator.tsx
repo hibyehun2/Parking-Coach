@@ -3,13 +3,18 @@ import { GearSelector } from '../controls/GearSelector'
 import { SteeringWheel } from '../controls/SteeringWheel'
 import { useVehicleSimulation } from '../../hooks/useVehicleSimulation'
 import { ParkingLotCanvas } from './ParkingLotCanvas'
+import { detectCollision } from '../../engine/collisionDetection'
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
 }
 
-export function VehicleSimulator() {
+type VehicleSimulatorProps = {
+  learningMode: boolean
+}
+
+export function VehicleSimulator({ learningMode }: VehicleSimulatorProps) {
   const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean }
   const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent)
     || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
@@ -26,6 +31,8 @@ export function VehicleSimulator() {
   const {
     vehicle,
     braking,
+    collisions,
+    collisionCount,
     canShift,
     setSteeringAngle,
     setBraking,
@@ -33,6 +40,7 @@ export function VehicleSimulator() {
     centerSteering,
     reset,
   } = useVehicleSimulation()
+  const danger = learningMode ? detectCollision(vehicle, 0.42) : null
 
   useEffect(() => {
     document.documentElement.classList.add('simulator-active')
@@ -109,7 +117,7 @@ export function VehicleSimulator() {
 
   return (
     <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
-      <ParkingLotCanvas vehicle={vehicle} />
+      <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions} />
       {canUseFullscreen && !isFullscreen && (!isMobile || isInstalled) && (
         <button
           type="button"
@@ -167,6 +175,7 @@ export function VehicleSimulator() {
           <div className="gear-display">{vehicle.gear}</div>
           <strong>{Math.abs(vehicle.speed).toFixed(1)} <small>m/s</small></strong>
           <span>{braking ? '브레이크 작동' : `${vehicle.gear === 'R' ? '후진' : '전진'} 크리프`}</span>
+          <span className={collisionCount ? 'collision-count active' : 'collision-count'}>충돌 {collisionCount}회</span>
           <button type="button" className="reset-control" onClick={reset}>처음 위치</button>
         </div>
 
