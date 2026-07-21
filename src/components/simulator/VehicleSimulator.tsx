@@ -4,6 +4,7 @@ import { GearSelector } from '../controls/GearSelector'
 import { SteeringWheel } from '../controls/SteeringWheel'
 import { useVehicleSimulation } from '../../hooks/useVehicleSimulation'
 import { ParkingLotCanvas } from './ParkingLotCanvas'
+import { DriverAssistance } from './DriverAssistance'
 import { detectCollision } from '../../engine/collisionDetection'
 import { evaluateParking } from '../../engine/parkingEvaluation'
 
@@ -125,7 +126,9 @@ export function VehicleSimulator({ learningMode }: VehicleSimulatorProps) {
 
   return (
     <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
-      <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions} />
+      <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions}>
+        <DriverAssistance vehicle={vehicle} />
+      </ParkingLotCanvas>
       {canUseFullscreen && !isFullscreen && (!isMobile || isInstalled) && (
         <button
           type="button"
@@ -201,7 +204,7 @@ export function VehicleSimulator({ learningMode }: VehicleSimulatorProps) {
       <p className="driving-help">
         핸들을 손가락으로 원을 그리듯 돌리세요. 브레이크를 작동한 뒤 기어를 선택하고, 브레이크를 해제하면 천천히 움직입니다.
       </p>
-      <p className="keyboard-help">키보드: ←/A · →/D 조향, Space/S 브레이크, F 전진, R 후진, C 중앙</p>
+      <p className="keyboard-help">키보드: ←/A · →/D 조향, Space/S 브레이크, F 전진, R 후진, C 중앙 · 1/2/3 미러·카메라</p>
     </div>
   )
 }

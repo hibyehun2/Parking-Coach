@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { renderParkingLot } from '../../engine/parkingLotRenderer'
 import type { VehicleState } from '../../engine/vehiclePhysics'
 import type { Collision } from '../../engine/collisionDetection'
@@ -7,9 +7,10 @@ type ParkingLotCanvasProps = {
   vehicle: VehicleState
   danger: Collision | null
   collisions: Collision[]
+  children?: ReactNode
 }
 
-export function ParkingLotCanvas({ vehicle, danger, collisions }: ParkingLotCanvasProps) {
+export function ParkingLotCanvas({ vehicle, danger, collisions, children }: ParkingLotCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const vehicleRef = useRef(vehicle)
   const renderOptionsRef = useRef({ danger, collisions })
@@ -63,6 +64,7 @@ export function ParkingLotCanvas({ vehicle, danger, collisions }: ParkingLotCanv
         <span><i className="legend-parked" />주차 차량</span>
         <span><i className="legend-target" />연습 주차칸</span>
       </div>
+      {children}
     </div>
   )
 }

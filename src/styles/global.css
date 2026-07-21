@@ -106,6 +106,21 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .canvas-legend { position: absolute; top: 16px; left: 16px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; display: flex; flex-wrap: wrap; gap: 12px; color: white; background: rgba(20, 29, 26, .78); backdrop-filter: blur(6px); font-size: .78rem; font-weight: 700; }
 .canvas-legend span { display: inline-flex; align-items: center; gap: 6px; }
 .canvas-legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.driver-assistance { position: absolute; z-index: 4; right: 10px; bottom: 10px; left: 10px; pointer-events: none; }
+.driver-view-list { display: flex; align-items: end; justify-content: center; gap: 7px; }
+.driver-view { position: relative; width: min(150px, 29%); padding: 5px; border: 1px solid rgba(255,255,255,.32); border-radius: 10px; overflow: hidden; color: white; background: rgba(10,18,15,.88); box-shadow: 0 5px 15px rgba(0,0,0,.28); cursor: zoom-in; pointer-events: auto; touch-action: manipulation; }
+.driver-view > span { margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; gap: 5px; font-size: .67rem; font-weight: 800; }
+.driver-view kbd { min-width: 18px; padding: 1px 4px; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; font: inherit; }
+.driver-view canvas { width: 100%; height: 68px; border-radius: 6px; display: block; }
+.driver-view > strong { position: absolute; right: 9px; bottom: 9px; padding: 3px 5px; border-radius: 5px; color: #dff8ef; background: rgba(9,20,16,.82); font-size: .62rem; }
+.driver-view > strong.sensor-close { color: white; background: #b8443b; }
+.view-check-count { position: absolute; right: 2px; bottom: -2px; color: rgba(255,255,255,.8); font-size: .58rem; transform: translateY(100%); }
+.driver-view-backdrop { position: absolute; z-index: 10; inset: -10px; padding: 12px; display: grid; place-items: center; background: rgba(4,10,8,.82); pointer-events: auto; touch-action: none; }
+.driver-view-expanded { width: min(620px, 94%); height: min(360px, 92%); padding: 10px; border: 1px solid rgba(255,255,255,.28); border-radius: 14px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 7px; color: white; background: #101b17; }
+.driver-view-expanded header { display: flex; align-items: center; justify-content: space-between; }
+.driver-view-expanded header button { min-height: 32px; padding: 0 10px; border: 1px solid #566a62; border-radius: 7px; color: white; background: transparent; }
+.driver-view-expanded canvas { width: 100%; height: 100%; min-height: 0; border-radius: 9px; display: block; }
+.driver-view-expanded p { margin: 0; font-size: .76rem; text-align: center; }
 .immersive-control { display: none; }
 .install-guide-backdrop { position: fixed; z-index: 50; inset: 0; padding: 20px; display: grid; place-items: center; color: #17231f; background: rgba(5,12,9,.7); touch-action: none; }
 .install-guide { width: min(390px, 100%); padding: 22px; border-radius: 18px; display: flex; flex-direction: column; gap: 16px; background: white; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
@@ -269,6 +284,11 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .immersive-control { position: absolute; z-index: 5; top: max(10px, env(safe-area-inset-top)); right: max(12px, env(safe-area-inset-right)); min-height: 38px; padding: 0 12px; border: 1px solid rgba(255,255,255,.35); border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; color: white; background: rgba(10,18,15,.82); backdrop-filter: blur(6px); font-size: .75rem; font-weight: 800; cursor: pointer; touch-action: manipulation; }
   .mobile-install-control { max-width: 245px; text-align: center; }
   .parking-canvas-frame { height: 100%; min-height: 0; border-radius: 12px; }
+  .driver-assistance { right: 5px; bottom: 5px; left: 5px; }
+  .driver-view { width: min(120px, 27%); padding: 3px; }
+  .driver-view canvas { height: 48px; }
+  .driver-view > span { margin-bottom: 2px; font-size: .58rem; }
+  .driver-view-expanded { width: min(520px, 90%); height: 94%; }
   .canvas-legend { right: auto; max-width: calc(100% - 270px); }
   .simulation-controls { grid-template-columns: minmax(250px, 1fr) auto auto auto; padding: 10px; gap: 9px; }
   .steering-controls { grid-column: auto; }
