@@ -1,0 +1,265 @@
+:root {
+  font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #17231f;
+  background: #f5f8f6;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --brand: #167357;
+  --brand-dark: #0d503c;
+  --brand-soft: #e5f3ed;
+  --surface: #ffffff;
+  --muted: #68746f;
+  --border: #dce6e1;
+  --shadow: 0 18px 50px rgba(35, 74, 61, 0.09);
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; scroll-behavior: smooth; }
+body { margin: 0; min-width: 320px; min-height: 100vh; overflow-x: hidden; }
+a { color: inherit; text-decoration: none; }
+button, a { font: inherit; -webkit-tap-highlight-color: transparent; }
+button { color: inherit; }
+
+.app-shell { width: 100%; max-width: 100vw; min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+.site-header, .main-content, .site-footer { width: min(1180px, calc(100% - 48px)); margin-inline: auto; }
+
+.site-header { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 850; }
+.brand-mark { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; color: white; background: var(--brand); }
+.primary-nav { display: flex; align-items: center; gap: 8px; }
+.primary-nav a { padding: 9px 14px; border-radius: 999px; color: var(--muted); font-weight: 700; }
+.primary-nav a:hover, .primary-nav a.active { color: var(--brand-dark); background: var(--brand-soft); }
+
+.main-content { min-width: 0; flex: 1; display: flex; }
+.page { width: 100%; padding: clamp(46px, 7vw, 88px) 0; }
+.home-page { width: 100%; padding-bottom: 88px; }
+.home-hero { min-height: min(720px, calc(100vh - 76px)); padding: clamp(56px, 8vw, 100px) 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(380px, 0.86fr); align-items: center; gap: clamp(48px, 8vw, 104px); }
+.hero-copy { min-width: 0; max-width: 680px; }
+.eyebrow { margin: 0 0 12px; color: var(--brand); font-size: 0.86rem; font-weight: 850; letter-spacing: 0.08em; }
+h1, h2 { margin: 0; overflow-wrap: anywhere; letter-spacing: -0.045em; }
+h1 { font-size: clamp(2.6rem, 5vw, 4.8rem); line-height: 1.1; }
+h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
+.simulator-shell h1 { font-size: clamp(2rem, 4vw, 3.25rem); }
+.page-description { max-width: 650px; margin: 22px 0 32px; color: var(--muted); font-size: clamp(1rem, 1.8vw, 1.14rem); line-height: 1.75; word-break: keep-all; }
+
+.primary-button, .secondary-button { min-height: 50px; border-radius: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 28px; font-weight: 800; cursor: pointer; }
+.primary-button { padding: 0 22px; border: 0; color: white; background: var(--brand); box-shadow: 0 10px 22px rgba(22, 115, 87, 0.2); transition: background 160ms ease, transform 160ms ease; }
+.primary-button:hover { background: var(--brand-dark); transform: translateY(-1px); }
+.secondary-button { padding: 0 18px; border: 1px solid var(--border); color: var(--brand-dark); background: var(--surface); }
+.primary-button:focus-visible, .secondary-button:focus-visible, .scenario-card:focus-visible, .mode-card:focus-visible, .primary-nav a:focus-visible, .brand:focus-visible { outline: 3px solid #83d0b5; outline-offset: 3px; }
+
+.hero-preview { min-width: 0; border: 1px solid var(--border); border-radius: 30px; overflow: hidden; background: var(--surface); box-shadow: var(--shadow); }
+.preview-road { position: relative; min-height: 370px; overflow: hidden; background: linear-gradient(90deg, transparent 49.5%, rgba(255,255,255,.1) 49.5% 50.5%, transparent 50.5%), #66716d; }
+.preview-road::before, .preview-road::after { content: ""; position: absolute; bottom: 0; width: 29%; height: 48%; border: 3px solid rgba(255,255,255,.7); border-bottom: 0; }
+.preview-road::before { left: 5%; }
+.preview-road::after { right: 5%; }
+.preview-car { position: absolute; width: 17%; height: 35%; border-radius: 14px; background: #dce3e0; box-shadow: inset 0 0 0 3px rgba(0,0,0,.13); }
+.parked-one { left: 11%; bottom: 5%; }
+.parked-two { right: 11%; bottom: 5%; }
+.learner-car { left: 41.5%; top: 18%; display: grid; place-items: center; color: white; background: var(--brand); font-size: 1.4rem; font-weight: 900; transform: rotate(-13deg); }
+.turning-guide { position: absolute; left: 47%; top: 49%; width: 38%; height: 38%; border: 3px dashed #a4edce; border-left-color: transparent; border-bottom-color: transparent; border-radius: 50%; transform: rotate(14deg); }
+.preview-caption { padding: 22px 24px 24px; display: flex; flex-direction: column; gap: 7px; }
+.preview-caption span { color: var(--brand); font-size: .82rem; font-weight: 800; }
+.preview-caption strong { line-height: 1.5; }
+
+.home-section { padding: 76px 0; border-top: 1px solid var(--border); }
+.section-heading { margin-bottom: 28px; display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+.section-heading > p { margin: 0 0 5px; color: var(--muted); }
+.scenario-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.scenario-card { position: relative; min-width: 0; padding: 14px; border: 1px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; text-align: left; background: var(--surface); cursor: pointer; transition: border 160ms ease, box-shadow 160ms ease, transform 160ms ease; }
+.scenario-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.scenario-card.selected { border: 2px solid var(--brand); padding: 13px; background: #fbfffd; box-shadow: 0 12px 32px rgba(22,115,87,.12); }
+.scenario-visual { position: relative; height: 145px; margin-bottom: 17px; border-radius: 14px; overflow: hidden; background: #68736e; }
+.parking-bay { position: absolute; left: 35%; bottom: -2px; width: 30%; height: 86%; border: 2px solid rgba(255,255,255,.75); border-bottom: 0; }
+.obstacle { position: absolute; bottom: 8%; width: 23%; height: 70%; border-radius: 7px; background: #d9e0dd; box-shadow: inset 0 0 0 2px rgba(0,0,0,.12); }
+.obstacle-left { left: 7%; }
+.obstacle-right { right: 7%; }
+.car-left .obstacle-right, .car-right .obstacle-left { display: none; }
+.pillar .obstacle-left { display: none; }
+.pillar .obstacle-right { width: 17%; height: 28%; border-radius: 4px; background: #d6ad68; }
+.scenario-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.scenario-card-heading strong { font-size: 1.08rem; }
+.scenario-card-heading > span { flex: none; padding: 4px 7px; border-radius: 99px; color: var(--brand); background: var(--brand-soft); font-size: .72rem; font-weight: 800; }
+.scenario-description { min-height: 48px; margin-top: 9px; color: var(--muted); font-size: .9rem; line-height: 1.55; word-break: keep-all; }
+.selection-indicator { position: absolute; top: 24px; right: 24px; width: 28px; height: 28px; border-radius: 50%; display: none; place-items: center; color: var(--brand); background: white; font-weight: 900; box-shadow: 0 4px 12px rgba(0,0,0,.16); }
+.scenario-card.selected .selection-indicator { display: grid; }
+
+.mode-section { padding-top: 72px; }
+.mode-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.mode-card { min-width: 0; min-height: 155px; padding: 26px; border: 1px solid var(--border); border-radius: 20px; display: flex; gap: 16px; text-align: left; background: var(--surface); cursor: pointer; }
+.mode-card.selected { border: 2px solid var(--brand); padding: 25px; background: #fafffc; }
+.mode-radio { flex: none; width: 21px; height: 21px; margin-top: 2px; border: 2px solid #aab7b1; border-radius: 50%; box-shadow: inset 0 0 0 4px white; }
+.mode-card.selected .mode-radio { border-color: var(--brand); background: var(--brand); }
+.mode-copy { display: flex; flex-direction: column; gap: 7px; }
+.mode-copy strong { font-size: 1.12rem; }
+.mode-copy > span { color: var(--muted); }
+.mode-features { margin-top: 7px; display: flex; flex-wrap: wrap; gap: 7px; }
+.mode-features small { padding: 5px 8px; border-radius: 7px; color: var(--brand-dark); background: var(--brand-soft); font-weight: 700; }
+.start-panel { padding: 24px 28px; border-radius: 20px; display: flex; align-items: center; justify-content: space-between; gap: 24px; color: white; background: #183e32; }
+.start-panel > div { display: flex; flex-direction: column; gap: 6px; }
+.start-panel > div span { color: #a8c6bb; font-size: .82rem; font-weight: 750; }
+.start-panel strong { font-size: 1.18rem; }
+
+.simulator-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.parking-canvas-frame { position: relative; width: 100%; height: clamp(480px, 59vw, 720px); border: 1px solid #cbd7d1; border-radius: 22px; overflow: hidden; background: #303936; box-shadow: var(--shadow); }
+.parking-canvas { width: 100%; height: 100%; display: block; }
+.canvas-legend { position: absolute; top: 16px; left: 16px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; display: flex; flex-wrap: wrap; gap: 12px; color: white; background: rgba(20, 29, 26, .78); backdrop-filter: blur(6px); font-size: .78rem; font-weight: 700; }
+.canvas-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.canvas-legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+.legend-user { background: #13805f; }
+.legend-parked { background: #d7dedd; }
+.legend-target { border: 2px dashed #71dbb6; background: rgba(113, 219, 182, .2); }
+.simulation-controls { margin-top: 14px; padding: 15px; border: 1px solid var(--border); border-radius: 16px; display: grid; grid-template-columns: minmax(260px, 1fr) auto auto auto; align-items: end; gap: 14px; background: var(--surface); box-shadow: 0 8px 24px rgba(35, 74, 61, .06); }
+.control-group { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+.control-label { color: var(--muted); font-size: .76rem; font-weight: 750; }
+.control-row, .gear-selector { display: flex; align-items: center; gap: 7px; }
+.control-row button, .gear-selector button, .brake-control, .reset-control { min-width: 46px; min-height: 44px; padding: 0 13px; border: 1px solid var(--border); border-radius: 10px; background: #f7faf8; font-weight: 800; cursor: pointer; touch-action: manipulation; }
+.control-row button:not(.text-control) { font-size: 1.25rem; }
+.control-row strong { min-width: 52px; text-align: center; font-variant-numeric: tabular-nums; }
+.control-row button:active, .gear-selector button.active { color: white; border-color: var(--brand); background: var(--brand); }
+.gear-selector button.active { box-shadow: inset 0 0 0 2px rgba(255,255,255,.25); }
+.brake-control { min-width: 126px; color: white; border-color: #b4473e; background: #c65349; }
+.brake-control.active { color: #7d2d27; border-color: #e6bbb7; background: #f8dcda; }
+.reset-control { align-self: end; color: var(--brand-dark); }
+.keyboard-help { margin: 10px 4px 0; color: var(--muted); font-size: .78rem; text-align: right; }
+.driving-console { position: relative; min-height: 290px; margin-top: 14px; padding: 20px 24px; border: 1px solid #25332e; border-radius: 24px; display: grid; grid-template-columns: minmax(230px, 1.35fr) minmax(150px, .75fr) minmax(150px, .75fr) minmax(145px, .7fr); align-items: center; gap: 24px; color: #edf6f2; background: linear-gradient(150deg, #26332e, #121a17); box-shadow: 0 16px 34px rgba(20, 35, 30, .18); }
+.dashboard-label { color: #96aaa2; font-size: .72rem; font-weight: 800; letter-spacing: .08em; }
+.steering-module { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto 1fr auto; align-items: center; justify-items: center; }
+.steering-readout { width: 100%; grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; color: #96aaa2; font-size: .78rem; }
+.steering-readout strong { color: white; font-size: 1rem; font-variant-numeric: tabular-nums; }
+.steering-wheel-touch-area { width: 210px; height: 210px; grid-column: 1 / -1; display: grid; place-items: center; cursor: grab; touch-action: none; user-select: none; }
+.steering-wheel-touch-area:active { cursor: grabbing; }
+.steering-wheel-touch-area:focus-visible { outline: 3px solid #83d0b5; outline-offset: 2px; border-radius: 50%; }
+.steering-wheel { position: relative; width: 180px; height: 180px; border-radius: 50%; transition: transform 45ms linear; }
+.wheel-rim { position: absolute; inset: 0; border: 19px solid #0a0e0d; border-radius: 50%; box-shadow: inset 0 0 0 3px #46504c, 0 5px 10px rgba(0,0,0,.42); }
+.wheel-spoke { position: absolute; z-index: 1; left: 50%; top: 50%; width: 67px; height: 18px; border-radius: 7px; background: linear-gradient(#343c39, #171d1b); transform-origin: left center; }
+.spoke-left { transform: rotate(155deg); }
+.spoke-right { transform: rotate(25deg); }
+.spoke-bottom { transform: rotate(90deg); }
+.wheel-hub { position: absolute; z-index: 2; left: 50%; top: 50%; width: 62px; height: 62px; border: 4px solid #3d4944; border-radius: 50%; display: grid; place-items: center; color: #c9d8d2; background: #151c19; font-size: 1.15rem; font-weight: 900; transform: translate(-50%, -50%); }
+.wheel-center-mark { position: absolute; z-index: 3; left: 50%; top: 6px; width: 5px; height: 23px; border-radius: 4px; background: #d9b853; transform: translateX(-50%); }
+.center-steering-button { grid-column: 1 / -1; padding: 5px 10px; border: 1px solid #43534d; border-radius: 7px; color: #b8c9c2; background: transparent; font-size: .73rem; cursor: pointer; }
+
+.instrument-panel, .gear-module, .pedal-module { min-height: 220px; padding-left: 22px; border-left: 1px solid #394740; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 11px; }
+.instrument-panel .gear-display { width: 72px; height: 72px; border: 2px solid #4f675e; border-radius: 50%; display: grid; place-items: center; color: #69d8b1; background: #0b110f; box-shadow: inset 0 0 18px rgba(105,216,177,.12); font-size: 2.2rem; font-weight: 900; }
+.instrument-panel > strong { font-size: 1.35rem; font-variant-numeric: tabular-nums; }
+.instrument-panel > strong small { color: #96aaa2; font-size: .65rem; }
+.instrument-panel > span:not(.dashboard-label) { min-height: 20px; color: #aec0b9; font-size: .76rem; text-align: center; }
+.instrument-panel .reset-control { width: auto; min-height: 34px; color: #b9cbc4; border-color: #43534d; background: transparent; font-size: .72rem; }
+
+.gear-gate { position: relative; width: 104px; padding: 8px; border: 2px solid #3b4944; border-radius: 18px; display: flex; flex-direction: column; gap: 7px; background: #0c1210; }
+.gear-gate button { position: relative; z-index: 2; height: 68px; border: 0; border-radius: 11px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #91a39c; background: transparent; cursor: pointer; }
+.gear-gate button strong { font-size: 1.3rem; }
+.gear-gate button small { margin-top: 2px; font-size: .65rem; }
+.gear-gate button.active { color: white; background: rgba(22,115,87,.38); box-shadow: inset 0 0 0 1px #47b78f; }
+.gear-gate button:disabled { cursor: not-allowed; opacity: .42; }
+.gear-lever { position: absolute; z-index: 1; right: -13px; width: 18px; height: 51px; border-radius: 9px; background: linear-gradient(90deg, #77817d, #252d2a); transition: top 180ms ease; }
+.gear-r { top: 16px; }
+.gear-d { top: 91px; }
+.shift-help, .pedal-module > small { color: #83968e; font-size: .65rem; text-align: center; }
+
+.brake-pedal { width: 116px; height: 154px; padding: 14px; border: 0; border-radius: 18px 18px 28px 28px; color: #aebbb6; background: linear-gradient(145deg, #46504c, #181e1c); box-shadow: 0 13px 0 #090d0c, 0 17px 20px rgba(0,0,0,.38); cursor: pointer; touch-action: none; transition: transform 80ms ease, box-shadow 80ms ease; }
+.brake-pedal.pressed { color: #ffd2cd; background: linear-gradient(145deg, #78423e, #2b1c1a); box-shadow: 0 4px 0 #090d0c, 0 7px 10px rgba(0,0,0,.4); transform: translateY(9px); }
+.pedal-face { margin-bottom: 10px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.pedal-face i { height: 34px; border-radius: 4px; background: repeating-linear-gradient(0deg, #202825 0 4px, #515d58 4px 7px); }
+.brake-pedal strong { font-size: .75rem; letter-spacing: .1em; }
+.driving-help { margin: 12px 4px 0; color: var(--brand-dark); font-size: .82rem; font-weight: 700; text-align: center; }
+.result-placeholder { padding: 40px; border: 1px solid var(--border); border-radius: 20px; display: flex; flex-direction: column; gap: 10px; background: var(--surface); }
+.result-placeholder span { color: var(--muted); }
+
+.orientation-notice { display: none; }
+.site-footer { padding: 24px 0; border-top: 1px solid var(--border); color: var(--muted); }
+
+@media (max-width: 960px) {
+  .home-hero { grid-template-columns: minmax(0, 1fr) minmax(320px, .8fr); gap: 40px; }
+  .scenario-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .driving-console { grid-template-columns: minmax(210px, 1.15fr) repeat(3, minmax(125px, .7fr)); gap: 12px; padding-inline: 16px; }
+  .steering-wheel-touch-area { width: 190px; height: 190px; }
+  .steering-wheel { width: 165px; height: 165px; }
+  .instrument-panel, .gear-module, .pedal-module { padding-left: 12px; }
+}
+
+@media (max-width: 720px) {
+  .site-header, .main-content, .site-footer { width: min(100% - 32px, 1180px); }
+  .site-header { min-height: 68px; }
+  .brand span:last-child { display: none; }
+  .primary-nav { gap: 1px; }
+  .primary-nav a { padding: 8px 10px; font-size: .88rem; }
+  .home-page { padding-bottom: 56px; }
+  .home-hero { min-height: auto; padding: 48px 0 64px; grid-template-columns: minmax(0, 1fr); gap: 42px; }
+  h1 { font-size: clamp(2.3rem, 11vw, 3.3rem); }
+  .hero-preview { border-radius: 22px; }
+  .preview-road { min-height: 290px; }
+  .home-section { padding: 56px 0; }
+  .section-heading { align-items: start; flex-direction: column; gap: 10px; }
+  .section-heading > p { font-size: .92rem; }
+  .scenario-grid { grid-template-columns: minmax(0, 1fr); }
+  .scenario-card { padding: 12px; display: grid; grid-template-columns: 112px minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: 15px; }
+  .scenario-card.selected { padding: 11px; }
+  .scenario-visual { height: 104px; margin: 0; grid-row: 1 / 3; }
+  .scenario-description { min-height: 0; }
+  .selection-indicator { top: 18px; right: 18px; }
+  .mode-grid { grid-template-columns: minmax(0, 1fr); }
+  .mode-card { min-height: auto; padding: 22px; }
+  .mode-card.selected { padding: 21px; }
+  .start-panel { padding: 22px; align-items: stretch; flex-direction: column; }
+  .start-panel .primary-button { width: 100%; }
+  .page { padding: 40px 0 56px; }
+  .simulator-heading { align-items: flex-start; flex-direction: column; }
+  .parking-canvas-frame { height: min(72vh, 620px); min-height: 420px; border-radius: 16px; }
+  .canvas-legend { top: 10px; left: 10px; right: 10px; gap: 9px; }
+  .simulation-controls { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: stretch; }
+  .steering-controls { grid-column: 1 / -1; }
+  .control-row { flex-wrap: wrap; }
+  .brake-control, .reset-control { width: 100%; align-self: end; }
+  .keyboard-help { display: none; }
+  .driving-console { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 18px; }
+  .steering-module { grid-row: span 2; }
+  .instrument-panel, .gear-module, .pedal-module { min-height: 190px; }
+  .result-placeholder { padding: 28px 22px; }
+}
+
+@media (max-width: 900px) and (orientation: portrait) {
+  .orientation-notice { position: fixed; z-index: 20; inset: 0; width: 100vw; max-width: 100vw; padding: 28px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: #17231f; background: #f5f8f6; }
+  .orientation-notice h1 { width: 100%; max-width: 520px; font-size: clamp(2rem, 9vw, 3.25rem); }
+  .orientation-notice > p:not(.eyebrow) { width: 100%; max-width: 450px; margin: 18px 0 28px; color: var(--muted); line-height: 1.7; overflow-wrap: anywhere; }
+  .rotate-phone { width: 100px; height: 100px; margin-bottom: 28px; display: grid; place-items: center; }
+  .rotate-phone::before { content: "↻"; position: absolute; color: var(--brand); font-size: 6rem; font-weight: 300; }
+  .rotate-phone span { position: relative; z-index: 1; width: 36px; height: 64px; border: 4px solid #17231f; border-radius: 9px; background: #f5f8f6; transform: rotate(70deg); }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .site-header, .site-footer { display: none; }
+  .main-content { width: calc(100% - 16px); }
+  .page { padding: 5px 0; }
+  .simulator-heading, .simulator-shell > .page-description { display: none; }
+  .vehicle-simulator { height: calc(100vh - 10px); display: grid; grid-template-rows: minmax(0, 55fr) minmax(0, 45fr); gap: 5px; }
+  .parking-canvas-frame { height: 100%; min-height: 0; border-radius: 12px; }
+  .simulation-controls { grid-template-columns: minmax(250px, 1fr) auto auto auto; padding: 10px; gap: 9px; }
+  .steering-controls { grid-column: auto; }
+  .control-label { display: none; }
+  .control-group { justify-content: end; }
+  .control-row { flex-wrap: nowrap; }
+  .control-row button, .gear-selector button, .brake-control, .reset-control { min-height: 40px; }
+  .brake-control { min-width: 110px; }
+  .driving-console { min-height: 0; height: 100%; margin: 0; grid-template-columns: minmax(185px, 1.2fr) minmax(105px, .65fr) minmax(100px, .6fr) minmax(105px, .65fr); gap: 8px; padding: 5px 12px; border-radius: 12px; }
+  .steering-module { grid-row: auto; }
+  .steering-wheel-touch-area { width: 145px; height: 132px; }
+  .steering-wheel { width: 122px; height: 122px; }
+  .wheel-rim { border-width: 15px; }
+  .wheel-spoke { width: 49px; height: 14px; }
+  .wheel-hub { width: 48px; height: 48px; }
+  .instrument-panel, .gear-module, .pedal-module { min-height: 0; height: 100%; padding-left: 7px; gap: 4px; }
+  .instrument-panel .gear-display { width: 50px; height: 50px; font-size: 1.5rem; }
+  .gear-gate { width: 78px; }
+  .gear-gate button { height: 52px; }
+  .gear-d { top: 75px; }
+  .brake-pedal { width: 78px; height: 100px; padding: 8px; }
+  .pedal-face { margin-bottom: 5px; gap: 5px; }
+  .pedal-face i { height: 18px; }
+  .driving-help, .keyboard-help { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+}
