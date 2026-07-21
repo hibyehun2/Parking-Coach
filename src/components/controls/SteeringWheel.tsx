@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent, type PointerEvent } from 'react'
+import { useEffect, useRef, type KeyboardEvent, type PointerEvent } from 'react'
 import { DEFAULT_VEHICLE_CONFIG, radiansToDegrees } from '../../engine/vehiclePhysics'
 
 type SteeringWheelProps = {
@@ -8,6 +8,8 @@ type SteeringWheelProps = {
 }
 
 const MAX_WHEEL_ROTATION = 450
+const LOCK_ENTER_MARGIN = Math.PI / 720
+const LOCK_RELEASE_MARGIN = Math.PI / 60
 
 function pointerAngle(event: PointerEvent<HTMLDivElement>) {
   const bounds = event.currentTarget.getBoundingClientRect()
@@ -25,6 +27,7 @@ function clamp(value: number, minimum: number, maximum: number) {
 }
 
 export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWheelProps) {
+  const announcedLockRef = useRef<-1 | 0 | 1>(0)
   const dragRef = useRef<{
     pointerId: number
     pointerAngle: number
@@ -33,6 +36,30 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
   const maxSteeringAngle = DEFAULT_VEHICLE_CONFIG.maxSteeringAngle
   const wheelRotation = steeringAngle / maxSteeringAngle * MAX_WHEEL_ROTATION
   const steeringDegrees = Math.round(radiansToDegrees(steeringAngle))
+  const absoluteAngle = Math.abs(steeringAngle)
+  const lockDirection: -1 | 0 | 1 = absoluteAngle >= maxSteeringAngle - LOCK_ENTER_MARGIN
+    ? steeringAngle < 0 ? -1 : 1
+    : 0
+
+  useEffect(() => {
+    if (lockDirection !== 0 && announcedLockRef.current !== lockDirection) {
+      announcedLockRef.current = lockDirection
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        navigator.vibrate(35)
+      }
+      return
+    }
+
+    if (lockDirection === 0 && absoluteAngle <= maxSteeringAngle - LOCK_RELEASE_MARGIN) {
+      announcedLockRef.current = 0
+    }
+  }, [absoluteAngle, lockDirection, maxSteeringAngle])
+
+  const steeringStatus = lockDirection === -1
+    ? '좌측 최대 35°'
+    : lockDirection === 1
+      ? '우측 최대 35°'
+      : `${steeringDegrees > 0 ? '+' : ''}${steeringDegrees}°`
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (!event.isPrimary || event.button !== 0) return
@@ -83,19 +110,19 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
 
   return (
     <div className="steering-module">
-      <div className="steering-readout">
+      <div className="steering-readout" aria-live="polite">
         <span>핸들</span>
-        <strong>{steeringDegrees > 0 ? '+' : ''}{steeringDegrees}°</strong>
+        <strong className={lockDirection ? 'at-lock' : ''}>{steeringStatus}</strong>
       </div>
       <div
-        className="steering-wheel-touch-area"
+        className={`steering-wheel-touch-area${lockDirection ? ' at-lock' : ''}`}
         role="slider"
         tabIndex={0}
         aria-label="가상 핸들"
         aria-valuemin={-35}
         aria-valuemax={35}
         aria-valuenow={steeringDegrees}
-        aria-valuetext={`${steeringDegrees}도`}
+        aria-valuetext={steeringStatus}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={finishDrag}
