@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import type { Gear } from '../../engine/vehiclePhysics'
 
 type GearSelectorProps = {
@@ -9,6 +10,14 @@ type GearSelectorProps = {
 }
 
 export function GearSelector({ gear, braking, canShift, onChange, onBrakeChange }: GearSelectorProps) {
+  const lastTouchRef = useRef(0)
+  const handleTouch = (action: () => void) => {
+    lastTouchRef.current = Date.now()
+    action()
+  }
+  const handleAccessibleClick = (action: () => void) => {
+    if (Date.now() - lastTouchRef.current > 700) action()
+  }
   const toggleBrake = () => {
     if (!braking && typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       navigator.vibrate(25)
@@ -26,13 +35,13 @@ export function GearSelector({ gear, braking, canShift, onChange, onBrakeChange 
           aria-label={braking ? '브레이크 해제' : '브레이크 작동'}
           aria-pressed={braking}
           onPointerDown={(event) => {
-            if (event.pointerType === 'touch') toggleBrake()
+            if (event.pointerType === 'touch') handleTouch(toggleBrake)
           }}
           onPointerUp={(event) => {
             if (event.pointerType !== 'touch' && event.button === 0) toggleBrake()
           }}
           onClick={(event) => {
-            if (event.detail === 0) toggleBrake()
+            if (event.detail === 0) handleAccessibleClick(toggleBrake)
           }}
           onContextMenu={(event) => event.preventDefault()}
         >
@@ -48,13 +57,13 @@ export function GearSelector({ gear, braking, canShift, onChange, onBrakeChange 
             aria-pressed={gear === 'R'}
             disabled={!canShift && gear !== 'R'}
             onPointerDown={(event) => {
-              if (event.pointerType === 'touch') onChange('R')
+              if (event.pointerType === 'touch') handleTouch(() => onChange('R'))
             }}
             onPointerUp={(event) => {
               if (event.pointerType !== 'touch' && event.button === 0) onChange('R')
             }}
             onClick={(event) => {
-              if (event.detail === 0) onChange('R')
+              if (event.detail === 0) handleAccessibleClick(() => onChange('R'))
             }}
             onContextMenu={(event) => event.preventDefault()}
           >
@@ -66,13 +75,13 @@ export function GearSelector({ gear, braking, canShift, onChange, onBrakeChange 
             aria-pressed={gear === 'D'}
             disabled={!canShift && gear !== 'D'}
             onPointerDown={(event) => {
-              if (event.pointerType === 'touch') onChange('D')
+              if (event.pointerType === 'touch') handleTouch(() => onChange('D'))
             }}
             onPointerUp={(event) => {
               if (event.pointerType !== 'touch' && event.button === 0) onChange('D')
             }}
             onClick={(event) => {
-              if (event.detail === 0) onChange('D')
+              if (event.detail === 0) handleAccessibleClick(() => onChange('D'))
             }}
             onContextMenu={(event) => event.preventDefault()}
           >

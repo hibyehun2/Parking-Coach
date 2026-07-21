@@ -26,7 +26,7 @@ export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
   wheelbase: 2.7,
   maxSteeringAngle: degreesToRadians(35),
   steeringSpeed: degreesToRadians(65),
-  creepSpeed: 1.15,
+  creepSpeed: 0.6,
 }
 
 export const INITIAL_VEHICLE_STATE: VehicleState = {

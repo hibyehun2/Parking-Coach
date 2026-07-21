@@ -64,11 +64,15 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if ((event.pointerType !== 'touch' && event.button !== 0) || dragRef.current) return
     event.preventDefault()
-    event.currentTarget.setPointerCapture(event.pointerId)
     dragRef.current = {
       pointerId: event.pointerId,
       pointerAngle: pointerAngle(event),
       wheelRotation,
+    }
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    } catch {
+      // iOS 홈 화면 웹앱에서는 캡처가 거부돼도 영역 안의 터치는 계속 처리한다.
     }
   }
 

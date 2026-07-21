@@ -10,6 +10,10 @@ import {
 
 const movingStraight = { steeringDirection: 0 as const, braking: false }
 
+test('주차 연습용 크리프 속도는 저속으로 제한된다', () => {
+  assert.ok(DEFAULT_VEHICLE_CONFIG.creepSpeed <= 0.7)
+})
+
 function simulate(duration: number, step: number) {
   let state = withGear({ ...INITIAL_VEHICLE_STATE }, 'D')
   for (let elapsed = 0; elapsed < duration - step / 2; elapsed += step) {
