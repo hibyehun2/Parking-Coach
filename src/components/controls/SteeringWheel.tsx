@@ -1,4 +1,4 @@
-import { useEffect, useRef, type KeyboardEvent, type PointerEvent } from 'react'
+import { useEffect, useRef, type KeyboardEvent, type PointerEvent, type TouchEvent } from 'react'
 import { DEFAULT_VEHICLE_CONFIG, radiansToDegrees } from '../../engine/vehiclePhysics'
 
 type SteeringWheelProps = {
@@ -11,11 +11,11 @@ const MAX_WHEEL_ROTATION = 450
 const LOCK_ENTER_MARGIN = Math.PI / 720
 const LOCK_RELEASE_MARGIN = Math.PI / 60
 
-function pointerAngle(event: PointerEvent<HTMLDivElement>) {
-  const bounds = event.currentTarget.getBoundingClientRect()
+function inputAngle(element: HTMLDivElement, clientX: number, clientY: number) {
+  const bounds = element.getBoundingClientRect()
   const centerX = bounds.left + bounds.width / 2
   const centerY = bounds.top + bounds.height / 2
-  return Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180 / Math.PI
+  return Math.atan2(clientY - centerY, clientX - centerX) * 180 / Math.PI
 }
 
 function shortestAngleDelta(previous: number, current: number) {
@@ -31,6 +31,11 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
   const dragRef = useRef<{
     pointerId: number
     pointerAngle: number
+    wheelRotation: number
+  } | null>(null)
+  const touchDragRef = useRef<{
+    identifier: number
+    touchAngle: number
     wheelRotation: number
   } | null>(null)
   const maxSteeringAngle = DEFAULT_VEHICLE_CONFIG.maxSteeringAngle
@@ -62,11 +67,11 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
       : `${steeringDegrees > 0 ? '+' : ''}${steeringDegrees}°`
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if ((event.pointerType !== 'touch' && event.button !== 0) || dragRef.current) return
+    if (event.pointerType === 'touch' || event.button !== 0 || dragRef.current) return
     event.preventDefault()
     dragRef.current = {
       pointerId: event.pointerId,
-      pointerAngle: pointerAngle(event),
+      pointerAngle: inputAngle(event.currentTarget, event.clientX, event.clientY),
       wheelRotation,
     }
     try {
@@ -80,7 +85,7 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
     const drag = dragRef.current
     if (!drag || drag.pointerId !== event.pointerId) return
     event.preventDefault()
-    const currentPointerAngle = pointerAngle(event)
+    const currentPointerAngle = inputAngle(event.currentTarget, event.clientX, event.clientY)
     const delta = shortestAngleDelta(drag.pointerAngle, currentPointerAngle)
     drag.pointerAngle = currentPointerAngle
     drag.wheelRotation = clamp(
@@ -89,6 +94,41 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
       MAX_WHEEL_ROTATION,
     )
     onChange(drag.wheelRotation / MAX_WHEEL_ROTATION * maxSteeringAngle)
+  }
+
+  const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (touchDragRef.current) return
+    const touch = event.changedTouches.item(0)
+    if (!touch) return
+    event.preventDefault()
+    touchDragRef.current = {
+      identifier: touch.identifier,
+      touchAngle: inputAngle(event.currentTarget, touch.clientX, touch.clientY),
+      wheelRotation,
+    }
+  }
+
+  const handleTouchMove = (event: TouchEvent<HTMLDivElement>) => {
+    const drag = touchDragRef.current
+    if (!drag) return
+    const touch = Array.from(event.touches).find((item) => item.identifier === drag.identifier)
+    if (!touch) return
+    event.preventDefault()
+    const currentTouchAngle = inputAngle(event.currentTarget, touch.clientX, touch.clientY)
+    drag.wheelRotation = clamp(
+      drag.wheelRotation + shortestAngleDelta(drag.touchAngle, currentTouchAngle),
+      -MAX_WHEEL_ROTATION,
+      MAX_WHEEL_ROTATION,
+    )
+    drag.touchAngle = currentTouchAngle
+    onChange(drag.wheelRotation / MAX_WHEEL_ROTATION * maxSteeringAngle)
+  }
+
+  const finishTouch = (event: TouchEvent<HTMLDivElement>) => {
+    const drag = touchDragRef.current
+    if (!drag) return
+    const ended = Array.from(event.changedTouches).some((item) => item.identifier === drag.identifier)
+    if (ended) touchDragRef.current = null
   }
 
   const finishDrag = (event: PointerEvent<HTMLDivElement>) => {
@@ -132,6 +172,10 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
         onPointerUp={finishDrag}
         onPointerCancel={finishDrag}
         onLostPointerCapture={finishDrag}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={finishTouch}
+        onTouchCancel={finishTouch}
         onKeyDown={handleKeyDown}
       >
         <div className="steering-wheel" style={{ transform: `rotate(${wheelRotation}deg)` }}>

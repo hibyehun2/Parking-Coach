@@ -34,8 +34,9 @@ export function GearSelector({ gear, braking, canShift, onChange, onBrakeChange 
           className={`integrated-brake${braking ? ' active' : ''}`}
           aria-label={braking ? '브레이크 해제' : '브레이크 작동'}
           aria-pressed={braking}
-          onPointerDown={(event) => {
-            if (event.pointerType === 'touch') handleTouch(toggleBrake)
+          onTouchStart={(event) => {
+            event.preventDefault()
+            handleTouch(toggleBrake)
           }}
           onPointerUp={(event) => {
             if (event.pointerType !== 'touch' && event.button === 0) toggleBrake()
@@ -56,8 +57,9 @@ export function GearSelector({ gear, braking, canShift, onChange, onBrakeChange 
             className={gear === 'R' ? 'active' : ''}
             aria-pressed={gear === 'R'}
             disabled={!canShift && gear !== 'R'}
-            onPointerDown={(event) => {
-              if (event.pointerType === 'touch') handleTouch(() => onChange('R'))
+            onTouchStart={(event) => {
+              event.preventDefault()
+              handleTouch(() => onChange('R'))
             }}
             onPointerUp={(event) => {
               if (event.pointerType !== 'touch' && event.button === 0) onChange('R')
@@ -74,8 +76,9 @@ export function GearSelector({ gear, braking, canShift, onChange, onBrakeChange 
             className={gear === 'D' ? 'active' : ''}
             aria-pressed={gear === 'D'}
             disabled={!canShift && gear !== 'D'}
-            onPointerDown={(event) => {
-              if (event.pointerType === 'touch') handleTouch(() => onChange('D'))
+            onTouchStart={(event) => {
+              event.preventDefault()
+              handleTouch(() => onChange('D'))
             }}
             onPointerUp={(event) => {
               if (event.pointerType !== 'touch' && event.button === 0) onChange('D')
