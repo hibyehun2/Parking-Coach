@@ -89,12 +89,37 @@ function drawVehicle(
 
   const center = project(toLocal(vehicle, obstacle.x, obstacle.y))
   if (!center) return
-  const apparentWidth = Math.abs(visible[0].x - visible[1].x)
+  const apparentWidth = Math.max(8, Math.abs(visible[0].x - visible[1].x))
+  const bodyHeight = apparentWidth * .58
+  const groundY = Math.max(...visible.map((point) => point.y))
+  const bodyTop = groundY - bodyHeight
+  context.beginPath()
+  context.moveTo(center.x - apparentWidth * .48, groundY)
+  context.lineTo(center.x - apparentWidth * .42, bodyTop + bodyHeight * .28)
+  context.quadraticCurveTo(center.x - apparentWidth * .3, bodyTop, center.x, bodyTop)
+  context.quadraticCurveTo(center.x + apparentWidth * .3, bodyTop, center.x + apparentWidth * .42, bodyTop + bodyHeight * .28)
+  context.lineTo(center.x + apparentWidth * .48, groundY)
+  context.closePath()
+  context.fillStyle = obstacle.color
+  context.fill()
+  context.strokeStyle = 'rgba(245,250,248,.9)'
+  context.stroke()
+  context.fillStyle = 'rgba(27,43,49,.9)'
+  context.beginPath()
+  context.moveTo(center.x - apparentWidth * .28, bodyTop + bodyHeight * .17)
+  context.lineTo(center.x + apparentWidth * .28, bodyTop + bodyHeight * .17)
+  context.lineTo(center.x + apparentWidth * .34, bodyTop + bodyHeight * .52)
+  context.lineTo(center.x - apparentWidth * .34, bodyTop + bodyHeight * .52)
+  context.closePath()
+  context.fill()
+  context.fillStyle = '#232a28'
+  context.fillRect(center.x - apparentWidth * .52, groundY - bodyHeight * .27, apparentWidth * .08, bodyHeight * .31)
+  context.fillRect(center.x + apparentWidth * .44, groundY - bodyHeight * .27, apparentWidth * .08, bodyHeight * .31)
   context.fillStyle = 'rgba(24,36,42,.82)'
-  context.fillRect(center.x - apparentWidth * .22, center.y - 2, apparentWidth * .44, Math.max(2, apparentWidth * .11))
+  context.fillRect(center.x - apparentWidth * .22, groundY - bodyHeight * .18, apparentWidth * .44, Math.max(2, apparentWidth * .06))
   context.fillStyle = '#ef5852'
-  context.fillRect(center.x - apparentWidth * .38, center.y + 2, Math.max(2, apparentWidth * .12), 2)
-  context.fillRect(center.x + apparentWidth * .26, center.y + 2, Math.max(2, apparentWidth * .12), 2)
+  context.fillRect(center.x - apparentWidth * .38, groundY - bodyHeight * .2, Math.max(2, apparentWidth * .14), 3)
+  context.fillRect(center.x + apparentWidth * .24, groundY - bodyHeight * .2, Math.max(2, apparentWidth * .14), 3)
 }
 
 export function renderDriverView(

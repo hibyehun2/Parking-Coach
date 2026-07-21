@@ -129,8 +129,36 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
 
   return (
     <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
-      <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions} />
-      <DriverAssistance vehicle={vehicle} />
+      <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions}>
+        <DriverAssistance vehicle={vehicle} />
+        <div className="driving-console" aria-label="차량 운전 조작부">
+          <SteeringWheel
+            steeringAngle={vehicle.steeringAngle}
+            onChange={setSteeringAngle}
+            onCenter={centerSteering}
+          />
+
+          <div className="instrument-panel" aria-live="polite">
+            <span className="dashboard-label">차량 상태</span>
+            <div className="gear-display">{vehicle.gear}</div>
+            <strong>{Math.abs(vehicle.speed).toFixed(1)} <small>m/s</small></strong>
+            <span>{braking ? '브레이크 작동' : `${vehicle.gear === 'R' ? '후진' : '전진'} 크리프`}</span>
+            <span className={collisionCount ? 'collision-count active' : 'collision-count'}>충돌 {collisionCount}회</span>
+            <div className="instrument-actions">
+              <button type="button" className="reset-control" onClick={reset}>처음 위치</button>
+              <button type="button" className="result-control" onClick={showParkingResult}>결과 확인</button>
+            </div>
+          </div>
+
+          <GearSelector
+            gear={vehicle.gear}
+            braking={braking}
+            canShift={canShift}
+            onChange={setGear}
+            onBrakeChange={setBraking}
+          />
+        </div>
+      </ParkingLotCanvas>
       {canUseFullscreen && !isFullscreen && (!isMobile || isInstalled) && (
         <button
           type="button"
@@ -176,33 +204,6 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
           </section>
         </div>
       )}
-      <div className="driving-console" aria-label="차량 운전 조작부">
-        <SteeringWheel
-          steeringAngle={vehicle.steeringAngle}
-          onChange={setSteeringAngle}
-          onCenter={centerSteering}
-        />
-
-        <div className="instrument-panel" aria-live="polite">
-          <span className="dashboard-label">차량 상태</span>
-          <div className="gear-display">{vehicle.gear}</div>
-          <strong>{Math.abs(vehicle.speed).toFixed(1)} <small>m/s</small></strong>
-          <span>{braking ? '브레이크 작동' : `${vehicle.gear === 'R' ? '후진' : '전진'} 크리프`}</span>
-          <span className={collisionCount ? 'collision-count active' : 'collision-count'}>충돌 {collisionCount}회</span>
-          <div className="instrument-actions">
-            <button type="button" className="reset-control" onClick={reset}>처음 위치</button>
-            <button type="button" className="result-control" onClick={showParkingResult}>결과 확인</button>
-          </div>
-        </div>
-
-        <GearSelector
-          gear={vehicle.gear}
-          braking={braking}
-          canShift={canShift}
-          onChange={setGear}
-          onBrakeChange={setBraking}
-        />
-      </div>
       <p className="driving-help">
         핸들을 손가락으로 원을 그리듯 돌리세요. 브레이크를 작동한 뒤 기어를 선택하고, 브레이크를 해제하면 천천히 움직입니다.
       </p>

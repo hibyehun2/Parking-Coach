@@ -4,6 +4,7 @@ import {
   renderDriverView,
   type DriverView,
 } from '../../engine/driverAssistance'
+import { renderParkingLot } from '../../engine/parkingLotRenderer'
 import type { VehicleState } from '../../engine/vehiclePhysics'
 
 type DriverAssistanceProps = {
@@ -60,6 +61,27 @@ function AssistanceCanvas({ vehicle, view }: { vehicle: VehicleState; view: Driv
   return <canvas ref={canvasRef} aria-hidden="true" />
 }
 
+function ParkingMiniMap({ vehicle }: { vehicle: VehicleState }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const bounds = canvas.getBoundingClientRect()
+    const width = Math.max(1, Math.round(bounds.width))
+    const height = Math.max(1, Math.round(bounds.height))
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
+    canvas.width = Math.round(width * pixelRatio)
+    canvas.height = Math.round(height * pixelRatio)
+    const context = canvas.getContext('2d')
+    if (!context) return
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+    renderParkingLot(context, width, height, vehicle, { danger: null, collisions: [] })
+  }, [vehicle])
+
+  return <canvas ref={canvasRef} className="rear-mini-map" aria-label="차량 위치 미니 탑뷰" role="img" />
+}
+
 export function DriverAssistance({ vehicle }: DriverAssistanceProps) {
   const lastTouchRef = useRef(0)
   const compactViews = window.matchMedia('(max-width: 900px), (pointer: coarse)').matches
@@ -101,10 +123,15 @@ export function DriverAssistance({ vehicle }: DriverAssistanceProps) {
   return (
     <div className="driver-assistance" aria-label="미러와 후방카메라">
       <div className="driver-view-list">
-        {VIEWS.map((view) => (
+        {VIEWS.filter((view) => view.id !== 'rear').map((view) => (
           <button
             type="button"
-            className="driver-view"
+            className={`driver-view ${
+              (view.id === 'left' && vehicle.steeringAngle < -0.12)
+              || (view.id === 'right' && vehicle.steeringAngle > 0.12)
+                ? 'recommended-view'
+                : ''
+            }`}
             key={view.id}
             onTouchStart={(event) => {
               event.preventDefault()
@@ -129,6 +156,17 @@ export function DriverAssistance({ vehicle }: DriverAssistanceProps) {
         ))}
       </div>
       <small className="view-check-count">확인 기록 {checkCount}회</small>
+
+      {vehicle.gear === 'R' && (
+        <section className="automatic-rear-view" aria-label="R 기어 자동 후방카메라">
+          <span>후방카메라 · 자동</span>
+          <AssistanceCanvas vehicle={vehicle} view="rear" />
+          <ParkingMiniMap vehicle={vehicle} />
+          <strong className={sensorDistance !== null && sensorDistance < 1 ? 'sensor-close' : ''}>
+            {sensorDistance === null ? '후방 5m 이상' : `후방 ${sensorDistance.toFixed(1)}m`}
+          </strong>
+        </section>
+      )}
 
       {expandedView && (
         <div className="driver-view-backdrop" role="presentation" onClick={() => setExpandedView(null)}>
