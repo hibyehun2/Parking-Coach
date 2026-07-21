@@ -7,6 +7,7 @@ import { ParkingLotCanvas } from './ParkingLotCanvas'
 import { DriverAssistance } from './DriverAssistance'
 import { detectCollision } from '../../engine/collisionDetection'
 import { evaluateParking } from '../../engine/parkingEvaluation'
+import type { PracticeMode, ScenarioId } from '../../types/practice'
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
@@ -15,9 +16,11 @@ type BeforeInstallPromptEvent = Event & {
 
 type VehicleSimulatorProps = {
   learningMode: boolean
+  scenarioId: ScenarioId
+  mode: PracticeMode
 }
 
-export function VehicleSimulator({ learningMode }: VehicleSimulatorProps) {
+export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimulatorProps) {
   const navigate = useNavigate()
   const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean }
   const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent)
@@ -121,7 +124,7 @@ export function VehicleSimulator({ learningMode }: VehicleSimulatorProps) {
   }
 
   const showParkingResult = () => {
-    navigate('/result', { state: { result: parkingEvaluation } })
+    navigate('/result', { state: { result: parkingEvaluation, scenarioId, mode } })
   }
 
   return (

@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import type { ParkingResult } from '../engine/parkingEvaluation'
+import type { PracticeMode, ScenarioId } from '../types/practice'
 
 function alignmentFeedback(error: number) {
   if (error <= 0.15) return '중앙에 매우 정확하게 정렬했습니다.'
@@ -15,7 +16,13 @@ function angleFeedback(error: number) {
 
 export function ResultPage() {
   const location = useLocation()
-  const result = (location.state as { result?: ParkingResult } | null)?.result
+  const state = location.state as {
+    result?: ParkingResult
+    scenarioId?: ScenarioId
+    mode?: PracticeMode
+  } | null
+  const result = state?.result
+  const retryPath = `/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=${state?.mode ?? 'learning'}`
 
   if (!result) {
     return (
@@ -67,7 +74,8 @@ export function ResultPage() {
       </div>
 
       <div className="result-actions">
-        <Link className="primary-button" to="/simulator">다시 연습하기</Link>
+        <Link className="primary-button" to={retryPath}>다시 연습하기</Link>
+        <Link className="secondary-button" to={`${retryPath}&lesson=1`}>미니 레슨 다시 보기</Link>
         <Link className="secondary-button" to="/">상황 선택</Link>
       </div>
     </section>

@@ -127,6 +127,45 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .install-guide > strong { font-size: 1.15rem; }
 .install-guide ol { margin: 0; padding-left: 22px; display: grid; gap: 10px; line-height: 1.45; }
 .install-guide button { min-height: 44px; border: 0; border-radius: 11px; color: white; background: var(--brand); font-weight: 800; }
+.lesson-backdrop { position: fixed; z-index: 80; inset: 0; padding: 18px; display: grid; place-items: center; color: #17231f; background: rgba(5,12,9,.82); }
+.mini-lesson { width: min(780px, 100%); max-height: calc(100dvh - 36px); padding: 22px; border-radius: 22px; overflow: auto; display: grid; grid-template-columns: minmax(260px, .95fr) minmax(280px, 1.05fr); gap: 18px 24px; background: #f8fbf9; box-shadow: 0 28px 80px rgba(0,0,0,.38); }
+.lesson-header, .lesson-progress, .lesson-footer { grid-column: 1 / -1; }
+.lesson-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.lesson-header > div { display: flex; flex-direction: column; gap: 5px; }
+.lesson-header span { color: var(--brand); font-size: .78rem; font-weight: 800; }
+.lesson-header strong { font-size: 1.35rem; }
+.lesson-skip { min-height: 38px; padding: 0 12px; border: 1px solid var(--border); border-radius: 9px; color: var(--muted); background: white; font-weight: 800; }
+.lesson-animation { position: relative; min-height: 230px; border-radius: 17px; overflow: hidden; background: #626c68; }
+.lesson-bay { position: absolute; right: 17%; bottom: -2px; width: 34%; height: 72%; border: 3px solid rgba(255,255,255,.82); border-bottom: 0; }
+.lesson-obstacle { position: absolute; bottom: 7%; width: 19%; height: 57%; border-radius: 8px; background: #d8dfdc; box-shadow: inset 0 0 0 2px rgba(0,0,0,.12); }
+.lesson-obstacle-left { right: 53%; }
+.lesson-obstacle-right { right: 3%; }
+.lesson-car { position: absolute; z-index: 2; left: 16%; top: 13%; width: 19%; height: 38%; border-radius: 9px; display: grid; place-items: center; color: white; background: var(--brand); font-weight: 900; box-shadow: inset 0 0 0 2px rgba(255,255,255,.24); animation: lesson-approach 2.8s ease-in-out infinite alternate; }
+.lesson-guide { position: absolute; z-index: 1; left: 30%; top: 29%; width: 40%; height: 46%; border: 3px dashed #9aefd1; border-left-color: transparent; border-bottom-color: transparent; border-radius: 50%; transform: rotate(22deg); }
+.lesson-turn .lesson-car { animation-name: lesson-turn; }
+.lesson-align .lesson-car { animation-name: lesson-align; }
+.lesson-mirror .lesson-car { animation-name: lesson-mirror; }
+.lesson-clearance .lesson-obstacle-right { background: #d0a759; }
+.lesson-clearance .lesson-car { animation-name: lesson-clearance; }
+@keyframes lesson-approach { to { transform: translate(52px, 18px); } }
+@keyframes lesson-turn { to { transform: translate(105px, 78px) rotate(58deg); } }
+@keyframes lesson-align { from { transform: translate(105px, 78px) rotate(58deg); } to { transform: translate(145px, 103px) rotate(90deg); } }
+@keyframes lesson-mirror { 50% { box-shadow: inset 0 0 0 3px white, -15px 0 20px #8be2c4; } to { transform: translate(65px, 45px) rotate(34deg); } }
+@keyframes lesson-clearance { to { transform: translate(85px, 55px) rotate(42deg); } }
+.lesson-copy { align-self: center; display: flex; flex-direction: column; gap: 10px; }
+.lesson-copy > span { color: var(--brand); font-size: .78rem; font-weight: 800; }
+.lesson-copy h2 { font-size: 1.65rem; }
+.lesson-copy p { margin: 0; color: var(--muted); line-height: 1.65; }
+.lesson-copy > strong { padding: 11px 13px; border-radius: 10px; color: var(--brand-dark); background: var(--brand-soft); line-height: 1.45; }
+.lesson-progress { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.lesson-progress span { height: 5px; border-radius: 99px; background: #dce6e1; }
+.lesson-progress span.active { background: var(--brand); }
+.lesson-footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+.lesson-footer label { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: .84rem; font-weight: 700; }
+.lesson-footer input { width: 18px; height: 18px; accent-color: var(--brand); }
+.lesson-footer > div { display: flex; gap: 8px; }
+.lesson-footer button { min-height: 42px; padding: 0 15px; border: 1px solid var(--border); border-radius: 10px; background: white; font-weight: 800; }
+.lesson-footer .lesson-next { border-color: var(--brand); color: white; background: var(--brand); }
 .legend-user { background: #13805f; }
 .legend-parked { background: #d7dedd; }
 .legend-target { border: 2px dashed #71dbb6; background: rgba(113, 219, 182, .2); }
@@ -262,6 +301,10 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .result-placeholder { padding: 28px 22px; }
   .result-summary-grid { grid-template-columns: minmax(0, 1fr); }
   .result-card.collision-result { grid-column: auto; }
+  .mini-lesson { grid-template-columns: minmax(0, 1fr); }
+  .lesson-header, .lesson-progress, .lesson-footer { grid-column: auto; }
+  .lesson-footer { align-items: stretch; flex-direction: column; }
+  .lesson-footer > div { justify-content: flex-end; }
 }
 
 @media (max-width: 900px) and (orientation: portrait) {
@@ -274,6 +317,17 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
+  .lesson-backdrop { padding: 6px; }
+  .mini-lesson { width: min(760px, 100%); max-height: calc(100dvh - 12px); padding: 10px 14px; grid-template-columns: minmax(220px, .8fr) minmax(280px, 1.2fr); gap: 7px 16px; border-radius: 14px; }
+  .lesson-header strong { font-size: 1rem; }
+  .lesson-header span { font-size: .65rem; }
+  .lesson-skip { min-height: 30px; }
+  .lesson-animation { min-height: 150px; }
+  .lesson-copy { gap: 5px; }
+  .lesson-copy h2 { font-size: 1.2rem; }
+  .lesson-copy p, .lesson-copy > strong { font-size: .75rem; line-height: 1.35; }
+  .lesson-copy > strong { padding: 6px 8px; }
+  .lesson-footer button { min-height: 34px; }
   html.simulator-active, body.simulator-active { width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; }
   .site-header, .site-footer { display: none; }
   .main-content { width: calc(100% - 16px); }
