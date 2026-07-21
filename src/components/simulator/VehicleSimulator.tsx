@@ -1,4 +1,4 @@
-import { useRef, type PointerEvent } from 'react'
+import { useEffect, useRef, type PointerEvent } from 'react'
 import { GearSelector } from '../controls/GearSelector'
 import { SteeringWheel } from '../controls/SteeringWheel'
 import { useVehicleSimulation } from '../../hooks/useVehicleSimulation'
@@ -16,6 +16,15 @@ export function VehicleSimulator() {
     centerSteering,
     reset,
   } = useVehicleSimulation()
+
+  useEffect(() => {
+    document.documentElement.classList.add('simulator-active')
+    document.body.classList.add('simulator-active')
+    return () => {
+      document.documentElement.classList.remove('simulator-active')
+      document.body.classList.remove('simulator-active')
+    }
+  }, [])
 
   const enterImmersiveMode = (event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType !== 'touch' || fullscreenAttemptedRef.current || document.fullscreenElement) return
