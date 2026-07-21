@@ -32,8 +32,8 @@ test('후진 조향 중에는 상황에 맞는 간격 화면 확인을 권장한
     gear: 'R',
     steeringAngle: 0.3,
   }, 'right-side')
-  assert.equal(hint?.id, 'clearance-view-오른쪽 간격 화면')
-  assert.match(hint?.title ?? '', /오른쪽 간격 화면/)
+  assert.equal(hint?.id, 'clearance-view-우측 후방 평면뷰')
+  assert.match(hint?.title ?? '', /우측 후방 평면뷰/)
 })
 
 test('진입점 전에는 위치 기반 안내를 제공한다', () => {

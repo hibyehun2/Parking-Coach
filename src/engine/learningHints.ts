@@ -19,10 +19,9 @@ function parkingAxisError(heading: number) {
 }
 
 function clearanceViewName(scenarioId: ScenarioId, steeringAngle: number) {
-  if (scenarioId === 'pillar-side') return '기둥 쪽 간격 화면'
-  if (scenarioId === 'left-side') return '왼쪽 간격 화면'
-  if (scenarioId === 'right-side') return '오른쪽 간격 화면'
-  return steeringAngle < 0 ? '왼쪽 간격 화면' : '오른쪽 간격 화면'
+  if (scenarioId === 'pillar-side' || scenarioId === 'right-side') return '우측 후방 평면뷰'
+  if (scenarioId === 'left-side') return '좌측 후방 평면뷰'
+  return steeringAngle < 0 ? '좌측 후방 평면뷰' : '우측 후방 평면뷰'
 }
 
 export function getLearningHint(vehicle: VehicleState, scenarioId: ScenarioId): LearningHint | null {

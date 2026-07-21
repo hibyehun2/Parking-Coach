@@ -204,7 +204,7 @@ export function renderParkingLot(
   options: {
     danger?: Collision | null
     collisions?: Collision[]
-    focus?: { x: number; y: number; span: number }
+    focus?: { x: number; y: number; span: number; heading?: number }
   } = {},
 ) {
   context.clearRect(0, 0, viewportWidth, viewportHeight)
@@ -216,12 +216,19 @@ export function renderParkingLot(
       (viewportWidth - padding * 2) / PARKING_WORLD.width,
       (viewportHeight - padding * 2) / PARKING_WORLD.height,
     )
-  const offsetX = options.focus ? viewportWidth / 2 - options.focus.x * scale : (viewportWidth - PARKING_WORLD.width * scale) / 2
-  const offsetY = options.focus ? viewportHeight / 2 - options.focus.y * scale : (viewportHeight - PARKING_WORLD.height * scale) / 2
+  const offsetX = (viewportWidth - PARKING_WORLD.width * scale) / 2
+  const offsetY = (viewportHeight - PARKING_WORLD.height * scale) / 2
 
   context.save()
-  context.translate(offsetX, offsetY)
-  context.scale(scale, scale)
+  if (options.focus) {
+    context.translate(viewportWidth / 2, viewportHeight / 2)
+    context.rotate(-Math.PI / 2 - (options.focus.heading ?? 0))
+    context.scale(scale, scale)
+    context.translate(-options.focus.x, -options.focus.y)
+  } else {
+    context.translate(offsetX, offsetY)
+    context.scale(scale, scale)
+  }
 
   context.fillStyle = '#59625e'
   context.fillRect(0, 0, PARKING_WORLD.width, PARKING_WORLD.height)
