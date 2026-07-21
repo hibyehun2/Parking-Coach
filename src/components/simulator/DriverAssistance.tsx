@@ -62,6 +62,7 @@ function AssistanceCanvas({ vehicle, view }: { vehicle: VehicleState; view: Driv
 
 export function DriverAssistance({ vehicle }: DriverAssistanceProps) {
   const lastTouchRef = useRef(0)
+  const compactViews = window.matchMedia('(max-width: 900px), (pointer: coarse)').matches
   const [expandedView, setExpandedView] = useState<DriverView | null>(null)
   const [checkCount, setCheckCount] = useState(() => {
     try {
@@ -73,7 +74,7 @@ export function DriverAssistance({ vehicle }: DriverAssistanceProps) {
   const sensorDistance = rearSensorDistance(vehicle)
 
   const openView = useCallback((view: DriverView, source: ViewCheck['source']) => {
-    setExpandedView(view)
+    if (!compactViews) setExpandedView(view)
     let checks: ViewCheck[]
     try {
       checks = JSON.parse(sessionStorage.getItem(VIEW_STORAGE_KEY) ?? '[]') as ViewCheck[]
@@ -83,7 +84,7 @@ export function DriverAssistance({ vehicle }: DriverAssistanceProps) {
     const next = [...checks, { view, source, checkedAt: Date.now() }]
     sessionStorage.setItem(VIEW_STORAGE_KEY, JSON.stringify(next))
     setCheckCount(next.length)
-  }, [])
+  }, [compactViews])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -115,7 +116,7 @@ export function DriverAssistance({ vehicle }: DriverAssistanceProps) {
               const pointerType = (event.nativeEvent as PointerEvent).pointerType
               openView(view.id, pointerType === 'touch' ? 'touch' : 'click')
             }}
-            aria-label={`${view.label} 확대, 단축키 ${view.shortcut}`}
+            aria-label={`${view.label} 확인, 단축키 ${view.shortcut}`}
           >
             <span>{view.label}<kbd>{view.shortcut}</kbd></span>
             <AssistanceCanvas vehicle={vehicle} view={view.id} />

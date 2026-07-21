@@ -129,9 +129,8 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
 
   return (
     <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
-      <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions}>
-        <DriverAssistance vehicle={vehicle} />
-      </ParkingLotCanvas>
+      <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions} />
+      <DriverAssistance vehicle={vehicle} />
       {canUseFullscreen && !isFullscreen && (!isMobile || isInstalled) && (
         <button
           type="button"
