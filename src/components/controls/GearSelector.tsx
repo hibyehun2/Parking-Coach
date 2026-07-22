@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import type { Gear } from '../../engine/vehiclePhysics'
 
 type GearSelectorProps = {
@@ -24,6 +24,7 @@ export function GearSelector({
   onPark,
   onShowResult,
 }: GearSelectorProps) {
+  const [isInteracting, setIsInteracting] = useState(false)
   const lastTouchRef = useRef(0)
   const handleTouch = (action: () => void) => {
     lastTouchRef.current = Date.now()
@@ -40,7 +41,13 @@ export function GearSelector({
   }
 
   return (
-    <div className="gear-module">
+    <div
+      className={`gear-module${isInteracting ? ' is-interacting' : ''}`}
+      onPointerDown={() => setIsInteracting(true)}
+      onPointerUp={() => setIsInteracting(false)}
+      onPointerCancel={() => setIsInteracting(false)}
+      onPointerLeave={() => setIsInteracting(false)}
+    >
       <div className="gear-control-cluster" role="group" aria-label="브레이크와 기어 선택">
         <button
           type="button"

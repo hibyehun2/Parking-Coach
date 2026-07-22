@@ -1,4 +1,4 @@
-import { useEffect, useRef, type KeyboardEvent, type PointerEvent, type TouchEvent } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type TouchEvent } from 'react'
 import { DEFAULT_VEHICLE_CONFIG, radiansToDegrees } from '../../engine/vehiclePhysics'
 
 type SteeringWheelProps = {
@@ -28,6 +28,7 @@ function clamp(value: number, minimum: number, maximum: number) {
 }
 
 export function SteeringWheel({ steeringAngle, onChange, onCenter, disabled = false }: SteeringWheelProps) {
+  const [isInteracting, setIsInteracting] = useState(false)
   const announcedLockRef = useRef<-1 | 0 | 1>(0)
   const dragRef = useRef<{
     pointerId: number
@@ -75,6 +76,7 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter, disabled = fa
       pointerAngle: inputAngle(event.currentTarget, event.clientX, event.clientY),
       wheelRotation,
     }
+    setIsInteracting(true)
     try {
       event.currentTarget.setPointerCapture(event.pointerId)
     } catch {
@@ -107,6 +109,7 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter, disabled = fa
       touchAngle: inputAngle(event.currentTarget, touch.clientX, touch.clientY),
       wheelRotation,
     }
+    setIsInteracting(true)
   }
 
   const handleTouchMove = (event: TouchEvent<HTMLDivElement>) => {
@@ -129,12 +132,16 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter, disabled = fa
     const drag = touchDragRef.current
     if (!drag) return
     const ended = Array.from(event.changedTouches).some((item) => item.identifier === drag.identifier)
-    if (ended) touchDragRef.current = null
+    if (ended) {
+      touchDragRef.current = null
+      setIsInteracting(false)
+    }
   }
 
   const finishDrag = (event: PointerEvent<HTMLDivElement>) => {
     if (dragRef.current?.pointerId !== event.pointerId) return
     dragRef.current = null
+    setIsInteracting(false)
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
@@ -155,7 +162,7 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter, disabled = fa
   }
 
   return (
-    <div className="steering-module">
+    <div className={`steering-module${isInteracting ? ' is-interacting' : ''}`}>
       <div
         className={`steering-wheel-touch-area${lockDirection ? ' at-lock' : ''}`}
         role="slider"

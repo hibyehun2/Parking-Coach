@@ -9,7 +9,7 @@ function rearSideFocus(vehicle: VehicleState, sideName: RearSide) {
   const cosine = Math.cos(vehicle.heading)
   const sine = Math.sin(vehicle.heading)
   const forwardOffset = 0.35
-  const sideOffset = 0.68
+  const sideOffset = 2.1
   return {
     x: vehicle.x + cosine * forwardOffset + -sine * sideOffset * sideSign,
     y: vehicle.y + sine * forwardOffset + cosine * sideOffset * sideSign,
@@ -50,7 +50,7 @@ export function CornerAssistance({ vehicle }: { vehicle: VehicleState }) {
   return (
     <div className="corner-assistance" aria-label="좌우 후방 평면 보조 화면">
       {(['left', 'right'] as const).map((sideName) => (
-        <div className="corner-view" key={sideName}>
+        <div className={`corner-view corner-view-${sideName}`} key={sideName}>
           <span>{sideName === 'left' ? '좌측 후방 평면뷰' : '우측 후방 평면뷰'}</span>
           <RearSideCanvas vehicle={vehicle} sideName={sideName} />
           <small>내 차 후측면 · 주차선 간격</small>

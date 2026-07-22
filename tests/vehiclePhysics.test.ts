@@ -3,15 +3,32 @@ import test from 'node:test'
 import {
   DEFAULT_VEHICLE_CONFIG,
   INITIAL_VEHICLE_STATE,
+  PARKING_ALIGNMENT_SPEED,
+  PARKING_APPROACH_SPEED,
+  parkingCreepSpeed,
   updateVehicle,
   withGear,
   withSteeringAngle,
 } from '../src/engine/vehiclePhysics.ts'
+import { TARGET_PARKING_BAY } from '../src/engine/parkingEvaluation.ts'
 
 const movingStraight = { steeringDirection: 0 as const, braking: false }
 
 test('주차 연습용 크리프 속도는 저속으로 제한된다', () => {
   assert.ok(DEFAULT_VEHICLE_CONFIG.creepSpeed <= 0.7)
+})
+
+test('주차칸 접근 구역과 내부 정렬 구역에서 단계적으로 감속한다', () => {
+  const approach = {
+    ...INITIAL_VEHICLE_STATE,
+    x: TARGET_PARKING_BAY.center.x,
+    y: TARGET_PARKING_BAY.top - 1,
+  }
+  const alignment = { ...approach, y: TARGET_PARKING_BAY.top + 0.5 }
+  assert.equal(parkingCreepSpeed(approach), PARKING_APPROACH_SPEED)
+  assert.equal(parkingCreepSpeed(alignment), PARKING_ALIGNMENT_SPEED)
+  assert.ok(PARKING_ALIGNMENT_SPEED < PARKING_APPROACH_SPEED)
+  assert.ok(PARKING_APPROACH_SPEED < DEFAULT_VEHICLE_CONFIG.creepSpeed)
 })
 
 function simulate(duration: number, step: number) {

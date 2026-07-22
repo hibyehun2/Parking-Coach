@@ -36,7 +36,8 @@ export function ParkingLotCanvas({ vehicle, danger, collisions, children }: Park
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
       renderParkingLot(context, width, height, vehicleRef.current, {
         ...renderOptionsRef.current,
-        bottomInsetRatio: 0.22,
+        topInsetRatio: 0.16,
+        bottomInsetRatio: 0.02,
       })
     }
     drawRef.current = draw
