@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import {
   ALWAYS_SKIP_LESSONS_KEY,
   MiniLessonView,
@@ -9,9 +9,12 @@ import { OrientationNotice } from '../components/OrientationNotice'
 import { VehicleSimulator } from '../components/simulator/VehicleSimulator'
 import { getScenario } from '../data/scenarios'
 import { getLesson } from '../data/lessons'
+import type { VehicleState } from '../engine/vehiclePhysics'
 
 export function SimulatorPage() {
   const [searchParams] = useSearchParams()
+  const location = useLocation()
+  const retryState = (location.state as { retryVehicle?: VehicleState } | null)?.retryVehicle
   const scenario = getScenario(searchParams.get('scenario'))
   const isPracticeMode = searchParams.get('mode') === 'practice'
   const forceLesson = searchParams.get('lesson') === '1'
@@ -44,6 +47,7 @@ export function SimulatorPage() {
           learningMode={!isPracticeMode}
           scenarioId={scenario.id}
           mode={isPracticeMode ? 'practice' : 'learning'}
+          initialVehicle={retryState}
         />
       </section>
       {showLesson && <MiniLessonView lesson={getLesson(scenario.id)} onFinish={() => setShowLesson(false)} />}

@@ -295,6 +295,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .instrument-panel.reset-panel { position: absolute; left: 50%; bottom: 0; width: auto; height: auto; min-height: 0; padding: 0; border: 0; transform: translateX(-50%); }
 .reset-panel .reset-control { align-self: center; min-height: 42px; padding: 0 14px; background: rgba(12,19,17,.62); }
 .top-reset-control { position: absolute; z-index: 8; top: 12px; left: 50%; min-height: 38px; padding: 0 13px; border: 1px solid rgba(255,255,255,.38); border-radius: 9px; color: white; background: rgba(12,19,17,.62); font-size: .72rem; font-weight: 800; transform: translateX(-50%); }
+.finish-practice-control { position: absolute; z-index: 8; top: 12px; right: 12px; min-height: 38px; padding: 0 13px; border: 1px solid rgba(255,255,255,.38); border-radius: 999px; color: white; background: rgba(18,25,22,.72); font-size: .72rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(12px); }
 
 .gear-control-cluster { display: flex; align-items: stretch; gap: 9px; }
 .integrated-brake { width: 72px; border: 1px solid #71423e; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #ffc7c1; background: rgba(130,49,42,.22); cursor: pointer; touch-action: none; }
@@ -333,6 +334,33 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .result-card.collision-result { grid-column: 1 / -1; }
 .result-actions { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; }
 .result-start-link { width: fit-content; }
+.mistake-retry { cursor: pointer; }
+.result-coaching, .replay-timeline { margin-top: 30px; }
+.result-coaching > h2, .replay-timeline h2 { font-size: 1.5rem; }
+.result-coaching > div { margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.result-coaching article { padding: 18px; border: 1px solid var(--border); border-radius: 17px; background: rgba(255,255,255,.68); }
+.result-coaching article > span { font-size: .75rem; font-weight: 900; }
+.result-coaching ul { margin: 10px 0 0; padding-left: 19px; display: grid; gap: 7px; color: #4c5d56; font-size: .82rem; line-height: 1.45; }
+.result-coaching article > p { margin: 10px 0 0; color: var(--muted); font-size: .82rem; line-height: 1.45; }
+.coaching-good { border-color: #a7dbc7 !important; }
+.coaching-good > span { color: #137151; }
+.coaching-mistakes { border-color: #efb5af !important; }
+.coaching-mistakes > span { color: #a34239; }
+.coaching-actions { border-color: #e3cc87 !important; }
+.coaching-actions > span { color: #856b18; }
+.replay-timeline > header { display: flex; align-items: end; justify-content: space-between; gap: 14px; }
+.replay-timeline > header span { color: var(--brand); font-size: .73rem; font-weight: 850; }
+.replay-timeline > header small { color: var(--muted); }
+.replay-timeline ol { margin: 15px 0 0; padding: 0; list-style: none; }
+.replay-timeline li { min-height: 54px; display: grid; grid-template-columns: 48px 16px minmax(0, 1fr) auto; align-items: center; gap: 9px; }
+.replay-timeline time { color: var(--muted); font-size: .7rem; font-variant-numeric: tabular-nums; text-align: right; }
+.replay-timeline li > i { position: relative; width: 11px; height: 11px; border: 3px solid #82cbb1; border-radius: 50%; background: white; }
+.replay-timeline li > i::after { content: ''; position: absolute; z-index: -1; top: 9px; left: 2px; width: 2px; height: 45px; background: #c9d8d2; }
+.replay-timeline li:last-child > i::after { display: none; }
+.replay-timeline li.replay-collision > i { border-color: #e05f55; }
+.replay-timeline li > div { display: grid; gap: 3px; }
+.replay-timeline li > div span { color: var(--muted); font-size: .68rem; }
+.replay-timeline li > button { min-height: 34px; padding: 0 10px; border: 1px solid #d99c96; border-radius: 8px; color: #9d3932; background: #fff8f7; font-size: .69rem; font-weight: 800; cursor: pointer; }
 .practice-history { margin-top: 34px; padding-top: 30px; border-top: 1px solid var(--border); }
 .history-heading { margin-bottom: 18px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
 .history-heading h2 { margin-top: 4px; font-size: 1.65rem; }
@@ -416,6 +444,9 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .result-placeholder { padding: 28px 22px; }
   .result-summary-grid { grid-template-columns: minmax(0, 1fr); }
   .result-card.collision-result { grid-column: auto; }
+  .result-coaching > div { grid-template-columns: minmax(0, 1fr); }
+  .replay-timeline li { grid-template-columns: 42px 14px minmax(0, 1fr); }
+  .replay-timeline li > button { grid-column: 3; justify-self: start; }
   .history-heading { align-items: flex-start; }
   .history-insights { grid-template-columns: minmax(0, 1fr); }
   .mistake-summary { grid-template-columns: minmax(0, 1fr); }

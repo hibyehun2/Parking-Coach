@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import type { ParkingResult } from '../engine/parkingEvaluation'
 import {
   calculatePracticeTrend,
@@ -10,6 +10,11 @@ import {
   type MistakeType,
 } from '../engine/practiceHistory'
 import { getScenario } from '../data/scenarios'
+import {
+  analyzeParkingResult,
+  firstMistakeEvent,
+  type ReplayEvent,
+} from '../engine/sessionReplay'
 import type { PracticeMode, ScenarioId } from '../types/practice'
 
 function alignmentFeedback(error: number) {
@@ -48,12 +53,17 @@ function formatCompletedAt(value: string) {
 
 export function ResultPage() {
   const location = useLocation()
+  const navigate = useNavigate()
   const state = location.state as {
     result?: ParkingResult
     scenarioId?: ScenarioId
     mode?: PracticeMode
+    replay?: ReplayEvent[]
   } | null
   const result = state?.result
+  const replay = state?.replay ?? []
+  const insights = result ? analyzeParkingResult(result) : null
+  const mistakeEvent = result ? firstMistakeEvent(replay, result) : null
   const [history, setHistory] = useState(loadPracticeHistory)
   const mistakeCounts = countMistakes(history.sessions)
   const trend = calculatePracticeTrend(history.sessions)
@@ -107,9 +117,62 @@ export function ResultPage() {
 
       {result && <div className="result-actions">
         <Link className="primary-button" to={retryPath}>다시 연습하기</Link>
-        <Link className="secondary-button" to={`${retryPath}&lesson=1`}>미니 레슨 다시 보기</Link>
+        <Link className="secondary-button" to={`${retryPath}&lesson=1`}>처음부터 재시작</Link>
+        {mistakeEvent && (
+          <button
+            type="button"
+            className="secondary-button mistake-retry"
+            onClick={() => navigate(retryPath, { state: { retryVehicle: mistakeEvent.vehicle } })}
+          >
+            실수 지점 재시도
+          </button>
+        )}
         <Link className="secondary-button" to="/practice">상황 선택</Link>
       </div>}
+
+      {result && insights && (
+        <section className="result-coaching" aria-labelledby="coaching-title">
+          <h2 id="coaching-title">이번 연습 분석</h2>
+          <div>
+            <article className="coaching-good">
+              <span>잘한 점</span>
+              {insights.wellDone.length ? <ul>{insights.wellDone.map((item) => <li key={item}>{item}</li>)}</ul> : <p>완료된 항목이 아직 없습니다.</p>}
+            </article>
+            <article className="coaching-mistakes">
+              <span>주요 실수</span>
+              {insights.mistakes.length ? <ul>{insights.mistakes.map((item) => <li key={item}>{item}</li>)}</ul> : <p>기록된 주요 실수가 없습니다.</p>}
+            </article>
+            <article className="coaching-actions">
+              <span>개선 행동</span>
+              {insights.improvements.length ? <ul>{insights.improvements.map((item) => <li key={item}>{item}</li>)}</ul> : <p>현재 동작을 유지하며 응용 상황에 도전해보세요.</p>}
+            </article>
+          </div>
+        </section>
+      )}
+
+      {result && replay.length > 0 && (
+        <section className="replay-timeline" aria-labelledby="replay-title">
+          <header>
+            <div><span>세션 리플레이</span><h2 id="replay-title">주요 순간 타임라인</h2></div>
+            <small>{replay.length}개 이벤트</small>
+          </header>
+          <ol>
+            {replay.map((event) => (
+              <li key={event.id} className={`replay-${event.type}`}>
+                <time>{event.elapsedSeconds.toFixed(1)}초</time>
+                <i aria-hidden="true" />
+                <div>
+                  <strong>{event.label}</strong>
+                  <span>기어 {event.vehicle.gear} · 조향 {(event.vehicle.steeringAngle * 180 / Math.PI).toFixed(0)}°</span>
+                </div>
+                {event.type === 'collision' && (
+                  <button type="button" onClick={() => navigate(retryPath, { state: { retryVehicle: event.vehicle } })}>여기서 재시도</button>
+                )}
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       <section className="practice-history" aria-labelledby="history-title">
         <header className="history-heading">

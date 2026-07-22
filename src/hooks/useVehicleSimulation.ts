@@ -17,11 +17,12 @@ const INITIAL_INPUT: VehicleInput = {
   braking: true,
 }
 
-export function useVehicleSimulation() {
-  const stateRef = useRef<VehicleState>({ ...INITIAL_VEHICLE_STATE })
+export function useVehicleSimulation(initialVehicle: VehicleState = INITIAL_VEHICLE_STATE) {
+  const startingVehicle = { ...initialVehicle, speed: 0, braking: true }
+  const stateRef = useRef<VehicleState>(startingVehicle)
   const inputRef = useRef<VehicleInput>({ ...INITIAL_INPUT })
   const controlsLockedRef = useRef(false)
-  const [vehicle, setVehicle] = useState<VehicleState>(() => ({ ...INITIAL_VEHICLE_STATE }))
+  const [vehicle, setVehicle] = useState<VehicleState>(startingVehicle)
   const [braking, setBrakingState] = useState(INITIAL_INPUT.braking)
   const [collisions, setCollisions] = useState<Collision[]>([])
 

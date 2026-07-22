@@ -9,19 +9,31 @@ import { CornerAssistance } from './CornerAssistance'
 import { detectCollision } from '../../engine/collisionDetection'
 import { evaluateParking } from '../../engine/parkingEvaluation'
 import { recordPracticeSession } from '../../engine/practiceHistory'
+import { cloneVehicleState, type ReplayEvent } from '../../engine/sessionReplay'
+import { INITIAL_VEHICLE_STATE, type Gear, type VehicleState } from '../../engine/vehiclePhysics'
 import type { PracticeMode, ScenarioId } from '../../types/practice'
 
 type VehicleSimulatorProps = {
   learningMode: boolean
   scenarioId: ScenarioId
   mode: PracticeMode
+  initialVehicle?: VehicleState
 }
 
-export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimulatorProps) {
+export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicle }: VehicleSimulatorProps) {
   const navigate = useNavigate()
   const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent)
     || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
   const fullscreenAttemptedRef = useRef(false)
+  const sessionStartedAtRef = useRef(0)
+  const replayRef = useRef<ReplayEvent[]>([{
+    id: 'start',
+    elapsedSeconds: 0,
+    type: 'start',
+    label: initialVehicle ? '실수 지점에서 새 세션 시작' : '연습 시작',
+    vehicle: cloneVehicleState(initialVehicle ?? INITIAL_VEHICLE_STATE),
+  }])
+  const recordedCollisionCountRef = useRef(0)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [parkedResult, setParkedResult] = useState<ReturnType<typeof evaluateParking> | null>(null)
   const canUseFullscreen = !isIos && document.fullscreenEnabled
@@ -36,9 +48,27 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
     centerSteering,
     setControlsLocked,
     reset,
-  } = useVehicleSimulation()
+  } = useVehicleSimulation(initialVehicle)
   const danger = learningMode ? detectCollision(vehicle, 0.42) : null
   const parkingEvaluation = evaluateParking(vehicle, collisions)
+
+  useEffect(() => {
+    sessionStartedAtRef.current = Date.now()
+  }, [])
+
+  useEffect(() => {
+    const collision = collisions.at(-1)
+    if (!collision || collisions.length <= recordedCollisionCountRef.current) return
+    recordedCollisionCountRef.current = collisions.length
+    replayRef.current.push({
+      id: `collision-${collisions.length}`,
+      elapsedSeconds: (Date.now() - sessionStartedAtRef.current) / 1000,
+      type: 'collision',
+      label: `${collision.kind === 'vehicle' ? '주차 차량' : collision.kind === 'pillar' ? '기둥' : '벽'} 충돌`,
+      vehicle: cloneVehicleState(vehicle),
+      collision,
+    })
+  }, [collisions, vehicle])
 
   useEffect(() => {
     document.documentElement.classList.add('simulator-active')
@@ -86,18 +116,54 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
   const resetSimulation = () => {
     setParkedResult(null)
     reset()
+    sessionStartedAtRef.current = Date.now()
+    recordedCollisionCountRef.current = 0
+    replayRef.current = [{
+      id: 'start',
+      elapsedSeconds: 0,
+      type: 'start',
+      label: '처음 위치에서 새 세션 시작',
+      vehicle: cloneVehicleState(INITIAL_VEHICLE_STATE),
+    }]
+  }
+
+  const finishSession = (result: ReturnType<typeof evaluateParking>) => {
+    if (parkedResult) return
+    setControlsLocked(true)
+    setParkedResult(result)
+    replayRef.current.push({
+      id: 'finish',
+      elapsedSeconds: (Date.now() - sessionStartedAtRef.current) / 1000,
+      type: 'finish',
+      label: result.success ? '주차 완료' : '미완료 상태로 연습 종료',
+      vehicle: cloneVehicleState(vehicle),
+    })
+    recordPracticeSession(result, scenarioId, mode)
   }
 
   const completeParking = () => {
-    if (!parkingEvaluation.success || parkedResult) return
-    setControlsLocked(true)
-    setParkedResult(parkingEvaluation)
-    recordPracticeSession(parkingEvaluation, scenarioId, mode)
+    if (!parkingEvaluation.success) return
+    finishSession(parkingEvaluation)
+  }
+
+  const finishIncompletePractice = () => {
+    finishSession(parkingEvaluation)
+  }
+
+  const changeGear = (gear: Gear) => {
+    setGear(gear)
+    replayRef.current.push({
+      id: `gear-${replayRef.current.length}`,
+      elapsedSeconds: (Date.now() - sessionStartedAtRef.current) / 1000,
+      type: 'gear',
+      label: `${gear} 기어 선택`,
+      vehicle: cloneVehicleState({ ...vehicle, gear }),
+    })
   }
 
   const showParkingResult = () => {
     if (!parkedResult) return
-    navigate('/result', { state: { result: parkedResult, scenarioId, mode } })
+    navigate('/result', { state: { result: parkedResult, scenarioId, mode, replay: replayRef.current } })
   }
 
   return (
@@ -119,7 +185,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
             canShift={canShift}
             parkingReady={parkingEvaluation.success}
             parkingCompleted={Boolean(parkedResult)}
-            onChange={parkedResult ? () => undefined : setGear}
+            onChange={parkedResult ? () => undefined : changeGear}
             onBrakeChange={parkedResult ? () => undefined : setBraking}
             onPark={completeParking}
             onShowResult={showParkingResult}
@@ -127,6 +193,9 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
         </div>
       </ParkingLotCanvas>
       <button type="button" className="reset-control top-reset-control" onClick={resetSimulation}>처음 위치</button>
+      {!parkedResult && (
+        <button type="button" className="finish-practice-control" onClick={finishIncompletePractice}>연습 종료</button>
+      )}
       {canUseFullscreen && !isFullscreen && (
         <button
           type="button"
