@@ -488,6 +488,40 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .hero-copy h1 { max-width: 720px; font-size: clamp(3rem, 6vw, 5.7rem); }
 .hero-start { min-width: 190px; min-height: 58px; border-radius: 18px; font-size: 1.02rem; }
 .hero-preview { border-color: rgba(255,255,255,.8); border-radius: 34px; background: rgba(255,255,255,.74); box-shadow: 0 30px 80px rgba(38,62,52,.16); backdrop-filter: blur(22px); }
+.compact-home-hero { padding-block: clamp(22px, 4vh, 48px); grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; }
+.compact-home-hero .hero-copy { width: min(780px, 100%); max-width: none; display: flex; flex-direction: column; align-items: center; }
+.compact-home-hero .page-description { max-width: 610px; margin: 16px 0 20px; }
+.home-hero-visual { width: min(720px, 100%); margin-top: 22px; border: 1px solid rgba(255,255,255,.85); border-radius: 28px; overflow: hidden; text-align: left; background: rgba(255,255,255,.74); box-shadow: 0 24px 65px rgba(30,54,44,.16); }
+.home-hero-visual img { width: 100%; height: clamp(210px, 32vh, 360px); display: block; object-fit: cover; }
+.home-hero-visual .preview-caption { padding: 13px 18px 15px; }
+
+.practice-setup { max-width: 1180px; margin-inline: auto; padding-block: clamp(28px, 5vh, 56px); animation: ios-page-enter 260ms cubic-bezier(.22,.8,.28,1) both; }
+.setup-header { margin-bottom: 22px; display: flex; align-items: center; gap: 14px; }
+.setup-header > div { display: grid; gap: 3px; }
+.setup-header h1 { font-size: clamp(2rem, 4vw, 3.4rem); }
+.setup-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(330px, .75fr); gap: 18px; }
+.setup-section { padding: 18px; border: 1px solid rgba(255,255,255,.82); border-radius: 25px; background: rgba(255,255,255,.58); box-shadow: 0 14px 38px rgba(32,58,47,.08); backdrop-filter: blur(20px); }
+.setup-section-heading { margin-bottom: 13px; display: flex; align-items: center; gap: 9px; }
+.setup-section-heading > span { width: 27px; height: 27px; border-radius: 50%; display: grid; place-items: center; color: white; background: var(--brand); font-size: .75rem; font-weight: 900; }
+.setup-section-heading h2 { font-size: 1.3rem; }
+.compact-scenario-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.compact-scenario-grid .scenario-card { min-height: 122px; padding: 9px; display: grid; grid-template-columns: 86px minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: 10px; }
+.compact-scenario-grid .scenario-card.selected { padding: 8px; }
+.compact-scenario-grid .scenario-visual { height: 86px; margin: 0; grid-row: 1 / 3; }
+.compact-scenario-grid .scenario-description { min-height: 0; font-size: .76rem; line-height: 1.35; }
+.compact-scenario-grid .scenario-card-heading strong { font-size: .92rem; }
+.compact-scenario-grid .scenario-card-heading > span { font-size: .6rem; }
+.practice-setup .mode-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.practice-setup .mode-card { min-height: 121px; padding: 16px; border-radius: 19px; }
+.practice-setup .mode-card.selected { padding: 15px; }
+.practice-setup .mode-copy strong { font-size: 1rem; }
+.practice-setup .mode-copy > span { font-size: .8rem; }
+.practice-setup .mode-features { margin-top: 2px; }
+.practice-setup .mode-features small { padding: 3px 6px; font-size: .66rem; }
+.setup-action { position: sticky; z-index: 5; bottom: 12px; margin-top: 16px; padding: 12px 14px; border: 1px solid rgba(255,255,255,.28); border-radius: 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; color: white; background: rgba(20,53,42,.9); box-shadow: 0 18px 45px rgba(13,45,34,.28); backdrop-filter: blur(22px); }
+.setup-action > div { display: grid; gap: 3px; }
+.setup-action span { color: #b4cec4; font-size: .72rem; }
+.setup-action .primary-button:disabled { opacity: .42; cursor: not-allowed; }
 
 .choice-page { max-width: 1080px; margin-inline: auto; animation: ios-page-enter 260ms cubic-bezier(.22,.8,.28,1) both; }
 @keyframes ios-page-enter { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
@@ -535,6 +569,21 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .choice-header { gap: 12px; }
   .choice-header h1 { font-size: 2.45rem; }
   .floating-start { bottom: 8px; }
+  .compact-home-hero { min-height: calc(100dvh - 82px); padding: 12px 0 8px; }
+  .compact-home-hero .hero-copy h1 { font-size: clamp(2.15rem, 10vw, 3rem); }
+  .compact-home-hero .page-description { margin: 10px 0 13px; font-size: .9rem; line-height: 1.45; }
+  .compact-home-hero .hero-start { min-height: 50px; }
+  .home-hero-visual { margin-top: 14px; border-radius: 21px; }
+  .home-hero-visual img { height: clamp(175px, 29dvh, 245px); }
+  .home-hero-visual .preview-caption { padding: 9px 12px 11px; }
+  .practice-setup { padding: 22px 0 30px; }
+  .setup-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .setup-section { padding: 12px; border-radius: 20px; }
+  .practice-setup .mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .practice-setup .mode-card { min-height: 116px; padding: 12px; }
+  .practice-setup .mode-card.selected { padding: 11px; }
+  .practice-setup .mode-features { display: none; }
+  .setup-action { bottom: 7px; }
 }
 
 @media (max-height: 520px) and (orientation: landscape) {
