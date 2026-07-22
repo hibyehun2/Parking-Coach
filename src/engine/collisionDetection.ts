@@ -24,9 +24,14 @@ export const PARKED_VEHICLES = [
   { id: 'parked-right', kind: 'vehicle' as const, x: 17.7, y: 9.75, heading: Math.PI / 2 },
 ] as const
 
-export const PILLARS = [
-  { id: 'pillar-right', kind: 'pillar' as const, x: 21.1, y: 6.85, width: 1.05, height: 1.05 },
-] as const
+export const PILLARS: readonly {
+  id: string
+  kind: 'pillar'
+  x: number
+  y: number
+  width: number
+  height: number
+}[] = []
 
 export const WALLS = [
   { id: 'wall-top', kind: 'wall' as const, x: 0.55, y: 0.5, width: 28.9, height: 0.35 },

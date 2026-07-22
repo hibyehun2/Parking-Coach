@@ -165,7 +165,7 @@ export function recommendPractice(sessions: PracticeSession[]) {
   const mostFrequent = (Object.entries(counts) as [MistakeType, number][])
     .sort((first, second) => second[1] - first[1])[0]
   if (!mostFrequent || mostFrequent[1] === 0) {
-    return { scenarioId: 'pillar-side' as const, reason: '기본 정렬이 안정적입니다. 기둥 옆 응용 연습에 도전해보세요.' }
+    return { scenarioId: 'pillar-side' as const, reason: '기본 정렬이 안정적입니다. 충전구역 옆 응용 연습에 도전해보세요.' }
   }
   if (mostFrequent[0] === 'collision') {
     const scenarioCounts = new Map<ScenarioId, number>()

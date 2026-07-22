@@ -52,13 +52,13 @@ export const lessons: Record<ScenarioId, MiniLesson> = {
   },
   'pillar-side': {
     scenarioId: 'pillar-side',
-    title: '기둥과 회전 여유 확보하기',
+    title: '충전구역 표시와 주차선 구분하기',
     steps: [
-      { title: '진입 위치 맞추기', description: '핸들을 중앙에 두고 주차선과 간격을 유지해 끝 선에 운전자 어깨를 맞춘 뒤 정지합니다.', cue: '기둥이 사각지대로 사라지기 전 위치를 기억하세요.', durationSeconds: 10, gear: 'D', steering: '중앙', check: '기둥 위치 · 끝 선과 어깨' },
-      { title: '진입 각도 만들기', description: '핸들을 왼쪽 끝까지 돌려 전진하고 내 차 뒷부분이 주차 공간 중간에 오면 정지합니다.', cue: '회전 중 기둥과 차체의 여유를 계속 확인하세요.', durationSeconds: 12, gear: 'D', steering: '좌측 끝까지', check: '기둥 · 내 차 뒤 모서리' },
-      { title: '후진 준비하기', description: '멈춘 상태에서 R로 바꾸고 핸들을 오른쪽 끝까지 돌립니다. 기둥과 가까워질 차체 모서리를 먼저 확인합니다.', cue: '기둥 위치가 불확실하면 움직이기 전에 다시 확인하세요.', durationSeconds: 8, gear: 'R', steering: '우측 끝까지', check: 'R 기어 · 오른쪽 최대 조향 · 기둥 위치' },
-      { title: '간격을 보며 곡선 후진', description: '기둥 쪽 간격뷰를 우선 보며 후진하고 반대편도 번갈아 확인해 양쪽 여유를 유지합니다.', cue: '기둥 쪽을 우선 확인하되 반대쪽 선도 놓치지 마세요.', durationSeconds: 14, gear: 'R', steering: '우측 끝까지', check: '기둥 쪽 간격뷰 ↔ 반대편 간격뷰' },
-      { title: '평행 정렬 후 직선 후진', description: '차체가 평행해지면 정지해 핸들을 중앙으로 돌립니다. 후방 거리와 기둥 쪽 여유를 확인하며 직선 후진합니다.', cue: '마지막에는 기둥 쪽 문을 열 공간도 확인하세요.', durationSeconds: 12, gear: 'R', steering: '중앙', check: '평행 상태 · 후방 거리 · 기둥 여유' },
+      { title: '진입 위치 맞추기', description: '핸들을 중앙에 두고 실제 주차선과 간격을 유지해 끝 선에 운전자 어깨를 맞춘 뒤 정지합니다.', cue: '흐린 충전구역 표시와 연습 주차선을 구분하세요.', durationSeconds: 10, gear: 'D', steering: '중앙', check: '연습 주차선 · 끝 선과 어깨' },
+      { title: '진입 각도 만들기', description: '핸들을 왼쪽 끝까지 돌려 전진하고 내 차 뒷부분이 주차 공간 중간에 오면 정지합니다.', cue: '바닥 아이콘이 아니라 흰색 주차선을 기준으로 각도를 만드세요.', durationSeconds: 12, gear: 'D', steering: '좌측 끝까지', check: '주차선 · 내 차 뒤 모서리' },
+      { title: '후진 준비하기', description: '멈춘 상태에서 R로 바꾸고 핸들을 오른쪽 끝까지 돌린 뒤 양쪽 주차선 위치를 확인합니다.', cue: '기어와 핸들을 확인한 다음 천천히 움직이세요.', durationSeconds: 8, gear: 'R', steering: '우측 끝까지', check: 'R 기어 · 오른쪽 최대 조향 · 양쪽 주차선' },
+      { title: '간격을 보며 곡선 후진', description: '좌우 간격뷰를 번갈아 보며 양쪽 주차선 안으로 천천히 곡선 후진합니다.', cue: '충전기 장식보다 차체와 주차선 사이 여유를 우선 보세요.', durationSeconds: 14, gear: 'R', steering: '우측 끝까지', check: '좌측 간격뷰 ↔ 우측 간격뷰' },
+      { title: '평행 정렬 후 직선 후진', description: '차체가 평행해지면 정지해 핸들을 중앙으로 돌리고 후방 거리선을 보며 직선 후진합니다.', cue: '방지턱 반응은 보조 신호이며 후방 거리선으로 깊이를 확인하세요.', durationSeconds: 12, gear: 'R', steering: '중앙', check: '평행 상태 · 후방 거리 · 방지턱 위치' },
     ],
   },
 }

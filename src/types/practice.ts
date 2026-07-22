@@ -7,6 +7,6 @@ export type Scenario = {
   title: string
   description: string
   difficulty: string
-  visual: 'cars-both' | 'car-left' | 'car-right' | 'pillar'
+  visual: 'cars-both' | 'car-left' | 'car-right' | 'ev-space'
   available: boolean
 }

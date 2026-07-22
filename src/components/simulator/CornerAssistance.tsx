@@ -35,7 +35,7 @@ function RearSideCanvas({ vehicle, sideName }: { vehicle: VehicleState; sideName
       const focus = rearSideFocus(vehicle, sideName)
       renderParkingLot(context, width, height, vehicle, {
         focus: { ...focus, span: 5.2, heading: vehicle.heading },
-        highlightParkedSide: sideName,
+        assistanceSide: sideName,
       })
       const innerEdge = sideName === 'left' ? width : 0
       const direction = sideName === 'left' ? -1 : 1

@@ -85,8 +85,9 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .obstacle-left { left: 7%; }
 .obstacle-right { right: 7%; }
 .car-left .obstacle-right, .car-right .obstacle-left { display: none; }
-.pillar .obstacle-left { display: none; }
-.pillar .obstacle-right { width: 17%; height: 28%; border-radius: 4px; background: #d6ad68; }
+.ev-space .obstacle-left { display: none; }
+.ev-space .obstacle-right { width: 20%; height: 10%; border-radius: 4px; background: rgba(128, 202, 177, .48); }
+.ev-space::after { content: "EV"; position: absolute; right: 8%; bottom: 30%; color: rgba(175, 231, 212, .62); font-size: .72rem; font-weight: 900; }
 .scenario-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .scenario-card-heading strong { font-size: 1.08rem; }
 .scenario-card-heading > span { flex: none; padding: 4px 7px; border-radius: 99px; color: var(--brand); background: var(--brand-soft); font-size: .72rem; font-weight: 800; }
@@ -185,8 +186,12 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .lesson-bay-lines { fill: none; stroke: rgba(255,255,255,.88); stroke-width: 3; }
 .lesson-parked rect { fill: #cdd5d2; stroke: #f4f7f6; stroke-width: 1.5; }
 .lesson-parked path { fill: none; stroke: #788581; stroke-width: 5; }
-.lesson-pillar rect { fill: #d1a65c; stroke: #f1d59f; stroke-width: 2; }
-.lesson-pillar path { fill: none; stroke: #8d682d; stroke-width: 2; }
+.lesson-charger { display: none; opacity: .5; }
+.lesson-scene-pillar-side .lesson-charger { display: block; }
+.lesson-charger rect { fill: #dce5e1; stroke: #8cb9aa; stroke-width: 1.5; }
+.lesson-charger circle { fill: #70c6a7; }
+.lesson-charger path { fill: none; stroke: #8cb9aa; stroke-width: 1.5; }
+.lesson-charger text { fill: #53786b; font-size: 6px; font-weight: 900; text-anchor: middle; }
 .lesson-user-car rect { fill: #087858; stroke: #aff0d9; stroke-width: 2; filter: drop-shadow(0 4px 3px rgba(0,0,0,.35)); }
 .lesson-user-car path { fill: none; stroke: #b7e4d5; stroke-width: 7; }
 .lesson-user-car circle { fill: #ff645b; }
@@ -216,7 +221,6 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .lesson-stage-3.lesson-scene-right-side .lesson-danger-right,
 .lesson-stage-3.lesson-scene-both-sides .lesson-danger-left,
 .lesson-stage-3.lesson-scene-both-sides .lesson-danger-right,
-.lesson-stage-3.lesson-scene-pillar-side .lesson-danger-pillar { opacity: 1; }
 .lesson-reverse-guide { display: none; fill: none; stroke-linecap: round; }
 .lesson-stage-4 .lesson-reverse-guide { display: block; }
 .lesson-guide-neutral { stroke: #32a8ff; stroke-width: 3; stroke-dasharray: 5 4; }
@@ -225,7 +229,6 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .lesson-guide-yellow { stroke: #ffd60a; stroke-width: 3; }
 .lesson-scene-left-side .lesson-parked-right, .lesson-scene-right-side .lesson-parked-left { opacity: .16; }
 .lesson-scene-pillar-side .lesson-parked-right { opacity: .14; }
-.lesson-scene-both-sides .lesson-pillar, .lesson-scene-left-side .lesson-pillar, .lesson-scene-right-side .lesson-pillar { display: none; }
 .lesson-steering-symbol circle, .lesson-steering-symbol path { fill: none; stroke: rgba(255,255,255,.9); stroke-width: 3; }
 .lesson-steering-symbol .lesson-wheel-arrow { stroke: #ffe078; stroke-width: 3; }
 .lesson-driving-state { position: absolute; right: 8px; top: 8px; display: flex; gap: 6px; }
@@ -315,6 +318,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .instrument-panel.reset-panel { position: absolute; left: 50%; bottom: 0; width: auto; height: auto; min-height: 0; padding: 0; border: 0; transform: translateX(-50%); }
 .reset-panel .reset-control { align-self: center; min-height: 42px; padding: 0 14px; background: rgba(12,19,17,.62); }
 .top-reset-control { position: absolute; z-index: 8; top: 12px; left: 50%; min-height: 38px; padding: 0 13px; border: 1px solid rgba(255,255,255,.38); border-radius: 9px; color: white; background: rgba(12,19,17,.62); font-size: .72rem; font-weight: 800; transform: translateX(-50%); }
+.lesson-replay-control { position: absolute; z-index: 8; top: 12px; left: 12px; min-height: 38px; padding: 0 13px; border: 1px solid rgba(255,255,255,.38); border-radius: 999px; color: white; background: rgba(18,25,22,.72); font-size: .72rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(12px); }
 .finish-practice-control { position: absolute; z-index: 8; top: 12px; right: 12px; min-height: 38px; padding: 0 13px; border: 1px solid rgba(255,255,255,.38); border-radius: 999px; color: white; background: rgba(18,25,22,.72); font-size: .72rem; font-weight: 800; cursor: pointer; backdrop-filter: blur(12px); }
 
 .gear-control-cluster { display: flex; align-items: stretch; gap: 9px; }
@@ -577,7 +581,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .parking-control > strong { font-size: .67rem; }
   .parking-control > small { font-size: .49rem; }
   .driving-help, .keyboard-help { display: none; }
-  .top-reset-control { top: max(7px, env(safe-area-inset-top)); }
+  .top-reset-control, .lesson-replay-control { top: max(7px, env(safe-area-inset-top)); }
   .immersive-control { right: 30%; transform: none; }
 }
 
@@ -661,7 +665,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .gear-gate button { border-radius: 14px; }
 .gear-gate button.active { background: rgba(48,209,88,.24); box-shadow: inset 0 0 0 1px rgba(111,240,147,.65); }
 .parking-control, .gear-module .result-control { border-radius: 14px; background: linear-gradient(180deg, #24a97c, #0d704f); box-shadow: inset 0 1px rgba(255,255,255,.22), 0 8px 20px rgba(10,91,64,.22); }
-.top-reset-control, .immersive-control { border-color: rgba(255,255,255,.25); border-radius: 999px; background: rgba(18,25,22,.62); backdrop-filter: blur(18px); }
+.top-reset-control, .immersive-control, .lesson-replay-control { border-color: rgba(255,255,255,.25); border-radius: 999px; background: rgba(18,25,22,.62); backdrop-filter: blur(18px); }
 .learning-hint { border-color: rgba(255,255,255,.18); border-radius: 16px; background: rgba(21,29,26,.94); box-shadow: 0 14px 34px rgba(0,0,0,.28); }
 .corner-view { background: linear-gradient(145deg, #59625f, #151a18 50%, #050706); filter: drop-shadow(0 10px 14px rgba(0,0,0,.48)); }
 .mirror-glass { border: 3px solid #77817d; background: #303937; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2), inset 0 8px 18px rgba(176,215,205,.08); }

@@ -7,13 +7,14 @@ type ParkingLotCanvasProps = {
   vehicle: VehicleState
   danger: Collision | null
   collisions: Collision[]
+  wheelStopActive?: boolean
   children?: ReactNode
 }
 
-export function ParkingLotCanvas({ vehicle, danger, collisions, children }: ParkingLotCanvasProps) {
+export function ParkingLotCanvas({ vehicle, danger, collisions, wheelStopActive = false, children }: ParkingLotCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const vehicleRef = useRef(vehicle)
-  const renderOptionsRef = useRef({ danger, collisions })
+  const renderOptionsRef = useRef({ danger, collisions, wheelStopActive })
 
   const drawRef = useRef<() => void>(() => undefined)
 
@@ -52,16 +53,16 @@ export function ParkingLotCanvas({ vehicle, danger, collisions, children }: Park
 
   useEffect(() => {
     vehicleRef.current = vehicle
-    renderOptionsRef.current = { danger, collisions }
+    renderOptionsRef.current = { danger, collisions, wheelStopActive }
     drawRef.current()
-  }, [collisions, danger, vehicle])
+  }, [collisions, danger, vehicle, wheelStopActive])
 
   return (
     <div className="parking-canvas-frame">
       <canvas
         ref={canvasRef}
         className="parking-canvas"
-        aria-label="양옆에 차량이 있는 지하주차장 탑뷰. 중앙 연습 주차칸, 좌우 주차 차량, 사용자 차량과 오른쪽 기둥이 표시되어 있습니다."
+        aria-label="옥상 주차장 탑뷰. 중앙 연습 주차칸, 좌우 주차 차량, 빈 주차칸, 전기차 충전 구역과 사용자 차량이 표시되어 있습니다."
         role="img"
       />
       <div className="canvas-legend" aria-hidden="true">

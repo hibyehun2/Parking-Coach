@@ -27,10 +27,10 @@ export const scenarios: Scenario[] = [
   },
   {
     id: 'pillar-side',
-    title: '기둥 옆',
-    description: '고정 장애물과 안전거리를 유지해요.',
+    title: '충전구역 옆',
+    description: '주변 표시와 주차선을 구분하며 정렬해요.',
     difficulty: '응용',
-    visual: 'pillar',
+    visual: 'ev-space',
     available: true,
   },
 ]

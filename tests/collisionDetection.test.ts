@@ -4,7 +4,6 @@ import {
   boxesIntersect,
   detectCollision,
   PARKED_VEHICLES,
-  PILLARS,
   resolveVehicleCollision,
   type OrientedBox,
 } from '../src/engine/collisionDetection.ts'
@@ -22,14 +21,13 @@ test('회전한 OBB가 떨어져 있으면 충돌하지 않는다', () => {
   assert.equal(boxesIntersect(box(0, 0, Math.PI / 6), box(6, 4, -Math.PI / 5)), false)
 })
 
-test('장애 차량, 기둥, 벽 충돌을 구분한다', () => {
+test('장애 차량과 벽 충돌을 구분하고 장식 공간은 장애물로 취급하지 않는다', () => {
   const parkedVehicle = PARKED_VEHICLES[0]
-  const parkingPillar = PILLARS[0]
   const parked = detectCollision({ ...INITIAL_VEHICLE_STATE, x: parkedVehicle.x, y: parkedVehicle.y, heading: parkedVehicle.heading })
-  const pillar = detectCollision({ ...INITIAL_VEHICLE_STATE, x: parkingPillar.x + parkingPillar.width / 2, y: parkingPillar.y + parkingPillar.height / 2, heading: 0 })
+  const formerPillarSpace = detectCollision({ ...INITIAL_VEHICLE_STATE, x: 21.6, y: 9.8, heading: Math.PI / 2 })
   const wall = detectCollision({ ...INITIAL_VEHICLE_STATE, x: INITIAL_VEHICLE_STATE.x, y: 1.2, heading: Math.PI / 2 })
   assert.equal(parked?.kind, 'vehicle')
-  assert.equal(pillar?.kind, 'pillar')
+  assert.equal(formerPillarSpace, null)
   assert.equal(wall?.kind, 'wall')
 })
 

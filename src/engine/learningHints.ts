@@ -19,7 +19,7 @@ function parkingAxisError(heading: number) {
 }
 
 function mirrorPriority(scenarioId: ScenarioId) {
-  if (scenarioId === 'pillar-side') return '기둥 쪽 미러를 먼저 본 뒤 반대편 미러도 확인하세요.'
+  if (scenarioId === 'pillar-side') return '충전구역 표시보다 양쪽 실제 주차선 간격을 우선 확인하세요.'
   if (scenarioId === 'left-side') return '좌측 미러를 먼저 본 뒤 우측 미러도 확인하세요.'
   if (scenarioId === 'right-side') return '우측 미러를 먼저 본 뒤 좌측 미러도 확인하세요.'
   return '좌우 사이드미러를 짧게 번갈아 보며 양쪽 간격을 비교하세요.'

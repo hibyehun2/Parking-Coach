@@ -48,6 +48,7 @@ export function SimulatorPage() {
           scenarioId={scenario.id}
           mode={isPracticeMode ? 'practice' : 'learning'}
           initialVehicle={retryState}
+          onShowLesson={() => setShowLesson(true)}
         />
       </section>
       {showLesson && <MiniLessonView lesson={getLesson(scenario.id)} onFinish={() => setShowLesson(false)} />}

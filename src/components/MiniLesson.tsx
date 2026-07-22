@@ -62,7 +62,7 @@ export function MiniLessonView({ lesson, onFinish }: MiniLessonProps) {
               <rect x="198" y="132" width="34" height="84" rx="7" />
               <path d="M203 147H227M203 199H227" />
             </g>
-            <g className="lesson-pillar"><rect x="246" y="104" width="24" height="24" rx="2" /><path d="M249 125L267 107M256 128L270 114" /></g>
+            <g className="lesson-charger"><rect x="250" y="104" width="15" height="25" rx="3" /><circle cx="257.5" cy="111" r="2.5" /><path d="M258 129C270 134 269 143 262 146" /><text x="257.5" y="122">EV</text></g>
             <path className="lesson-motion-path lesson-path-approach" d="M112 42H190" markerEnd="url(#lesson-arrow)" />
             <path className="lesson-motion-path lesson-path-angle" d="M190 42C218 42 238 48 240 70" markerEnd="url(#lesson-arrow)" />
             <path className="lesson-motion-path lesson-path-reverse-turn" d="M240 70C236 108 196 112 160 142" markerEnd="url(#lesson-arrow)" />
@@ -76,7 +76,6 @@ export function MiniLessonView({ lesson, onFinish }: MiniLessonProps) {
             <g className="lesson-mirror-check lesson-mirror-right" transform="translate(272 104)"><path d="M-16 0Q0-13 16 0Q0 13-16 0Z" /><circle r="4" /><text y="25">우측</text></g>
             <circle className="lesson-danger lesson-danger-left" cx="102" cy="128" r="15" />
             <circle className="lesson-danger lesson-danger-right" cx="216" cy="128" r="15" />
-            <circle className="lesson-danger lesson-danger-pillar" cx="258" cy="116" r="17" />
             <g className="lesson-reverse-guide">
               <path className="lesson-guide-neutral" d="M145 158V218M175 158V218" />
               <path className="lesson-guide-dynamic" d="M145 158V218M175 158V218" />

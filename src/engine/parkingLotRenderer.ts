@@ -12,7 +12,6 @@ import type { VehicleState } from './vehiclePhysics.ts'
 import { DEFAULT_VEHICLE_CONFIG } from './vehiclePhysics.ts'
 import {
   PARKED_VEHICLES,
-  PILLARS,
   VEHICLE_DIMENSIONS,
   WALLS,
   type Collision,
@@ -136,6 +135,33 @@ function drawParkingLines(context: CanvasRenderingContext2D) {
 
   context.restore()
 
+  context.save()
+  context.strokeStyle = 'rgba(255, 255, 255, .38)'
+  context.lineWidth = 0.08
+  for (const [left, right] of [[8.25, 10.95], [19.05, 21.75]]) {
+    context.beginPath()
+    context.moveTo(left, bayTop)
+    context.lineTo(left, bayBottom)
+    context.moveTo(right, bayTop)
+    context.lineTo(right, bayBottom)
+    context.moveTo(left, bayBottom)
+    context.lineTo(right, bayBottom)
+    context.stroke()
+  }
+
+  context.translate(20.4, 10.3)
+  context.strokeStyle = 'rgba(132, 205, 181, .34)'
+  context.lineWidth = 0.1
+  context.beginPath()
+  context.arc(0, 0, 0.58, 0, Math.PI * 2)
+  context.stroke()
+  context.font = '800 0.56px sans-serif'
+  context.fillStyle = 'rgba(164, 222, 202, .38)'
+  context.textAlign = 'center'
+  context.textBaseline = 'middle'
+  context.fillText('EV', 0, 0.03)
+  context.restore()
+
   context.fillStyle = 'rgba(95, 235, 194, 0.08)'
   context.fillRect(
     PARKING_LINE_X.targetLeft,
@@ -174,17 +200,50 @@ function drawStructure(context: CanvasRenderingContext2D) {
     context.strokeRect(wall.x, wall.y, wall.width, wall.height)
   }
 
-  context.fillStyle = '#c6a157'
-  context.strokeStyle = '#806331'
-  context.lineWidth = 0.08
-  const pillar = PILLARS[0]
-  roundedRect(context, pillar.x, pillar.y, pillar.width, pillar.height, 0.08)
+  context.save()
+  context.globalAlpha = 0.42
+  context.fillStyle = '#dce5e1'
+  context.strokeStyle = '#81948d'
+  context.lineWidth = 0.05
+  roundedRect(context, 21.22, 6.72, 0.36, 0.62, 0.06)
   context.fill()
   context.stroke()
-  context.fillStyle = '#4b3c21'
-  context.font = '800 0.28px sans-serif'
-  context.textAlign = 'center'
-  context.fillText('기둥', pillar.x + pillar.width / 2, pillar.y + pillar.height * 0.59)
+  context.fillStyle = '#64b99a'
+  context.beginPath()
+  context.arc(21.4, 6.9, 0.07, 0, Math.PI * 2)
+  context.fill()
+  context.strokeStyle = '#8aa69c'
+  context.beginPath()
+  context.arc(21.38, 7.18, 0.18, -Math.PI / 2, Math.PI / 1.7)
+  context.stroke()
+  context.restore()
+}
+
+export const WHEEL_STOP = { left: 14.02, right: 15.98, y: 8.05 } as const
+
+export function isRearWheelAtStop(vehicle: ReverseGuideVehicle) {
+  const rearAxleX = vehicle.x - Math.cos(vehicle.heading) * DEFAULT_VEHICLE_CONFIG.wheelbase / 2
+  const rearAxleY = vehicle.y - Math.sin(vehicle.heading) * DEFAULT_VEHICLE_CONFIG.wheelbase / 2
+  return rearAxleX >= WHEEL_STOP.left - 0.2
+    && rearAxleX <= WHEEL_STOP.right + 0.2
+    && Math.abs(rearAxleY - WHEEL_STOP.y) <= 0.16
+}
+
+function drawWheelStop(context: CanvasRenderingContext2D, active: boolean) {
+  context.save()
+  context.shadowColor = active ? 'rgba(255, 220, 139, .9)' : 'rgba(0, 0, 0, .28)'
+  context.shadowBlur = active ? 0.24 : 0.08
+  const gradient = context.createLinearGradient(0, WHEEL_STOP.y - 0.12, 0, WHEEL_STOP.y + 0.12)
+  gradient.addColorStop(0, active ? '#74664b' : '#545955')
+  gradient.addColorStop(1, '#252a28')
+  context.fillStyle = gradient
+  roundedRect(context, WHEEL_STOP.left, WHEEL_STOP.y - 0.12, WHEEL_STOP.right - WHEEL_STOP.left, 0.24, 0.08)
+  context.fill()
+  context.fillStyle = 'rgba(235, 238, 226, .72)'
+  for (const x of [WHEEL_STOP.left + 0.32, WHEEL_STOP.right - 0.46]) {
+    context.fillRect(x, WHEEL_STOP.y - 0.12, 0.14, 0.24)
+  }
+  context.restore()
 }
 
 function drawRooftopAsphalt(context: CanvasRenderingContext2D) {
@@ -222,6 +281,43 @@ function drawRooftopAsphalt(context: CanvasRenderingContext2D) {
   }
 }
 
+function drawViewportScenery(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+) {
+  const backdrop = context.createLinearGradient(0, 0, width, height)
+  backdrop.addColorStop(0, '#d6c5a8')
+  backdrop.addColorStop(0.45, '#8fa096')
+  backdrop.addColorStop(1, '#56645f')
+  context.fillStyle = backdrop
+  context.fillRect(0, 0, width, height)
+
+  context.save()
+  context.globalAlpha = 0.34
+  for (const side of [-1, 1]) {
+    const edge = side < 0 ? 0 : width
+    context.fillStyle = '#596a63'
+    for (let index = 0; index < 4; index += 1) {
+      const blockWidth = Math.max(20, width * (0.035 + index * 0.007))
+      const blockHeight = height * (0.16 + (index % 2) * 0.07)
+      const x = edge + side * -(index * width * 0.035 + blockWidth * (side < 0 ? 1 : 0))
+      context.fillRect(x, height * 0.16, blockWidth, blockHeight)
+    }
+
+    for (let index = 0; index < 7; index += 1) {
+      const radius = Math.max(12, Math.min(width, height) * (0.035 + (index % 3) * 0.009))
+      const x = edge + side * -(index * radius * 0.72 + radius * 0.25)
+      const y = height * (0.52 + (index % 2) * 0.12)
+      context.fillStyle = index % 2 ? '#446a54' : '#587b60'
+      context.beginPath()
+      context.arc(x, y, radius, 0, Math.PI * 2)
+      context.fill()
+    }
+  }
+  context.restore()
+}
+
 export const REVERSE_GUIDE_LEVELS = [
   { distance: 0.5, halfWidth: 1.3, color: '#ff453a' },
   { distance: 1, halfWidth: 1.3, color: '#ffd60a' },
@@ -233,6 +329,26 @@ export const REVERSE_NEUTRAL_PATH_COLOR = '#32a8ff'
 export const RED_GUIDE_ALIGNMENT_THRESHOLD = 0.12
 
 type ReverseGuideVehicle = Pick<VehicleState, 'x' | 'y' | 'heading' | 'steeringAngle'>
+type AssistanceSide = 'left' | 'right'
+
+export function assistanceVisibilityPolygon(vehicle: ReverseGuideVehicle, side: AssistanceSide) {
+  const sideDirection = side === 'left' ? -1 : 1
+  const cosine = Math.cos(vehicle.heading)
+  const sine = Math.sin(vehicle.heading)
+  const toWorld = (forward: number, signedSide: number) => {
+    const lateral = signedSide * sideDirection
+    return {
+      x: vehicle.x + cosine * forward - sine * lateral,
+      y: vehicle.y + sine * forward + cosine * lateral,
+    }
+  }
+  return [
+    toWorld(1.15, -0.18),
+    toWorld(1.15, 2.7),
+    toWorld(-6, 4.8),
+    toWorld(-6, -0.18),
+  ]
+}
 
 function reverseGuidePose(vehicle: ReverseGuideVehicle, distanceBehindBumper: number) {
   const targetDistance = distanceBehindBumper
@@ -397,9 +513,12 @@ export function renderParkingLot(
     topInsetRatio?: number
     bottomInsetRatio?: number
     highlightParkedSide?: 'left' | 'right'
+    assistanceSide?: AssistanceSide
+    wheelStopActive?: boolean
   } = {},
 ) {
   context.clearRect(0, 0, viewportWidth, viewportHeight)
+  if (!options.focus) drawViewportScenery(context, viewportWidth, viewportHeight)
   const padding = options.focus
     ? Math.max(8, Math.min(viewportWidth, viewportHeight) * 0.025)
     : 0
@@ -429,23 +548,40 @@ export function renderParkingLot(
 
   drawRooftopAsphalt(context)
 
+  if (options.assistanceSide) {
+    const visibility = assistanceVisibilityPolygon(vehicle, options.assistanceSide)
+    context.beginPath()
+    visibility.forEach((point, index) => index
+      ? context.lineTo(point.x, point.y)
+      : context.moveTo(point.x, point.y))
+    context.closePath()
+    context.clip()
+  }
+
   drawStructure(context)
   drawParkingLines(context)
+  drawWheelStop(context, Boolean(options.wheelStopActive))
   drawReverseGuide(context, vehicle)
 
   const [leftVehicle, rightVehicle] = PARKED_VEHICLES
-  drawVehicle(context, leftVehicle.x, leftVehicle.y, leftVehicle.heading, {
-    body: '#171c20',
-    roof: '#303940',
-    outline: '#737c81',
-    highlight: options.highlightParkedSide === 'left',
-  })
-  drawVehicle(context, rightVehicle.x, rightVehicle.y, rightVehicle.heading, {
-    body: '#e7e5df',
-    roof: '#aeb8bb',
-    outline: '#ffffff',
-    highlight: options.highlightParkedSide === 'right',
-  })
+  const showLeftVehicle = !options.assistanceSide || options.assistanceSide === 'right'
+  const showRightVehicle = !options.assistanceSide || options.assistanceSide === 'left'
+  if (showLeftVehicle) {
+    drawVehicle(context, leftVehicle.x, leftVehicle.y, leftVehicle.heading, {
+      body: '#171c20',
+      roof: '#303940',
+      outline: '#737c81',
+      highlight: options.assistanceSide === 'right' || options.highlightParkedSide === 'left',
+    })
+  }
+  if (showRightVehicle) {
+    drawVehicle(context, rightVehicle.x, rightVehicle.y, rightVehicle.heading, {
+      body: '#e7e5df',
+      roof: '#aeb8bb',
+      outline: '#ffffff',
+      highlight: options.assistanceSide === 'left' || options.highlightParkedSide === 'right',
+    })
+  }
   drawVehicle(context, vehicle.x, vehicle.y, vehicle.heading, {
     body: options.danger ? '#db8b24' : '#128356',
     roof: options.danger ? '#72440f' : '#0b4934',

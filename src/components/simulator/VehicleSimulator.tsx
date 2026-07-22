@@ -8,6 +8,7 @@ import { ParkingLotCanvas } from './ParkingLotCanvas'
 import { CornerAssistance } from './CornerAssistance'
 import { detectCollision } from '../../engine/collisionDetection'
 import { evaluateParking } from '../../engine/parkingEvaluation'
+import { isRearWheelAtStop } from '../../engine/parkingLotRenderer'
 import { recordPracticeSession } from '../../engine/practiceHistory'
 import { cloneVehicleState, type ReplayEvent } from '../../engine/sessionReplay'
 import { INITIAL_VEHICLE_STATE, type Gear, type VehicleState } from '../../engine/vehiclePhysics'
@@ -18,9 +19,10 @@ type VehicleSimulatorProps = {
   scenarioId: ScenarioId
   mode: PracticeMode
   initialVehicle?: VehicleState
+  onShowLesson: () => void
 }
 
-export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicle }: VehicleSimulatorProps) {
+export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicle, onShowLesson }: VehicleSimulatorProps) {
   const navigate = useNavigate()
   const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent)
     || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
@@ -34,8 +36,11 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
     vehicle: cloneVehicleState(initialVehicle ?? INITIAL_VEHICLE_STATE),
   }])
   const recordedCollisionCountRef = useRef(0)
+  const wheelStopContactRef = useRef(false)
+  const wheelStopTimerRef = useRef<number | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [parkedResult, setParkedResult] = useState<ReturnType<typeof evaluateParking> | null>(null)
+  const [wheelStopActive, setWheelStopActive] = useState(false)
   const canUseFullscreen = !isIos && document.fullscreenEnabled
   const {
     vehicle,
@@ -54,6 +59,21 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
 
   useEffect(() => {
     sessionStartedAtRef.current = Date.now()
+  }, [])
+
+  useEffect(() => {
+    const touching = isRearWheelAtStop(vehicle)
+    if (touching && !wheelStopContactRef.current) {
+      setWheelStopActive(true)
+      if ('vibrate' in navigator) navigator.vibrate(35)
+      if (wheelStopTimerRef.current !== null) window.clearTimeout(wheelStopTimerRef.current)
+      wheelStopTimerRef.current = window.setTimeout(() => setWheelStopActive(false), 480)
+    }
+    wheelStopContactRef.current = touching
+  }, [vehicle])
+
+  useEffect(() => () => {
+    if (wheelStopTimerRef.current !== null) window.clearTimeout(wheelStopTimerRef.current)
   }, [])
 
   useEffect(() => {
@@ -115,6 +135,8 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
 
   const resetSimulation = () => {
     setParkedResult(null)
+    setWheelStopActive(false)
+    wheelStopContactRef.current = false
     reset()
     sessionStartedAtRef.current = Date.now()
     recordedCollisionCountRef.current = 0
@@ -146,8 +168,13 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
     finishSession(parkingEvaluation)
   }
 
+  const navigateToResult = (result: ReturnType<typeof evaluateParking>) => {
+    navigate('/result', { state: { result, scenarioId, mode, replay: replayRef.current } })
+  }
+
   const finishIncompletePractice = () => {
     finishSession(parkingEvaluation)
+    navigateToResult(parkingEvaluation)
   }
 
   const changeGear = (gear: Gear) => {
@@ -163,12 +190,12 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
 
   const showParkingResult = () => {
     if (!parkedResult) return
-    navigate('/result', { state: { result: parkedResult, scenarioId, mode, replay: replayRef.current } })
+    navigateToResult(parkedResult)
   }
 
   return (
     <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
-      <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions}>
+      <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions} wheelStopActive={wheelStopActive}>
         <CornerAssistance vehicle={vehicle} />
         {learningMode && <LearningHintPanel vehicle={vehicle} scenarioId={scenarioId} />}
         <div className="driving-console separate-console" aria-label="차량 운전 조작부">
@@ -192,6 +219,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
           />
         </div>
       </ParkingLotCanvas>
+      <button type="button" className="lesson-replay-control" onClick={onShowLesson}>단계별 안내</button>
       <button type="button" className="reset-control top-reset-control" onClick={resetSimulation}>처음 위치</button>
       {!parkedResult && (
         <button type="button" className="finish-practice-control" onClick={finishIncompletePractice}>연습 종료</button>
