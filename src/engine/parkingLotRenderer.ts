@@ -3,6 +3,11 @@ export const PARKING_WORLD = {
   height: 14,
 } as const
 
+export const PARKING_LINE_X = {
+  targetLeft: 13.65,
+  targetRight: 16.35,
+} as const
+
 import type { VehicleState } from './vehiclePhysics.ts'
 import { DEFAULT_VEHICLE_CONFIG } from './vehiclePhysics.ts'
 import {
@@ -113,7 +118,7 @@ function drawParkingLines(context: CanvasRenderingContext2D) {
 
   const bayTop = 6.5
   const bayBottom = 13.45
-  for (const x of [10.95, 13.65, 16.35, 19.05]) {
+  for (const x of [10.95, PARKING_LINE_X.targetLeft, PARKING_LINE_X.targetRight, 19.05]) {
     context.beginPath()
     context.moveTo(x, bayTop)
     context.lineTo(x, bayBottom)
@@ -128,9 +133,9 @@ function drawParkingLines(context: CanvasRenderingContext2D) {
 
   context.fillStyle = 'rgba(113, 219, 182, 0.14)'
   context.fillRect(
-    13.65,
+    PARKING_LINE_X.targetLeft,
     bayTop,
-    2.7,
+    PARKING_LINE_X.targetRight - PARKING_LINE_X.targetLeft,
     bayBottom - bayTop,
   )
   context.fillStyle = '#8be2c4'
@@ -157,24 +162,55 @@ function drawStructure(context: CanvasRenderingContext2D) {
 }
 
 export const REVERSE_GUIDE_LEVELS = [
-  { distance: 0.5, halfWidth: 1.0, color: '#ff453a' },
-  { distance: 1.5, halfWidth: 1.28, color: '#ffd60a' },
-  { distance: 3, halfWidth: 1.7, color: '#30d158' },
+  { distance: 0.5, halfWidth: 1.3, color: '#ff453a' },
+  { distance: 1.5, halfWidth: 1.42, color: '#ffd60a' },
+  { distance: 3, halfWidth: 1.58, color: '#30d158' },
 ] as const
 
+type ReverseGuideVehicle = Pick<VehicleState, 'x' | 'y' | 'heading' | 'steeringAngle'>
+
+function reverseGuidePose(vehicle: ReverseGuideVehicle, distanceBehindBumper: number) {
+  const targetDistance = VEHICLE_DIMENSIONS.length / 2 + distanceBehindBumper
+  const stepSize = 0.05
+  let travelled = 0
+  let x = vehicle.x
+  let y = vehicle.y
+  let heading = vehicle.heading
+
+  while (travelled < targetDistance) {
+    const step = Math.min(stepSize, targetDistance - travelled)
+    const signedDistance = -step
+    const headingDelta = signedDistance / DEFAULT_VEHICLE_CONFIG.wheelbase
+      * Math.tan(vehicle.steeringAngle)
+    const middleHeading = heading + headingDelta / 2
+    x += Math.cos(middleHeading) * signedDistance
+    y += Math.sin(middleHeading) * signedDistance
+    heading += headingDelta
+    travelled += step
+  }
+
+  return { x, y, heading }
+}
+
 export function reverseGuidePoint(
-  vehicle: Pick<VehicleState, 'x' | 'y' | 'heading'>,
+  vehicle: ReverseGuideVehicle,
   distanceBehindBumper: number,
   sideOffset: number,
 ) {
-  const distanceFromCenter = VEHICLE_DIMENSIONS.length / 2 + distanceBehindBumper
+  const pose = reverseGuidePose(vehicle, distanceBehindBumper)
   return {
-    x: vehicle.x - Math.cos(vehicle.heading) * distanceFromCenter - Math.sin(vehicle.heading) * sideOffset,
-    y: vehicle.y - Math.sin(vehicle.heading) * distanceFromCenter + Math.cos(vehicle.heading) * sideOffset,
+    x: pose.x - Math.sin(pose.heading) * sideOffset,
+    y: pose.y + Math.cos(pose.heading) * sideOffset,
   }
 }
 
-export function reverseTrapezoidGeometry(vehicle: Pick<VehicleState, 'x' | 'y' | 'heading'>) {
+function reverseGuideHalfWidth(distance: number) {
+  const nearWidth = 1.24
+  const farLevel = REVERSE_GUIDE_LEVELS.at(-1)!
+  return nearWidth + (farLevel.halfWidth - nearWidth) * distance / farLevel.distance
+}
+
+export function reverseTrapezoidGeometry(vehicle: ReverseGuideVehicle) {
   return REVERSE_GUIDE_LEVELS.map((level) => ({
     ...level,
     left: reverseGuidePoint(vehicle, level.distance, -level.halfWidth),
@@ -184,12 +220,29 @@ export function reverseTrapezoidGeometry(vehicle: Pick<VehicleState, 'x' | 'y' |
 
 function drawDistanceTrapezoid(context: CanvasRenderingContext2D, vehicle: VehicleState) {
   const levels = reverseTrapezoidGeometry(vehicle)
-  const nearLeft = reverseGuidePoint(vehicle, 0, -0.84)
-  const nearRight = reverseGuidePoint(vehicle, 0, 0.84)
+  const paths: { x: number; y: number }[][] = [[], []]
+  for (let step = 0; step <= 30; step += 1) {
+    const distance = step / 10
+    const halfWidth = reverseGuideHalfWidth(distance)
+    paths[0].push(reverseGuidePoint(vehicle, distance, -halfWidth))
+    paths[1].push(reverseGuidePoint(vehicle, distance, halfWidth))
+  }
 
   context.save()
   context.lineCap = 'round'
   context.lineJoin = 'round'
+
+  context.strokeStyle = 'rgba(52, 152, 255, .98)'
+  context.lineWidth = 0.1
+  context.setLineDash([0.18, 0.09])
+  for (const path of paths) {
+    context.beginPath()
+    path.forEach((point, index) => index
+      ? context.lineTo(point.x, point.y)
+      : context.moveTo(point.x, point.y))
+    context.stroke()
+  }
+  context.setLineDash([])
 
   for (const level of levels) {
     context.strokeStyle = level.color
@@ -198,21 +251,6 @@ function drawDistanceTrapezoid(context: CanvasRenderingContext2D, vehicle: Vehic
     context.moveTo(level.left.x, level.left.y)
     context.lineTo(level.right.x, level.right.y)
     context.stroke()
-  }
-
-  const edges = [
-    [nearLeft, ...levels.map((level) => level.left)],
-    [nearRight, ...levels.map((level) => level.right)],
-  ]
-  for (const edge of edges) {
-    for (let index = 1; index < edge.length; index += 1) {
-      context.strokeStyle = levels[index - 1].color
-      context.lineWidth = 0.08
-      context.beginPath()
-      context.moveTo(edge[index - 1].x, edge[index - 1].y)
-      context.lineTo(edge[index].x, edge[index].y)
-      context.stroke()
-    }
   }
 
   const redLevel = levels[0]
@@ -234,33 +272,6 @@ function drawDistanceTrapezoid(context: CanvasRenderingContext2D, vehicle: Vehic
 function drawReverseGuide(context: CanvasRenderingContext2D, vehicle: VehicleState) {
   if (vehicle.gear !== 'R') return
   drawDistanceTrapezoid(context, vehicle)
-  const paths: { x: number; y: number }[][] = [[], []]
-  let x = vehicle.x
-  let y = vehicle.y
-  let heading = vehicle.heading
-  for (let step = 0; step <= 30; step += 1) {
-    const sideX = -Math.sin(heading) * 0.82
-    const sideY = Math.cos(heading) * 0.82
-    paths[0].push({ x: x + sideX, y: y + sideY })
-    paths[1].push({ x: x - sideX, y: y - sideY })
-    const distance = -0.1
-    const headingDelta = distance / DEFAULT_VEHICLE_CONFIG.wheelbase * Math.tan(vehicle.steeringAngle)
-    const middleHeading = heading + headingDelta / 2
-    x += Math.cos(middleHeading) * distance
-    y += Math.sin(middleHeading) * distance
-    heading += headingDelta
-  }
-  context.save()
-  context.strokeStyle = 'rgba(52, 152, 255, .98)'
-  context.lineWidth = 0.1
-  context.setLineDash([0.16, 0.1])
-  for (const path of paths) {
-    context.beginPath()
-    path.forEach((point, index) => index ? context.lineTo(point.x, point.y) : context.moveTo(point.x, point.y))
-    context.stroke()
-  }
-  context.setLineDash([])
-  context.restore()
 }
 
 export function renderParkingLot(
