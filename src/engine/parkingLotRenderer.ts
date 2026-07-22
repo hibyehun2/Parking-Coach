@@ -228,6 +228,8 @@ export const REVERSE_GUIDE_LEVELS = [
   { distance: 3, halfWidth: 0.72, color: '#ffd60a' },
 ] as const
 
+export const REVERSE_PATH_COLOR = '#ffd60a'
+
 type ReverseGuideVehicle = Pick<VehicleState, 'x' | 'y' | 'heading' | 'steeringAngle'>
 
 function reverseGuidePose(vehicle: ReverseGuideVehicle, distanceBehindBumper: number) {
@@ -321,7 +323,7 @@ function drawDistanceTrapezoid(context: CanvasRenderingContext2D, vehicle: Vehic
   context.lineCap = 'round'
   context.lineJoin = 'round'
 
-  context.strokeStyle = 'rgba(52, 152, 255, .98)'
+  context.strokeStyle = REVERSE_PATH_COLOR
   context.lineWidth = 0.1
   context.setLineDash([0.18, 0.09])
   for (const path of paths) {
@@ -342,19 +344,6 @@ function drawDistanceTrapezoid(context: CanvasRenderingContext2D, vehicle: Vehic
     context.stroke()
   }
 
-  const redLevel = levels[0]
-  context.save()
-  context.translate(
-    (redLevel.left.x + redLevel.right.x) / 2,
-    (redLevel.left.y + redLevel.right.y) / 2,
-  )
-  context.rotate(vehicle.heading)
-  context.fillStyle = '#ffffff'
-  context.font = '800 0.24px sans-serif'
-  context.textAlign = 'center'
-  context.textBaseline = 'bottom'
-  context.fillText('50cm', 0, -0.08)
-  context.restore()
   context.restore()
 }
 
