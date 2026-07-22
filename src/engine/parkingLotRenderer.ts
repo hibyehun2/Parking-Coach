@@ -1,5 +1,5 @@
 export const PARKING_WORLD = {
-  width: 22,
+  width: 26,
   height: 14,
 } as const
 
@@ -113,39 +113,30 @@ function drawParkingLines(context: CanvasRenderingContext2D) {
 
   const bayTop = 6.5
   const bayBottom = 13.45
-  for (const x of [6.95, 9.65, 12.35, 15.05]) {
+  for (const x of [8.95, 11.65, 14.35, 17.05]) {
     context.beginPath()
     context.moveTo(x, bayTop)
     context.lineTo(x, bayBottom)
     context.stroke()
   }
   context.beginPath()
-  context.moveTo(4.95, bayBottom)
-  context.lineTo(13.05, bayBottom)
+  context.moveTo(8.95, bayBottom)
+  context.lineTo(17.05, bayBottom)
   context.stroke()
 
-  context.setLineDash([0.18, 0.16])
-  context.strokeStyle = '#71dbb6'
-  context.lineWidth = 0.1
-  context.strokeRect(
-    TARGET_PARKING_BAY.left,
-    TARGET_PARKING_BAY.top,
-    TARGET_PARKING_BAY.right - TARGET_PARKING_BAY.left,
-    TARGET_PARKING_BAY.bottom - TARGET_PARKING_BAY.top,
-  )
   context.restore()
 
   context.fillStyle = 'rgba(113, 219, 182, 0.14)'
   context.fillRect(
-    TARGET_PARKING_BAY.left,
-    TARGET_PARKING_BAY.top,
-    TARGET_PARKING_BAY.right - TARGET_PARKING_BAY.left,
-    TARGET_PARKING_BAY.bottom - TARGET_PARKING_BAY.top,
+    11.65,
+    bayTop,
+    2.7,
+    bayBottom - bayTop,
   )
   context.fillStyle = '#8be2c4'
   context.font = '700 0.34px sans-serif'
   context.textAlign = 'center'
-  context.fillText('연습 주차칸', TARGET_PARKING_BAY.center.x, TARGET_PARKING_BAY.bottom - 0.28)
+  context.fillText('연습 주차칸', TARGET_PARKING_BAY.center.x, bayBottom - 0.28)
 }
 
 function drawStructure(context: CanvasRenderingContext2D) {

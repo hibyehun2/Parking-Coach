@@ -105,13 +105,13 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .parking-canvas { width: 100%; height: 100%; display: block; }
 .corner-assistance { position: absolute; z-index: 4; top: 10px; right: 10px; left: 10px; display: flex; justify-content: space-between; pointer-events: none; }
 .corner-view { position: relative; width: min(220px, 25%); padding: 4px; overflow: hidden; background: #29332f; filter: drop-shadow(0 5px 8px rgba(0,0,0,.35)); }
-.corner-view-left { padding-right: 15px; clip-path: polygon(0 14%, 2% 7%, 7% 2%, 87% 9%, 94% 14%, 97% 22%, 97% 78%, 94% 86%, 87% 91%, 7% 98%, 2% 93%, 0 86%); }
-.corner-view-right { padding-left: 15px; clip-path: polygon(3% 22%, 6% 14%, 13% 9%, 93% 2%, 98% 7%, 100% 14%, 100% 86%, 98% 93%, 93% 98%, 13% 91%, 6% 86%, 3% 78%); }
+.corner-view-left { padding-right: 15px; clip-path: polygon(3% 22%, 6% 14%, 13% 9%, 93% 2%, 98% 7%, 100% 14%, 100% 86%, 98% 93%, 93% 98%, 13% 91%, 6% 86%, 3% 78%); }
+.corner-view-right { padding-left: 15px; clip-path: polygon(0 14%, 2% 7%, 7% 2%, 87% 9%, 94% 14%, 97% 22%, 97% 78%, 94% 86%, 87% 91%, 7% 98%, 2% 93%, 0 86%); }
 .corner-view::after { content: ""; position: absolute; z-index: 2; inset: 3px; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,.6); border-radius: 18px; }
-.corner-view span { position: absolute; z-index: 1; top: 7px; left: 7px; padding: 3px 5px; border-radius: 5px; color: white; background: rgba(8,17,14,.82); font-size: .65rem; font-weight: 850; }
-.corner-view canvas { width: 100%; height: 105px; border-radius: 6px; display: block; }
+.corner-view span { position: absolute; z-index: 1; top: 9px; left: 12px; padding: 0; color: white; background: transparent; text-shadow: 0 1px 3px #000, 0 0 5px #000; font-size: .62rem; font-weight: 850; }
+.corner-view canvas { width: 100%; height: 135px; border-radius: 12px; display: block; }
 .corner-view small { position: absolute; z-index: 1; right: 7px; bottom: 7px; padding: 2px 4px; border-radius: 4px; color: rgba(255,255,255,.9); background: rgba(8,17,14,.72); font-size: .52rem; font-weight: 750; }
-.corner-view-right span { right: 7px; left: auto; }
+.corner-view-right span { right: 12px; left: auto; }
 .corner-view-left small { right: 18px; }
 .corner-view-right small { right: 7px; left: auto; }
 .canvas-legend { position: absolute; top: 16px; left: 16px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.2); border-radius: 10px; display: flex; flex-wrap: wrap; gap: 12px; color: white; background: rgba(20, 29, 26, .78); backdrop-filter: blur(6px); font-size: .78rem; font-weight: 700; }
@@ -231,8 +231,14 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .separate-console .steering-module, .separate-console .instrument-panel, .separate-console .gear-module { border-radius: 0; background: transparent; }
 .separate-console .steering-module { padding: 6px; }
 .separate-console .steering-module, .separate-console .gear-module { opacity: .48; transition: opacity 160ms ease; }
-.separate-console .steering-module:is(.is-interacting, :hover, :focus-within),
-.separate-console .gear-module:is(.is-interacting, :hover, :focus-within) { opacity: 1; }
+.separate-console .steering-module.is-interacting,
+.separate-console .gear-module.is-interacting,
+.separate-console .steering-module:has(:focus-visible),
+.separate-console .gear-module:has(:focus-visible) { opacity: 1; }
+@media (hover: hover) {
+  .separate-console .steering-module:hover,
+  .separate-console .gear-module:hover { opacity: 1; }
+}
 .gear-module, .gear-module button { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .dashboard-label { color: #96aaa2; font-size: .72rem; font-weight: 800; letter-spacing: .08em; }
 .steering-module { min-width: 0; justify-self: start; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: 1fr auto; align-items: center; justify-items: center; }
@@ -397,8 +403,9 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .parking-canvas-frame { height: 100%; min-height: 0; border-radius: 12px; }
   .corner-assistance { top: 5px; right: 5px; left: 5px; }
   .corner-view { width: min(190px, 27%); padding: 2px; border-radius: 7px; }
-  .corner-view canvas { height: clamp(54px, 14vh, 70px); }
-  .corner-view span { top: 4px; left: 4px; font-size: .55rem; }
+  .corner-view canvas { height: clamp(74px, 19vh, 94px); }
+  .corner-view span { top: 7px; left: 9px; font-size: .52rem; }
+  .corner-view-right span { right: 9px; left: auto; }
   .driver-assistance { inset: 5px 6px auto; }
   .driver-view-list { justify-content: space-between; gap: 5px; }
   .driver-view { width: min(220px, 31%); padding: 2px; cursor: default; }

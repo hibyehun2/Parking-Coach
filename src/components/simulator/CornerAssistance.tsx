@@ -53,7 +53,6 @@ export function CornerAssistance({ vehicle }: { vehicle: VehicleState }) {
         <div className={`corner-view corner-view-${sideName}`} key={sideName}>
           <span>{sideName === 'left' ? '좌측 후방 평면뷰' : '우측 후방 평면뷰'}</span>
           <RearSideCanvas vehicle={vehicle} sideName={sideName} />
-          <small>내 차 후측면 · 주차선 간격</small>
         </div>
       ))}
     </div>
