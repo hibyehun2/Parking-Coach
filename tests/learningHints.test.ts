@@ -39,6 +39,19 @@ test('후진 조향 중에는 상황에 맞는 간격 화면 확인을 권장한
   assert.match(hint?.title ?? '', /우측 후방 평면뷰/)
 })
 
+test('핸들을 중앙에 두고 진입점에서 후진하면 빨간 50cm 기준선을 안내한다', () => {
+  const hint = getLearningHint({
+    ...INITIAL_VEHICLE_STATE,
+    x: TARGET_PARKING_BAY.center.x,
+    y: TARGET_PARKING_BAY.top - 1.5,
+    gear: 'R',
+    steeringAngle: 0,
+  }, 'both-sides')
+
+  assert.equal(hint?.id, 'rear-red-guide')
+  assert.match(hint?.message ?? '', /빨간선/)
+})
+
 test('진입점 전에는 위치 기반 안내를 제공한다', () => {
   const hint = getLearningHint(INITIAL_VEHICLE_STATE, 'both-sides')
   assert.equal(hint?.id, 'set-entry-point')

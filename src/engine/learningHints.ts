@@ -45,6 +45,16 @@ export function getLearningHint(vehicle: VehicleState, scenarioId: ScenarioId): 
 
   const axisError = parkingAxisError(vehicle.heading)
   const insideParkingArea = vehicle.y >= TARGET_PARKING_BAY.top - 1
+
+  if (vehicle.gear === 'R' && Math.abs(vehicle.steeringAngle) < 0.06 && !insideParkingArea) {
+    return {
+      id: 'rear-red-guide',
+      level: 'info',
+      title: '빨간 50cm 선을 맞추세요',
+      message: '직선 후진해 빨간선의 주차 방향 모서리가 주차 라인과 겹치면 정지하세요.',
+    }
+  }
+
   if (insideParkingArea && axisError <= Math.PI / 10 && Math.abs(vehicle.steeringAngle) >= 0.12) {
     return { id: 'center-steering', level: 'caution', title: '핸들을 중앙으로', message: '차체가 주차선과 거의 평행합니다. 정지한 뒤 핸들을 풀고 직선 후진하세요.' }
   }

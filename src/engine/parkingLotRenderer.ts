@@ -3,16 +3,16 @@ export const PARKING_WORLD = {
   height: 14,
 } as const
 
-import type { VehicleState } from './vehiclePhysics'
-import { DEFAULT_VEHICLE_CONFIG } from './vehiclePhysics'
+import type { VehicleState } from './vehiclePhysics.ts'
+import { DEFAULT_VEHICLE_CONFIG } from './vehiclePhysics.ts'
 import {
   PARKED_VEHICLES,
   PILLARS,
   VEHICLE_DIMENSIONS,
   WALLS,
   type Collision,
-} from './collisionDetection'
-import { TARGET_PARKING_BAY } from './parkingEvaluation'
+} from './collisionDetection.ts'
+import { TARGET_PARKING_BAY } from './parkingEvaluation.ts'
 
 type VehicleStyle = {
   body: string
@@ -156,8 +156,84 @@ function drawStructure(context: CanvasRenderingContext2D) {
   context.fillText('기둥', pillar.x + pillar.width / 2, pillar.y + pillar.height * 0.59)
 }
 
+export const REVERSE_GUIDE_LEVELS = [
+  { distance: 0.5, halfWidth: 1.0, color: '#ff453a' },
+  { distance: 1.5, halfWidth: 1.28, color: '#ffd60a' },
+  { distance: 3, halfWidth: 1.7, color: '#30d158' },
+] as const
+
+export function reverseGuidePoint(
+  vehicle: Pick<VehicleState, 'x' | 'y' | 'heading'>,
+  distanceBehindBumper: number,
+  sideOffset: number,
+) {
+  const distanceFromCenter = VEHICLE_DIMENSIONS.length / 2 + distanceBehindBumper
+  return {
+    x: vehicle.x - Math.cos(vehicle.heading) * distanceFromCenter - Math.sin(vehicle.heading) * sideOffset,
+    y: vehicle.y - Math.sin(vehicle.heading) * distanceFromCenter + Math.cos(vehicle.heading) * sideOffset,
+  }
+}
+
+export function reverseTrapezoidGeometry(vehicle: Pick<VehicleState, 'x' | 'y' | 'heading'>) {
+  return REVERSE_GUIDE_LEVELS.map((level) => ({
+    ...level,
+    left: reverseGuidePoint(vehicle, level.distance, -level.halfWidth),
+    right: reverseGuidePoint(vehicle, level.distance, level.halfWidth),
+  }))
+}
+
+function drawDistanceTrapezoid(context: CanvasRenderingContext2D, vehicle: VehicleState) {
+  const levels = reverseTrapezoidGeometry(vehicle)
+  const nearLeft = reverseGuidePoint(vehicle, 0, -0.84)
+  const nearRight = reverseGuidePoint(vehicle, 0, 0.84)
+
+  context.save()
+  context.lineCap = 'round'
+  context.lineJoin = 'round'
+
+  for (const level of levels) {
+    context.strokeStyle = level.color
+    context.lineWidth = level.distance === 0.5 ? 0.13 : 0.1
+    context.beginPath()
+    context.moveTo(level.left.x, level.left.y)
+    context.lineTo(level.right.x, level.right.y)
+    context.stroke()
+  }
+
+  const edges = [
+    [nearLeft, ...levels.map((level) => level.left)],
+    [nearRight, ...levels.map((level) => level.right)],
+  ]
+  for (const edge of edges) {
+    for (let index = 1; index < edge.length; index += 1) {
+      context.strokeStyle = levels[index - 1].color
+      context.lineWidth = 0.08
+      context.beginPath()
+      context.moveTo(edge[index - 1].x, edge[index - 1].y)
+      context.lineTo(edge[index].x, edge[index].y)
+      context.stroke()
+    }
+  }
+
+  const redLevel = levels[0]
+  context.save()
+  context.translate(
+    (redLevel.left.x + redLevel.right.x) / 2,
+    (redLevel.left.y + redLevel.right.y) / 2,
+  )
+  context.rotate(vehicle.heading)
+  context.fillStyle = '#ffffff'
+  context.font = '800 0.24px sans-serif'
+  context.textAlign = 'center'
+  context.textBaseline = 'bottom'
+  context.fillText('50cm', 0, -0.08)
+  context.restore()
+  context.restore()
+}
+
 function drawReverseGuide(context: CanvasRenderingContext2D, vehicle: VehicleState) {
   if (vehicle.gear !== 'R') return
+  drawDistanceTrapezoid(context, vehicle)
   const paths: { x: number; y: number }[][] = [[], []]
   let x = vehicle.x
   let y = vehicle.y
@@ -175,8 +251,8 @@ function drawReverseGuide(context: CanvasRenderingContext2D, vehicle: VehicleSta
     heading += headingDelta
   }
   context.save()
-  context.strokeStyle = 'rgba(255,216,98,.95)'
-  context.lineWidth = 0.08
+  context.strokeStyle = 'rgba(52, 152, 255, .98)'
+  context.lineWidth = 0.1
   context.setLineDash([0.16, 0.1])
   for (const path of paths) {
     context.beginPath()
