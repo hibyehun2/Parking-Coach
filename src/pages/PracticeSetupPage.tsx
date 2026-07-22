@@ -12,12 +12,11 @@ function validScenario(value: string | null): ScenarioId | null {
 export function PracticeSetupPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const [scenarioId, setScenarioId] = useState<ScenarioId | null>(() => validScenario(searchParams.get('scenario')))
-  const [mode, setMode] = useState<PracticeMode | null>(null)
+  const [scenarioId, setScenarioId] = useState<ScenarioId>(() => validScenario(searchParams.get('scenario')) ?? scenarios[0].id)
+  const [mode, setMode] = useState<PracticeMode>('learning')
   const scenario = scenarios.find((item) => item.id === scenarioId)
 
   const start = () => {
-    if (!scenarioId || !mode) return
     navigate(`/simulator?scenario=${scenarioId}&mode=${mode}`)
   }
 
@@ -40,8 +39,8 @@ export function PracticeSetupPage() {
         </section>
       </div>
       <footer className="setup-action">
-        <div><span>{scenario && mode ? '준비 완료' : '상황과 방식을 선택하세요'}</span><strong>{scenario ? scenario.title : '상황 미선택'} · {mode ? mode === 'learning' ? '학습 모드' : '실전 모드' : '방식 미선택'}</strong></div>
-        <button type="button" className="primary-button" disabled={!scenario || !mode} onClick={start}>연습 시작 →</button>
+        <div><span>준비 완료</span><strong>{scenario?.title} · {mode === 'learning' ? '학습 모드' : '실전 모드'}</strong></div>
+        <button type="button" className="primary-button" onClick={start}>연습 시작 →</button>
       </footer>
     </section>
   )
