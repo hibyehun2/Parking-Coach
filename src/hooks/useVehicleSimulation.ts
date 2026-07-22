@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { createSimulationLoop } from '../engine/simulationLoop'
 import { resolveVehicleCollision, type Collision } from '../engine/collisionDetection'
+import type { ScenarioRuntime } from '../types/practice'
 import {
   INITIAL_VEHICLE_STATE,
   updateVehicle,
@@ -17,7 +18,7 @@ const INITIAL_INPUT: VehicleInput = {
   braking: true,
 }
 
-export function useVehicleSimulation(initialVehicle: VehicleState = INITIAL_VEHICLE_STATE) {
+export function useVehicleSimulation(initialVehicle: VehicleState = INITIAL_VEHICLE_STATE, runtime?: ScenarioRuntime) {
   const startingVehicle = { ...initialVehicle, speed: 0, braking: true }
   const stateRef = useRef<VehicleState>(startingVehicle)
   const inputRef = useRef<VehicleInput>({ ...INITIAL_INPUT })
@@ -31,7 +32,7 @@ export function useVehicleSimulation(initialVehicle: VehicleState = INITIAL_VEHI
       step(deltaTime) {
         const previous = stateRef.current
         const next = updateVehicle(previous, inputRef.current, deltaTime)
-        const resolved = resolveVehicleCollision(previous, next)
+        const resolved = resolveVehicleCollision(previous, next, runtime)
         stateRef.current = resolved.vehicle
         if (resolved.collision) {
           inputRef.current = { ...inputRef.current, braking: true }
@@ -45,7 +46,7 @@ export function useVehicleSimulation(initialVehicle: VehicleState = INITIAL_VEHI
     })
     loop.start()
     return loop.stop
-  }, [])
+  }, [runtime])
 
   const setSteeringDirection = useCallback((direction: -1 | 0 | 1) => {
     if (controlsLockedRef.current) return
@@ -86,12 +87,12 @@ export function useVehicleSimulation(initialVehicle: VehicleState = INITIAL_VEHI
 
   const reset = useCallback(() => {
     controlsLockedRef.current = false
-    stateRef.current = { ...INITIAL_VEHICLE_STATE }
+    stateRef.current = { ...initialVehicle, speed: 0, braking: true }
     inputRef.current = { ...INITIAL_INPUT }
     setBrakingState(INITIAL_INPUT.braking)
     setCollisions([])
     setVehicle(stateRef.current)
-  }, [])
+  }, [initialVehicle])
 
   const setControlsLocked = useCallback((locked: boolean) => {
     controlsLockedRef.current = locked

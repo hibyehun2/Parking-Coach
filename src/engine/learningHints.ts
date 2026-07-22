@@ -2,7 +2,7 @@ import { detectCollision } from './collisionDetection.ts'
 import { rearSensorDistance } from './driverAssistance.ts'
 import { TARGET_PARKING_BAY } from './parkingEvaluation.ts'
 import type { VehicleState } from './vehiclePhysics.ts'
-import type { ScenarioId } from '../types/practice.ts'
+import type { ScenarioId, ScenarioRuntime } from '../types/practice.ts'
 
 export type HintLevel = 'info' | 'caution' | 'danger'
 
@@ -19,24 +19,24 @@ function parkingAxisError(heading: number) {
 }
 
 function mirrorPriority(scenarioId: ScenarioId) {
-  if (scenarioId === 'pillar-side') return '충전구역 표시보다 양쪽 실제 주차선 간격을 우선 확인하세요.'
-  if (scenarioId === 'left-side') return '좌측 미러를 먼저 본 뒤 우측 미러도 확인하세요.'
-  if (scenarioId === 'right-side') return '우측 미러를 먼저 본 뒤 좌측 미러도 확인하세요.'
+  if (scenarioId === 'wall-side') return '벽면 쪽 간격을 먼저 본 뒤 반대편 주차선도 확인하세요.'
+  if (scenarioId === 'one-side') return '차량이 있는 쪽을 먼저 본 뒤 빈 쪽 주차선도 확인하세요.'
+  if (scenarioId === 'tight-entry') return '닿을 것 같으면 먼저 정지하고 중앙으로 풀어 전진 수정하세요.'
   return '좌우 사이드미러를 짧게 번갈아 보며 양쪽 간격을 비교하세요.'
 }
 
-export function getLearningHint(vehicle: VehicleState, scenarioId: ScenarioId): LearningHint | null {
-  if (detectCollision(vehicle)) {
+export function getLearningHint(vehicle: VehicleState, scenarioId: ScenarioId, runtime?: ScenarioRuntime): LearningHint | null {
+  if (detectCollision(vehicle, 0, runtime)) {
     return { id: 'collision', level: 'danger', title: '충돌했습니다', message: '브레이크를 유지하고 처음 위치에서 다시 시도하세요.' }
   }
 
-  const closeObstacle = detectCollision(vehicle, 0.5)
+  const closeObstacle = detectCollision(vehicle, 0.5, runtime)
   if (closeObstacle) {
     const target = closeObstacle.kind === 'pillar' ? '기둥' : closeObstacle.kind === 'wall' ? '벽' : '주차 차량'
     return { id: `clearance-${closeObstacle.obstacleId}`, level: 'danger', title: `${target}이 너무 가깝습니다`, message: '즉시 정지하고 간격을 확인하세요.' }
   }
 
-  const rearDistance = vehicle.gear === 'R' ? rearSensorDistance(vehicle) : null
+  const rearDistance = vehicle.gear === 'R' ? rearSensorDistance(vehicle, 5, runtime) : null
   if (rearDistance !== null && rearDistance <= 0.7) {
     return { id: 'rear-danger', level: 'danger', title: `후방 ${rearDistance.toFixed(1)}m`, message: '즉시 브레이크를 밟으세요.' }
   }

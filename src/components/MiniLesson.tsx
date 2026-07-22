@@ -15,6 +15,7 @@ export function MiniLessonView({ lesson, onFinish }: MiniLessonProps) {
     () => localStorage.getItem(ALWAYS_SKIP_LESSONS_KEY) === 'true',
   )
   const step = lesson.steps[stepIndex]
+  const isCorrectionLesson = lesson.scenarioId === 'tight-entry'
 
   const finish = () => {
     let seen: string[]
@@ -62,11 +63,13 @@ export function MiniLessonView({ lesson, onFinish }: MiniLessonProps) {
               <rect x="198" y="132" width="34" height="84" rx="7" />
               <path d="M203 147H227M203 199H227" />
             </g>
-            <g className="lesson-charger"><rect x="250" y="104" width="15" height="25" rx="3" /><circle cx="257.5" cy="111" r="2.5" /><path d="M258 129C270 134 269 143 262 146" /><text x="257.5" y="122">EV</text></g>
+            <g className="lesson-charger"><rect x="250" y="104" width="15" height="25" rx="3" /><circle cx="257.5" cy="111" r="2.5" /><path d="M258 129C270 134 269 143 262 146" /><text x="257.5" y="122">!</text></g>
             <path className="lesson-motion-path lesson-path-approach" d="M112 42H190" markerEnd="url(#lesson-arrow)" />
             <path className="lesson-motion-path lesson-path-angle" d="M190 42C218 42 238 48 240 70" markerEnd="url(#lesson-arrow)" />
             <path className="lesson-motion-path lesson-path-reverse-turn" d="M240 70C236 108 196 112 160 142" markerEnd="url(#lesson-arrow)" />
             <path className="lesson-motion-path lesson-path-straight" d="M160 142V204" markerEnd="url(#lesson-arrow)" />
+            <path className="lesson-motion-path lesson-path-correction-forward" d="M160 142V100" markerEnd="url(#lesson-arrow)" />
+            <path className="lesson-motion-path lesson-path-correction-reverse" d="M160 100V190" markerEnd="url(#lesson-arrow)" />
             <line className="lesson-reference lesson-reference-entry" x1="190" y1="18" x2="190" y2="91" />
             <line className="lesson-reference lesson-reference-middle" x1="130" y1="105" x2="190" y2="105" />
             <g className="lesson-stop lesson-stop-entry" transform="translate(190 42)"><circle r="13" /><text y="4">정지</text></g>
@@ -82,14 +85,16 @@ export function MiniLessonView({ lesson, onFinish }: MiniLessonProps) {
               <path className="lesson-guide-red" d="M145 175H175" />
               <path className="lesson-guide-yellow" d="M145 198H175M145 218H175" />
             </g>
-            <g className="lesson-user-car" transform={stepIndex === 2 ? 'translate(240 70) rotate(90)' : undefined}>
+            <g className="lesson-user-car" transform={isCorrectionLesson && [0, 1].includes(stepIndex) ? 'translate(160 142) rotate(8)' : isCorrectionLesson && stepIndex === 3 ? 'translate(160 100)' : !isCorrectionLesson && stepIndex === 2 ? 'translate(240 70) rotate(90)' : undefined}>
               <rect x="-34" y="-15" width="68" height="30" rx="7" />
               <path d="M-18 -11V11M18 -11V11" />
               <circle cx="-25" cy="-10" r="2" /><circle cx="-25" cy="10" r="2" />
-              {stepIndex === 0 && <animateMotion dur="3s" path="M112 42 H190" rotate="auto" repeatCount="indefinite" />}
-              {stepIndex === 1 && <animateMotion dur="3.2s" path="M190 42 C218 42 238 48 240 70" rotate="auto" repeatCount="indefinite" />}
-              {stepIndex === 3 && <animateMotion dur="3.6s" path="M240 70 C236 108 196 112 160 142" rotate="auto-reverse" repeatCount="indefinite" />}
-              {stepIndex === 4 && <animateMotion dur="3s" path="M160 142 V204" rotate="auto-reverse" repeatCount="indefinite" />}
+              {!isCorrectionLesson && stepIndex === 0 && <animateMotion dur="3s" path="M112 42 H190" rotate="auto" repeatCount="indefinite" />}
+              {!isCorrectionLesson && stepIndex === 1 && <animateMotion dur="3.2s" path="M190 42 C218 42 238 48 240 70" rotate="auto" repeatCount="indefinite" />}
+              {!isCorrectionLesson && stepIndex === 3 && <animateMotion dur="3.6s" path="M240 70 C236 108 196 112 160 142" rotate="auto-reverse" repeatCount="indefinite" />}
+              {!isCorrectionLesson && stepIndex === 4 && <animateMotion dur="3s" path="M160 142 V204" rotate="auto-reverse" repeatCount="indefinite" />}
+              {isCorrectionLesson && stepIndex === 2 && <animateMotion dur="2.8s" path="M160 142 V100" rotate="auto" repeatCount="indefinite" />}
+              {isCorrectionLesson && stepIndex === 4 && <animateMotion dur="3.2s" path="M160 100 V190" rotate="auto-reverse" repeatCount="indefinite" />}
             </g>
             <g className="lesson-steering-symbol" transform="translate(43 190)">
               <circle r="19" /><circle r="5" /><path d="M0-5V-18M-4 3L-16 11M4 3L16 11" />

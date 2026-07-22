@@ -7,7 +7,7 @@ export const TARGET_PARKING_BAY = {
   top: 6.72,
   bottom: 13.2,
   center: { x: 15, y: 9.46 },
-  heading: Math.PI / 2,
+  heading: -Math.PI / 2,
 } as const
 
 export type ParkingResult = {

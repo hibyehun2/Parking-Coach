@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { renderParkingLot } from '../../engine/parkingLotRenderer'
 import type { VehicleState } from '../../engine/vehiclePhysics'
+import type { ScenarioRuntime } from '../../types/practice'
 
 type RearSide = 'left' | 'right'
 
@@ -16,7 +17,7 @@ function rearSideFocus(vehicle: VehicleState, sideName: RearSide) {
   }
 }
 
-function RearSideCanvas({ vehicle, sideName }: { vehicle: VehicleState; sideName: RearSide }) {
+function RearSideCanvas({ vehicle, sideName, runtime }: { vehicle: VehicleState; sideName: RearSide; runtime: ScenarioRuntime }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -36,6 +37,7 @@ function RearSideCanvas({ vehicle, sideName }: { vehicle: VehicleState; sideName
       renderParkingLot(context, width, height, vehicle, {
         focus: { ...focus, span: 5.2, heading: vehicle.heading },
         assistanceSide: sideName,
+        runtime,
       })
       const innerEdge = sideName === 'left' ? width : 0
       const direction = sideName === 'left' ? -1 : 1
@@ -71,19 +73,19 @@ function RearSideCanvas({ vehicle, sideName }: { vehicle: VehicleState; sideName
     observer.observe(canvas)
     draw()
     return () => observer.disconnect()
-  }, [sideName, vehicle])
+  }, [runtime, sideName, vehicle])
 
   return <canvas ref={canvasRef} aria-hidden="true" />
 }
 
-export function CornerAssistance({ vehicle }: { vehicle: VehicleState }) {
+export function CornerAssistance({ vehicle, runtime }: { vehicle: VehicleState; runtime: ScenarioRuntime }) {
   return (
     <div className="corner-assistance" aria-label="좌우 후방 간격 보조 화면">
       {(['left', 'right'] as const).map((sideName) => (
         <div className={`corner-view corner-view-${sideName}`} key={sideName}>
           <div className="mirror-glass">
             <span>{sideName === 'left' ? '좌측 후방 간격뷰' : '우측 후방 간격뷰'}</span>
-            <RearSideCanvas vehicle={vehicle} sideName={sideName} />
+            <RearSideCanvas vehicle={vehicle} sideName={sideName} runtime={runtime} />
           </div>
         </div>
       ))}

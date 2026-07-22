@@ -8,16 +8,22 @@ import {
 import { OrientationNotice } from '../components/OrientationNotice'
 import { VehicleSimulator } from '../components/simulator/VehicleSimulator'
 import { getScenario } from '../data/scenarios'
+import { createScenarioRuntime, loadFirstSuccess } from '../data/scenarios'
 import { getLesson } from '../data/lessons'
 import type { VehicleState } from '../engine/vehiclePhysics'
+import type { ScenarioRuntime } from '../types/practice'
 
 export function SimulatorPage() {
   const [searchParams] = useSearchParams()
   const location = useLocation()
-  const retryState = (location.state as { retryVehicle?: VehicleState } | null)?.retryVehicle
+  const retryPayload = location.state as { retryVehicle?: VehicleState; runtime?: ScenarioRuntime } | null
+  const retryState = retryPayload?.retryVehicle
   const scenario = getScenario(searchParams.get('scenario'))
   const isPracticeMode = searchParams.get('mode') === 'practice'
   const forceLesson = searchParams.get('lesson') === '1'
+  const [runtime] = useState(() => retryPayload?.runtime ?? createScenarioRuntime(scenario.id, {
+    firstSuccess: loadFirstSuccess()[scenario.id],
+  }))
   const [showLesson, setShowLesson] = useState(() => {
     if (forceLesson) return true
     if (localStorage.getItem(ALWAYS_SKIP_LESSONS_KEY) === 'true') return false
@@ -48,6 +54,7 @@ export function SimulatorPage() {
           scenarioId={scenario.id}
           mode={isPracticeMode ? 'practice' : 'learning'}
           initialVehicle={retryState}
+          runtime={runtime}
           onShowLesson={() => setShowLesson(true)}
         />
       </section>

@@ -11,6 +11,8 @@ export type ReplayEvent = {
   label: string
   vehicle: VehicleState
   collision?: Collision
+  impactVehicle?: VehicleState
+  phase?: 'approach' | 'turning-reverse' | 'straight-reverse' | 'finish'
 }
 
 export type ResultInsight = {
@@ -43,17 +45,6 @@ export function analyzeParkingResult(result: ParkingResult): ResultInsight {
     mistakes.push(`${result.collisionCount}회의 충돌이 발생했습니다.`)
     improvements.push('충돌 지점 직전부터 다시 시작해 좌우 미러를 더 짧게 교차 확인하세요.')
   }
-  if (result.centerError <= 0.35) wellDone.push(`중심 오차를 ${Math.round(result.centerError * 100)}cm로 유지했습니다.`)
-  else {
-    mistakes.push(`중심에서 ${Math.round(result.centerError * 100)}cm 벗어났습니다.`)
-    improvements.push('마지막 직선 후진에서 양쪽 주차선 간격을 같게 맞추세요.')
-  }
-  if (result.angleErrorDegrees <= 5) wellDone.push(`각도 오차를 ${result.angleErrorDegrees.toFixed(1)}°로 정렬했습니다.`)
-  else {
-    mistakes.push(`주차선과 ${result.angleErrorDegrees.toFixed(1)}° 기울어졌습니다.`)
-    improvements.push('차체가 주차선과 평행해지는 순간 정지하고 핸들을 중앙으로 복귀하세요.')
-  }
-
   return { wellDone, mistakes, improvements }
 }
 

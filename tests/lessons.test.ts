@@ -5,19 +5,21 @@ import { lessonDuration, lessons } from '../src/data/lessons.ts'
 test('모든 주차 상황에 설명과 조작이 분리된 5단계 미니 레슨이 있다', () => {
   assert.deepEqual(Object.keys(lessons).sort(), [
     'both-sides',
-    'left-side',
-    'pillar-side',
-    'right-side',
+    'one-side',
+    'tight-entry',
+    'wall-side',
   ])
 
   for (const lesson of Object.values(lessons)) {
     assert.equal(lesson.steps.length, 5)
     assert.ok(lesson.steps.every((step) => step.title && step.description && step.cue))
-    assert.deepEqual(lesson.steps.map((step) => step.gear), ['D', 'D', 'R', 'R', 'R'])
-    assert.deepEqual(
-      lesson.steps.map((step) => step.steering),
-      ['중앙', '좌측 끝까지', '우측 끝까지', '우측 끝까지', '중앙'],
-    )
+    if (lesson.scenarioId === 'tight-entry') {
+      assert.deepEqual(lesson.steps.map((step) => step.gear), ['R', 'R', 'D', 'R', 'R'])
+      assert.match(lesson.steps.map((step) => step.description).join(' '), /정지.*중앙.*전진.*재진입/)
+    } else {
+      assert.deepEqual(lesson.steps.map((step) => step.gear), ['D', 'D', 'R', 'R', 'R'])
+      assert.deepEqual(lesson.steps.map((step) => step.steering), ['중앙', '좌측 끝까지', '우측 끝까지', '우측 끝까지', '중앙'])
+    }
     assert.ok(lesson.steps.every((step) => step.check), `${lesson.scenarioId}: 확인 지점이 필요합니다.`)
   }
 })

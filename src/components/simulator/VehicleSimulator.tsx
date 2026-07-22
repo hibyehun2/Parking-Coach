@@ -11,8 +11,8 @@ import { evaluateParking } from '../../engine/parkingEvaluation'
 import { isRearWheelAtStop } from '../../engine/parkingLotRenderer'
 import { recordPracticeSession } from '../../engine/practiceHistory'
 import { cloneVehicleState, type ReplayEvent } from '../../engine/sessionReplay'
-import { INITIAL_VEHICLE_STATE, type Gear, type VehicleState } from '../../engine/vehiclePhysics'
-import type { PracticeMode, ScenarioId } from '../../types/practice'
+import { type Gear, type VehicleState } from '../../engine/vehiclePhysics'
+import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../../types/practice'
 
 type VehicleSimulatorProps = {
   learningMode: boolean
@@ -20,9 +20,10 @@ type VehicleSimulatorProps = {
   mode: PracticeMode
   initialVehicle?: VehicleState
   onShowLesson: () => void
+  runtime: ScenarioRuntime
 }
 
-export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicle, onShowLesson }: VehicleSimulatorProps) {
+export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicle, onShowLesson, runtime }: VehicleSimulatorProps) {
   const navigate = useNavigate()
   const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent)
     || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
@@ -33,9 +34,10 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
     elapsedSeconds: 0,
     type: 'start',
     label: initialVehicle ? '실수 지점에서 새 세션 시작' : '연습 시작',
-    vehicle: cloneVehicleState(initialVehicle ?? INITIAL_VEHICLE_STATE),
+      vehicle: cloneVehicleState(initialVehicle ?? runtime.initialVehicle),
   }])
   const recordedCollisionCountRef = useRef(0)
+  const safeSnapshotsRef = useRef<{ recordedAt: number; vehicle: VehicleState }[]>([])
   const wheelStopContactRef = useRef(false)
   const wheelStopTimerRef = useRef<number | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -53,13 +55,22 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
     centerSteering,
     setControlsLocked,
     reset,
-  } = useVehicleSimulation(initialVehicle)
-  const danger = learningMode ? detectCollision(vehicle, 0.42) : null
+  } = useVehicleSimulation(initialVehicle ?? runtime.initialVehicle, runtime)
+  const danger = learningMode ? detectCollision(vehicle, 0.42, runtime) : null
   const parkingEvaluation = evaluateParking(vehicle, collisions)
 
   useEffect(() => {
     sessionStartedAtRef.current = Date.now()
   }, [])
+
+  useEffect(() => {
+    if (detectCollision(vehicle, 0, runtime)) return
+    const now = Date.now()
+    const previous = safeSnapshotsRef.current.at(-1)
+    if (previous && now - previous.recordedAt < 250) return
+    safeSnapshotsRef.current = [...safeSnapshotsRef.current, { recordedAt: now, vehicle: cloneVehicleState(vehicle) }]
+      .filter((snapshot) => now - snapshot.recordedAt <= 2500)
+  }, [runtime, vehicle])
 
   useEffect(() => {
     const touching = isRearWheelAtStop(vehicle)
@@ -80,13 +91,21 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
     const collision = collisions.at(-1)
     if (!collision || collisions.length <= recordedCollisionCountRef.current) return
     recordedCollisionCountRef.current = collisions.length
+    const retrySnapshot = safeSnapshotsRef.current
+      .slice()
+      .reverse()
+      .find((snapshot) => Date.now() - snapshot.recordedAt >= 700)
     replayRef.current.push({
       id: `collision-${collisions.length}`,
       elapsedSeconds: (Date.now() - sessionStartedAtRef.current) / 1000,
       type: 'collision',
       label: `${collision.kind === 'vehicle' ? '주차 차량' : collision.kind === 'pillar' ? '기둥' : '벽'} 충돌`,
-      vehicle: cloneVehicleState(vehicle),
+      vehicle: cloneVehicleState(retrySnapshot?.vehicle ?? vehicle),
       collision,
+      impactVehicle: cloneVehicleState(vehicle),
+      phase: vehicle.gear === 'R'
+        ? (Math.abs(vehicle.steeringAngle) >= .12 ? 'turning-reverse' : 'straight-reverse')
+        : 'approach',
     })
   }, [collisions, vehicle])
 
@@ -140,12 +159,13 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
     reset()
     sessionStartedAtRef.current = Date.now()
     recordedCollisionCountRef.current = 0
+    safeSnapshotsRef.current = []
     replayRef.current = [{
       id: 'start',
       elapsedSeconds: 0,
       type: 'start',
       label: '처음 위치에서 새 세션 시작',
-      vehicle: cloneVehicleState(INITIAL_VEHICLE_STATE),
+      vehicle: cloneVehicleState(runtime.initialVehicle),
     }]
   }
 
@@ -157,10 +177,11 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
       id: 'finish',
       elapsedSeconds: (Date.now() - sessionStartedAtRef.current) / 1000,
       type: 'finish',
+      phase: 'finish',
       label: result.success ? '주차 완료' : '미완료 상태로 연습 종료',
       vehicle: cloneVehicleState(vehicle),
     })
-    recordPracticeSession(result, scenarioId, mode)
+    recordPracticeSession(result, scenarioId, mode, undefined, new Date(), runtime)
   }
 
   const completeParking = () => {
@@ -169,7 +190,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
   }
 
   const navigateToResult = (result: ReturnType<typeof evaluateParking>) => {
-    navigate('/result', { state: { result, scenarioId, mode, replay: replayRef.current } })
+    navigate('/result', { state: { result, scenarioId, mode, replay: replayRef.current, runtime } })
   }
 
   const finishIncompletePractice = () => {
@@ -195,9 +216,9 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
 
   return (
     <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
-      <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions} wheelStopActive={wheelStopActive}>
-        <CornerAssistance vehicle={vehicle} />
-        {learningMode && <LearningHintPanel vehicle={vehicle} scenarioId={scenarioId} />}
+      <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions} wheelStopActive={wheelStopActive} runtime={runtime}>
+        <CornerAssistance vehicle={vehicle} runtime={runtime} />
+        {learningMode && <LearningHintPanel vehicle={vehicle} scenarioId={scenarioId} runtime={runtime} />}
         <div className="driving-console separate-console" aria-label="차량 운전 조작부">
           <SteeringWheel
             steeringAngle={vehicle.steeringAngle}

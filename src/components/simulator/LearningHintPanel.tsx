@@ -1,17 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { getLearningHint, type LearningHint } from '../../engine/learningHints'
 import type { VehicleState } from '../../engine/vehiclePhysics'
-import type { ScenarioId } from '../../types/practice'
+import type { ScenarioId, ScenarioRuntime } from '../../types/practice'
 
 type LearningHintPanelProps = {
   vehicle: VehicleState
   scenarioId: ScenarioId
+  runtime: ScenarioRuntime
 }
 
 const REPEAT_DELAY = 8000
 
-export function LearningHintPanel({ vehicle, scenarioId }: LearningHintPanelProps) {
-  const candidate = getLearningHint(vehicle, scenarioId)
+export function LearningHintPanel({ vehicle, scenarioId, runtime }: LearningHintPanelProps) {
+  const candidate = getLearningHint(vehicle, scenarioId, runtime)
   const [visibleHint, setVisibleHint] = useState<LearningHint | null>(candidate)
   const lastShownRef = useRef(new Map<string, number>())
   const candidateId = candidate?.id

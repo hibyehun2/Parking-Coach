@@ -85,6 +85,10 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .obstacle-left { left: 7%; }
 .obstacle-right { right: 7%; }
 .car-left .obstacle-right, .car-right .obstacle-left { display: none; }
+.wall-side .obstacle-left { display: none; }
+.wall-side .obstacle-right { right: 5%; width: 10%; height: 86%; border-radius: 2px; background: #a99f91; }
+.tight-entry .obstacle-left { transform: rotate(-8deg); }
+.tight-entry .obstacle-right { transform: rotate(8deg); }
 .ev-space .obstacle-left { display: none; }
 .ev-space .obstacle-right { width: 20%; height: 10%; border-radius: 4px; background: rgba(128, 202, 177, .48); }
 .ev-space::after { content: "EV"; position: absolute; right: 8%; bottom: 30%; color: rgba(175, 231, 212, .62); font-size: .72rem; font-weight: 900; }
@@ -187,7 +191,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .lesson-parked rect { fill: #cdd5d2; stroke: #f4f7f6; stroke-width: 1.5; }
 .lesson-parked path { fill: none; stroke: #788581; stroke-width: 5; }
 .lesson-charger { display: none; opacity: .5; }
-.lesson-scene-pillar-side .lesson-charger { display: block; }
+.lesson-scene-tight-entry .lesson-charger { display: block; }
 .lesson-charger rect { fill: #dce5e1; stroke: #8cb9aa; stroke-width: 1.5; }
 .lesson-charger circle { fill: #70c6a7; }
 .lesson-charger path { fill: none; stroke: #8cb9aa; stroke-width: 1.5; }
@@ -200,6 +204,13 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .lesson-stage-1 .lesson-path-angle,
 .lesson-stage-3 .lesson-path-reverse-turn,
 .lesson-stage-4 .lesson-path-straight { opacity: 1; }
+.lesson-path-correction-forward, .lesson-path-correction-reverse { display: none; }
+.lesson-scene-tight-entry.lesson-stage-2 .lesson-path-correction-forward,
+.lesson-scene-tight-entry.lesson-stage-4 .lesson-path-correction-reverse { display: block; opacity: 1; }
+.lesson-scene-tight-entry .lesson-path-approach,
+.lesson-scene-tight-entry .lesson-path-angle,
+.lesson-scene-tight-entry .lesson-path-reverse-turn,
+.lesson-scene-tight-entry .lesson-path-straight { display: none; }
 .lesson-reference { stroke: #ffe078; stroke-width: 2.5; stroke-dasharray: 4 4; }
 .lesson-reference { display: none; }
 .lesson-stage-0 .lesson-reference-entry, .lesson-stage-1 .lesson-reference-middle { display: block; }
@@ -217,18 +228,20 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .lesson-mirror-right { animation-delay: .7s; }
 @keyframes lesson-mirror-pulse { 50% { opacity: .35; } }
 .lesson-danger { fill: rgba(255,91,80,.14); stroke: #ff756b; stroke-width: 3; opacity: 0; animation: lesson-danger-pulse 1.2s ease-in-out infinite; }
-.lesson-stage-3.lesson-scene-left-side .lesson-danger-left,
-.lesson-stage-3.lesson-scene-right-side .lesson-danger-right,
+.lesson-stage-3.lesson-scene-one-side .lesson-danger-left,
+.lesson-stage-3.lesson-scene-wall-side .lesson-danger-right,
 .lesson-stage-3.lesson-scene-both-sides .lesson-danger-left,
 .lesson-stage-3.lesson-scene-both-sides .lesson-danger-right,
+.lesson-stage-0.lesson-scene-tight-entry .lesson-danger-left,
+.lesson-stage-0.lesson-scene-tight-entry .lesson-danger-right { opacity: 1; }
 .lesson-reverse-guide { display: none; fill: none; stroke-linecap: round; }
 .lesson-stage-4 .lesson-reverse-guide { display: block; }
 .lesson-guide-neutral { stroke: #32a8ff; stroke-width: 3; stroke-dasharray: 5 4; }
 .lesson-guide-dynamic { stroke: #ffd60a; stroke-width: 2; }
 .lesson-guide-red { stroke: #ff453a; stroke-width: 4; }
 .lesson-guide-yellow { stroke: #ffd60a; stroke-width: 3; }
-.lesson-scene-left-side .lesson-parked-right, .lesson-scene-right-side .lesson-parked-left { opacity: .16; }
-.lesson-scene-pillar-side .lesson-parked-right { opacity: .14; }
+.lesson-scene-one-side .lesson-parked-right, .lesson-scene-wall-side .lesson-parked-left { opacity: .16; }
+.lesson-scene-tight-entry .lesson-parked-right { opacity: .7; }
 .lesson-steering-symbol circle, .lesson-steering-symbol path { fill: none; stroke: rgba(255,255,255,.9); stroke-width: 3; }
 .lesson-steering-symbol .lesson-wheel-arrow { stroke: #ffe078; stroke-width: 3; }
 .lesson-driving-state { position: absolute; right: 8px; top: 8px; display: flex; gap: 6px; }
@@ -364,6 +377,36 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .result-start-link { width: fit-content; }
 .mistake-retry { cursor: pointer; }
 .result-coaching, .replay-timeline { margin-top: 30px; }
+.collision-only-summary { grid-template-columns: minmax(0, 1fr); }
+.collision-quiz { margin-top: 30px; padding: 22px; border: 1px solid rgba(255,255,255,.82); border-radius: 24px; background: rgba(255,255,255,.72); box-shadow: 0 14px 40px rgba(30,53,44,.09); }
+.collision-quiz header span { color: var(--brand); font-size: .75rem; font-weight: 900; }
+.collision-quiz h2 { margin-top: 4px; }
+.quiz-layout { margin-top: 16px; display: grid; grid-template-columns: minmax(240px, .85fr) minmax(280px, 1.15fr); gap: 22px; align-items: center; }
+.quiz-layout svg { width: 100%; border-radius: 18px; }
+.quiz-road { fill: #59635f; }
+.quiz-lines { fill: none; stroke: rgba(255,255,255,.78); stroke-width: 3; }
+.quiz-wall { fill: #a89f93; }
+.quiz-obstacle { fill: #dce2df; stroke: white; stroke-width: 2; }
+.quiz-car > rect:first-child { fill: #128356; stroke: #b7ffe4; stroke-width: 2; }
+.quiz-glass { fill: #173d32; }
+.quiz-impact { fill: rgba(255,69,58,.22); stroke: #ff453a; stroke-width: 4; animation: lesson-danger-pulse 1.2s ease-in-out infinite; }
+.quiz-wrong-path, .quiz-correction-path { fill: none; stroke-width: 5; stroke-linecap: round; stroke-dasharray: 8 6; }
+.quiz-wrong-path { stroke: #ff6b62; }
+.quiz-correction-path { stroke: #49d19b; }
+.quiz-copy { display: grid; gap: 12px; }
+.quiz-copy small { color: var(--brand); font-weight: 850; }
+.quiz-copy > strong { font-size: 1.08rem; line-height: 1.45; }
+.quiz-choices { display: grid; gap: 8px; }
+.quiz-choices button, .quiz-next { min-height: 44px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 12px; text-align: left; background: white; font-weight: 750; }
+.quiz-choices button.correct { border-color: #4ec99b; color: #096345; background: #ecfff7; }
+.quiz-choices button.wrong { border-color: #ed8f87; color: #8e3028; background: #fff1ef; }
+.quiz-copy p { margin: 0; line-height: 1.55; }
+.quiz-correct-copy { color: #126d4f; }
+.quiz-wrong-copy { color: #9a3e35; }
+.quiz-next { width: fit-content; color: white; background: var(--brand); }
+.quiz-complete { padding: 12px; border-radius: 12px; color: #126d4f; background: #e9faf3; }
+.no-collision-feedback { margin-top: 28px; padding: 20px; border: 1px solid #a7dbc7; border-radius: 18px; background: #f5fcf9; }
+.no-collision-feedback p { margin-bottom: 0; color: var(--muted); }
 .result-coaching > h2, .replay-timeline h2 { font-size: 1.5rem; }
 .result-coaching > div { margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .result-coaching article { padding: 18px; border: 1px solid var(--border); border-radius: 17px; background: rgba(255,255,255,.68); }
@@ -433,6 +476,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 }
 
 @media (max-width: 720px) {
+  .quiz-layout { grid-template-columns: minmax(0, 1fr); }
   .site-header, .main-content, .site-footer { width: min(100% - 32px, 1180px); }
   .site-header { min-height: 68px; }
   .brand span:last-child { display: none; }

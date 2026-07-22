@@ -11,7 +11,7 @@ test('충돌과 장애물 근접 경고가 일반 안내보다 우선한다', ()
   assert.equal(collision?.level, 'danger')
   assert.equal(collision?.id, 'collision')
 
-  const nearVehicle = getLearningHint({ ...INITIAL_VEHICLE_STATE, x: parkedVehicle.x, y: parkedVehicle.y - 2.85, heading: parkedVehicle.heading }, 'left-side')
+  const nearVehicle = getLearningHint({ ...INITIAL_VEHICLE_STATE, x: parkedVehicle.x, y: parkedVehicle.y - 2.85, heading: parkedVehicle.heading }, 'one-side')
   assert.equal(nearVehicle?.level, 'danger')
 })
 
@@ -34,10 +34,10 @@ test('후진 조향 중에는 상황에 맞는 간격 화면 확인을 권장한
     y: 3,
     gear: 'R',
     steeringAngle: 0.3,
-  }, 'right-side')
+  }, 'wall-side')
   assert.equal(hint?.id, 'alternate-side-mirrors')
   assert.match(hint?.title ?? '', /좌우 사이드미러/)
-  assert.match(hint?.message ?? '', /우측 미러.*좌측 미러/)
+  assert.match(hint?.message ?? '', /벽면.*반대편/)
 })
 
 test('후진을 시작했지만 조향하지 않았으면 주차 방향 최대 조향을 안내한다', () => {

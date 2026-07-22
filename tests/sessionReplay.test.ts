@@ -26,7 +26,7 @@ test('결과 분석 문장은 실제 성공 기록과 일치한다', () => {
   const insight = analyzeParkingResult(result())
 
   assert.ok(insight.wellDone.some((item) => item.includes('충돌 없이')))
-  assert.ok(insight.wellDone.some((item) => item.includes('10cm')))
+  assert.ok(insight.wellDone.some((item) => item.includes('주차선 안')))
   assert.equal(insight.mistakes.length, 0)
   assert.equal(insight.improvements.length, 0)
 })
@@ -43,8 +43,6 @@ test('미완료 원인별 주요 실수와 개선 행동을 만든다', () => {
 
   assert.ok(insight.mistakes.some((item) => item.includes('주차선 밖')))
   assert.ok(insight.mistakes.some((item) => item.includes('2회의 충돌')))
-  assert.ok(insight.mistakes.some((item) => item.includes('70cm')))
-  assert.ok(insight.mistakes.some((item) => item.includes('12.0°')))
   assert.equal(insight.mistakes.length, insight.improvements.length)
 })
 

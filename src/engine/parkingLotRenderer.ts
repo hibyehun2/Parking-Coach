@@ -17,6 +17,7 @@ import {
   type Collision,
 } from './collisionDetection.ts'
 import { TARGET_PARKING_BAY } from './parkingEvaluation.ts'
+import type { ScenarioRuntime, ScenarioWall } from '../types/practice.ts'
 
 type VehicleStyle = {
   body: string
@@ -239,8 +240,8 @@ function drawParkingLines(context: CanvasRenderingContext2D) {
   context.restore()
 }
 
-function drawStructure(context: CanvasRenderingContext2D) {
-  for (const wall of WALLS) {
+function drawStructure(context: CanvasRenderingContext2D, walls: readonly ScenarioWall[] = WALLS) {
+  for (const wall of walls) {
     const concrete = context.createLinearGradient(wall.x, wall.y, wall.x, wall.y + wall.height)
     concrete.addColorStop(0, '#d8d1c6')
     concrete.addColorStop(1, '#918b82')
@@ -276,7 +277,7 @@ export const WHEEL_STOP = {
     { left: 14.02, right: 14.62 },
     { left: 15.38, right: 15.98 },
   ],
-  y: 8.05,
+  y: 10.81,
 } as const
 
 export function isRearWheelAtStop(vehicle: ReverseGuideVehicle) {
@@ -314,7 +315,7 @@ function drawRooftopAsphalt(context: CanvasRenderingContext2D) {
   context.fillRect(0, 0, PARKING_WORLD.width, PARKING_WORLD.height)
 
   const sunlight = context.createRadialGradient(3, 0, 0, 3, 0, 21)
-  sunlight.addColorStop(0, 'rgba(255, 224, 173, .34)')
+  sunlight.addColorStop(0, 'rgba(255, 224, 173, .22)')
   sunlight.addColorStop(0.55, 'rgba(244, 190, 125, .08)')
   sunlight.addColorStop(1, 'rgba(24, 37, 36, .16)')
   context.fillStyle = sunlight
@@ -353,7 +354,7 @@ function drawViewportScenery(
   context.fillRect(0, 0, width, height)
 
   context.save()
-  context.globalAlpha = 0.46
+  context.globalAlpha = 0.36
   for (const side of [-1, 1]) {
     const edge = side < 0 ? 0 : width
     for (let index = 0; index < 3; index += 1) {
@@ -583,6 +584,7 @@ export function renderParkingLot(
     highlightParkedSide?: 'left' | 'right'
     assistanceSide?: AssistanceSide
     wheelStopActive?: boolean
+    runtime?: ScenarioRuntime
   } = {},
 ) {
   context.clearRect(0, 0, viewportWidth, viewportHeight)
@@ -616,30 +618,23 @@ export function renderParkingLot(
 
   drawRooftopAsphalt(context)
 
-  drawStructure(context)
+  drawStructure(context, options.runtime?.walls)
   drawParkingLines(context)
   drawWheelStop(context, Boolean(options.wheelStopActive))
   drawReverseGuide(context, vehicle)
 
-  const [leftVehicle, rightVehicle] = PARKED_VEHICLES
-  const showLeftVehicle = !options.assistanceSide || options.assistanceSide === 'right'
-  const showRightVehicle = !options.assistanceSide || options.assistanceSide === 'left'
-  if (showLeftVehicle) {
-    drawVehicle(context, leftVehicle.x, leftVehicle.y, leftVehicle.heading, {
-      body: '#171c20',
-      roof: '#303940',
-      outline: '#737c81',
-      variant: 'sedan',
-      highlight: options.assistanceSide === 'right' || options.highlightParkedSide === 'left',
-    })
-  }
-  if (showRightVehicle) {
-    drawVehicle(context, rightVehicle.x, rightVehicle.y, rightVehicle.heading, {
-      body: '#e7e5df',
-      roof: '#aeb8bb',
-      outline: '#ffffff',
-      variant: 'suv',
-      highlight: options.assistanceSide === 'left' || options.highlightParkedSide === 'right',
+  const parkedVehicles = options.runtime?.parkedVehicles ?? PARKED_VEHICLES.map((item, index) => ({ ...item, side: index ? 'right' as const : 'left' as const }))
+  for (const parked of parkedVehicles) {
+    const visibleInAssistance = !options.assistanceSide
+      || (options.assistanceSide === 'left' ? parked.side === 'right' : parked.side === 'left')
+    if (!visibleInAssistance) continue
+    const isSedan = parked.side === 'left'
+    drawVehicle(context, parked.x, parked.y, parked.heading, {
+      body: isSedan ? '#171c20' : '#e7e5df',
+      roof: isSedan ? '#303940' : '#aeb8bb',
+      outline: isSedan ? '#737c81' : '#ffffff',
+      variant: isSedan ? 'sedan' : 'suv',
+      highlight: Boolean(options.assistanceSide) || options.highlightParkedSide === parked.side,
     })
   }
   drawVehicle(context, vehicle.x, vehicle.y, vehicle.heading, {
@@ -673,4 +668,21 @@ export function renderParkingLot(
   }
 
   context.restore()
+  if (!options.focus) {
+    context.save()
+    const focusShade = context.createRadialGradient(
+      viewportWidth / 2,
+      viewportHeight * .55,
+      Math.min(viewportWidth, viewportHeight) * .18,
+      viewportWidth / 2,
+      viewportHeight * .55,
+      Math.max(viewportWidth, viewportHeight) * .72,
+    )
+    focusShade.addColorStop(0, 'rgba(8, 16, 13, 0)')
+    focusShade.addColorStop(.72, 'rgba(8, 16, 13, .05)')
+    focusShade.addColorStop(1, 'rgba(8, 16, 13, .2)')
+    context.fillStyle = focusShade
+    context.fillRect(0, 0, viewportWidth, viewportHeight)
+    context.restore()
+  }
 }

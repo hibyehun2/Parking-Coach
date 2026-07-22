@@ -1,17 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { ParkingResult } from '../src/engine/parkingEvaluation.ts'
-import {
-  MAX_PRACTICE_SESSIONS,
-  PRACTICE_HISTORY_KEY,
-  calculatePracticeTrend,
-  clearPracticeHistory,
-  countMistakes,
-  loadPracticeHistory,
-  recommendPractice,
-  recordPracticeSession,
-  todayPracticeMessage,
-} from '../src/engine/practiceHistory.ts'
+import { MAX_PRACTICE_SESSIONS, PRACTICE_HISTORY_KEY, calculatePracticeTrend, clearPracticeHistory, countMistakes, loadPracticeHistory, recommendPractice, recordPracticeSession, todayPracticeMessage } from '../src/engine/practiceHistory.ts'
 
 class MemoryStorage implements Storage {
   private values = new Map<string, string>()
@@ -23,99 +13,58 @@ class MemoryStorage implements Storage {
   setItem(key: string, value: string) { this.values.set(key, value) }
 }
 
-function result(overrides: Partial<ParkingResult> = {}): ParkingResult {
-  return {
-    success: true,
-    fullyInside: true,
-    stopped: true,
-    centerError: 0.1,
-    angleErrorDegrees: 1,
-    collisionCount: 0,
-    collisions: [],
-    ...overrides,
-  }
+function result(collisionCount = 0): ParkingResult {
+  return { success: true, fullyInside: true, stopped: true, centerError: .1, angleErrorDegrees: 1, collisionCount, collisions: Array.from({ length: collisionCount }, (_, index) => ({ obstacleId: `parked-${index % 2 ? 'right' : 'left'}`, kind: 'vehicle', position: { x: 15, y: 8 } })) }
 }
 
-test('저장한 연습 기록은 다시 불러와도 유지된다', () => {
+test('저장한 충돌 중심 연습 기록은 다시 불러와도 유지된다', () => {
   const storage = new MemoryStorage()
   recordPracticeSession(result(), 'both-sides', 'learning', storage, new Date('2026-07-22T10:00:00Z'))
-
-  const reloaded = loadPracticeHistory(storage)
-  assert.equal(reloaded.sessions.length, 1)
-  assert.equal(reloaded.sessions[0].scenarioId, 'both-sides')
-  assert.equal(reloaded.sessions[0].completedAt, '2026-07-22T10:00:00.000Z')
+  const session = loadPracticeHistory(storage).sessions[0]
+  assert.equal(session.scenarioId, 'both-sides')
+  assert.equal(session.completedAt, '2026-07-22T10:00:00.000Z')
+  assert.equal('centerError' in session, false)
+  assert.equal('angleErrorDegrees' in session, false)
 })
 
 test('최근 기록은 최신순 10개까지만 저장한다', () => {
   const storage = new MemoryStorage()
-  for (let index = 0; index < 13; index += 1) {
-    recordPracticeSession(result({ centerError: index / 100 }), 'both-sides', 'practice', storage, new Date(1_700_000_000_000 + index * 1000))
-  }
-
+  for (let index = 0; index < 13; index += 1) recordPracticeSession(result(index % 2), 'both-sides', 'practice', storage, new Date(1_700_000_000_000 + index * 1000))
   const history = loadPracticeHistory(storage)
   assert.equal(history.sessions.length, MAX_PRACTICE_SESSIONS)
-  assert.equal(history.sessions[0].centerError, 0.12)
-  assert.equal(history.sessions.at(-1)?.centerError, 0.03)
+  assert.ok(history.sessions[0].completedAt > history.sessions.at(-1)!.completedAt)
 })
 
-test('충돌, 중앙 오차, 각도 오차 실수를 세션별로 정확히 집계한다', () => {
+test('실수 집계는 충돌 횟수만 합산한다', () => {
   const storage = new MemoryStorage()
-  recordPracticeSession(result({ collisionCount: 2, centerError: 0.5 }), 'left-side', 'learning', storage)
-  recordPracticeSession(result({ angleErrorDegrees: 8, centerError: 0.4 }), 'right-side', 'practice', storage)
-  recordPracticeSession(result(), 'both-sides', 'learning', storage)
-
-  assert.deepEqual(countMistakes(loadPracticeHistory(storage).sessions), {
-    collision: 1,
-    'off-center': 2,
-    angle: 1,
-  })
+  recordPracticeSession(result(2), 'one-side', 'learning', storage)
+  recordPracticeSession(result(1), 'wall-side', 'practice', storage)
+  assert.deepEqual(countMistakes(loadPracticeHistory(storage).sessions), { collision: 3 })
 })
 
-test('손상된 브라우저 데이터는 빈 기본값으로 복구한다', () => {
+test('손상된 브라우저 데이터는 버전 2 기본값으로 복구한다', () => {
   const storage = new MemoryStorage()
   storage.setItem(PRACTICE_HISTORY_KEY, '{broken-json')
-
-  assert.deepEqual(loadPracticeHistory(storage), { version: 1, sessions: [] })
-  assert.deepEqual(JSON.parse(storage.getItem(PRACTICE_HISTORY_KEY) ?? ''), { version: 1, sessions: [] })
+  assert.deepEqual(loadPracticeHistory(storage), { version: 2, sessions: [] })
 })
 
 test('기록을 초기화할 수 있다', () => {
   const storage = new MemoryStorage()
-  recordPracticeSession(result(), 'pillar-side', 'learning', storage)
-
-  clearPracticeHistory(storage)
-  assert.equal(loadPracticeHistory(storage).sessions.length, 0)
+  recordPracticeSession(result(), 'tight-entry', 'learning', storage)
+  assert.equal(clearPracticeHistory(storage).sessions.length, 0)
 })
 
-test('최근 오차가 줄면 개선 중으로 분석하고 가장 잦은 실수에 맞춰 추천한다', () => {
+test('최근 충돌이 줄면 개선 중이며 차량 충돌은 수정 연습을 추천한다', () => {
   const storage = new MemoryStorage()
-  const results = [
-    result({ centerError: 0.1, angleErrorDegrees: 1 }),
-    result({ centerError: 0.12, angleErrorDegrees: 1 }),
-    result({ centerError: 0.15, angleErrorDegrees: 2 }),
-    result({ centerError: 0.7, angleErrorDegrees: 10 }),
-    result({ centerError: 0.65, angleErrorDegrees: 9 }),
-    result({ centerError: 0.6, angleErrorDegrees: 8 }),
-  ]
-  results.slice().reverse().forEach((item, index) => {
-    recordPracticeSession(item, 'both-sides', 'learning', storage, new Date(1_700_000_000_000 + index * 1000))
-  })
+  ;[2, 2, 2, 0, 0, 0].forEach((count, index) => recordPracticeSession(result(count), 'both-sides', 'learning', storage, new Date(1_700_000_000_000 + index * 1000)))
   const sessions = loadPracticeHistory(storage).sessions
-
   assert.equal(calculatePracticeTrend(sessions), 'improving')
-  assert.equal(recommendPractice(sessions).scenarioId, 'both-sides')
+  assert.equal(recommendPractice(sessions).scenarioId, 'tight-entry')
 })
 
-test('최근 실수에 따라 오늘의 연습 문구를 선택하고 동률이면 안전 항목을 우선한다', () => {
+test('충돌 기록에 따라 오늘의 수정 연습 문구를 선택한다', () => {
   const storage = new MemoryStorage()
   assert.match(todayPracticeMessage([]), /기본 주차 순서/)
-
-  recordPracticeSession(result({ centerError: 0.6 }), 'both-sides', 'learning', storage)
-  assert.match(todayPracticeMessage(loadPracticeHistory(storage).sessions), /중앙/)
-
-  recordPracticeSession(result({ angleErrorDegrees: 9 }), 'both-sides', 'learning', storage)
-  assert.match(todayPracticeMessage(loadPracticeHistory(storage).sessions), /평행/)
-
-  recordPracticeSession(result({ collisionCount: 1 }), 'both-sides', 'learning', storage)
-  assert.match(todayPracticeMessage(loadPracticeHistory(storage).sessions), /장애물/)
+  recordPracticeSession(result(1), 'both-sides', 'learning', storage)
+  assert.match(todayPracticeMessage(loadPracticeHistory(storage).sessions), /정지.*전진/)
 })

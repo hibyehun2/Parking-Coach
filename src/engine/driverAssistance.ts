@@ -5,6 +5,7 @@ import {
 } from './collisionDetection.ts'
 import { TARGET_PARKING_BAY } from './parkingEvaluation.ts'
 import type { VehicleState } from './vehiclePhysics'
+import type { ScenarioRuntime } from '../types/practice'
 
 export type DriverView = 'left' | 'rear' | 'right'
 
@@ -22,7 +23,7 @@ function toLocal(vehicle: VehicleState, x: number, y: number): LocalPoint {
   }
 }
 
-export function rearSensorDistance(vehicle: VehicleState, maximumDistance = 5) {
+export function rearSensorDistance(vehicle: VehicleState, maximumDistance = 5, runtime?: ScenarioRuntime) {
   const step = 0.05
   for (let distance = 0; distance <= maximumDistance; distance += step) {
     const probe = {
@@ -30,7 +31,7 @@ export function rearSensorDistance(vehicle: VehicleState, maximumDistance = 5) {
       x: vehicle.x - Math.cos(vehicle.heading) * distance,
       y: vehicle.y - Math.sin(vehicle.heading) * distance,
     }
-    if (detectCollision(probe)) return Math.round(distance * 100) / 100
+    if (detectCollision(probe, 0, runtime)) return Math.round(distance * 100) / 100
   }
   return null
 }
