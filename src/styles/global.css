@@ -331,8 +331,38 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .result-card.good { border-color: #a7dbc7; background: #f5fcf9; }
 .result-card.needs-work { border-color: #efb5af; background: #fff8f7; }
 .result-card.collision-result { grid-column: 1 / -1; }
-.result-actions { margin-top: 22px; display: flex; gap: 10px; }
+.result-actions { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px; }
 .result-start-link { width: fit-content; }
+.practice-history { margin-top: 34px; padding-top: 30px; border-top: 1px solid var(--border); }
+.history-heading { margin-bottom: 18px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.history-heading h2 { margin-top: 4px; font-size: 1.65rem; }
+.history-reset { min-height: 40px; padding: 0 13px; border: 1px solid #d8aaa5; border-radius: 10px; color: #9d3932; background: #fff8f7; font-weight: 800; cursor: pointer; }
+.history-empty { padding: 28px; border: 1px dashed #afc4bb; border-radius: 18px; display: grid; justify-items: start; gap: 8px; background: rgba(255,255,255,.55); }
+.history-empty p { margin: 0 0 8px; color: var(--muted); }
+.history-insights { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.history-insights article { padding: 20px; border: 1px solid var(--border); border-radius: 18px; display: grid; align-content: start; gap: 7px; background: rgba(255,255,255,.72); }
+.history-insights article > span { color: var(--muted); font-size: .75rem; font-weight: 800; }
+.history-insights article > strong { font-size: 1.15rem; }
+.history-insights article > p { margin: 0; color: var(--muted); line-height: 1.5; }
+.history-insights article > a { width: fit-content; margin-top: 4px; color: var(--brand); font-weight: 850; }
+.history-trend.trend-improving { border-color: #92d6bb; background: #f2fcf7; }
+.history-trend.trend-needs-focus { border-color: #efb5af; background: #fff8f7; }
+.mistake-summary { margin-top: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.mistake-summary article { padding: 14px 16px; border: 1px solid #cfdad5; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,.62); }
+.mistake-summary article span { color: var(--muted); font-size: .78rem; font-weight: 800; }
+.mistake-summary article strong { color: var(--brand-dark); font-size: 1.1rem; }
+.mistake-summary article.has-mistakes { border-color: #e6bbb7; background: #fff8f7; }
+.mistake-summary article.has-mistakes strong { color: #b4473e; }
+.recent-practice { margin-top: 24px; }
+.recent-practice h3 { display: flex; align-items: baseline; gap: 7px; }
+.recent-practice h3 small { color: var(--muted); font-size: .7rem; }
+.recent-practice ol { margin: 12px 0 0; padding: 0; display: grid; gap: 8px; list-style: none; }
+.recent-practice li { padding: 13px 15px; border: 1px solid var(--border); border-radius: 13px; display: grid; grid-template-columns: minmax(130px, 1fr) auto auto; align-items: center; gap: 12px; background: rgba(255,255,255,.64); }
+.recent-practice li > div:first-child { display: grid; gap: 3px; }
+.recent-practice li > div:first-child span { color: var(--muted); font-size: .69rem; }
+.session-measures { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+.session-measures span { padding: 4px 6px; border-radius: 6px; color: #3f514a; background: #edf4f1; font-size: .68rem; font-weight: 750; }
+.recent-practice li > small { min-width: 76px; color: #a34239; font-weight: 750; text-align: right; }
 
 .orientation-notice { display: none; }
 .site-footer { padding: 24px 0; border-top: 1px solid var(--border); color: var(--muted); }
@@ -386,6 +416,12 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .result-placeholder { padding: 28px 22px; }
   .result-summary-grid { grid-template-columns: minmax(0, 1fr); }
   .result-card.collision-result { grid-column: auto; }
+  .history-heading { align-items: flex-start; }
+  .history-insights { grid-template-columns: minmax(0, 1fr); }
+  .mistake-summary { grid-template-columns: minmax(0, 1fr); }
+  .recent-practice li { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .session-measures { justify-content: flex-start; }
+  .recent-practice li > small { text-align: left; }
   .mini-lesson { grid-template-columns: minmax(0, 1fr); }
   .lesson-header, .lesson-progress, .lesson-footer { grid-column: auto; }
   .lesson-footer { align-items: stretch; flex-direction: column; }

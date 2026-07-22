@@ -8,6 +8,7 @@ import { ParkingLotCanvas } from './ParkingLotCanvas'
 import { CornerAssistance } from './CornerAssistance'
 import { detectCollision } from '../../engine/collisionDetection'
 import { evaluateParking } from '../../engine/parkingEvaluation'
+import { recordPracticeSession } from '../../engine/practiceHistory'
 import type { PracticeMode, ScenarioId } from '../../types/practice'
 
 type VehicleSimulatorProps = {
@@ -91,6 +92,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
     if (!parkingEvaluation.success || parkedResult) return
     setControlsLocked(true)
     setParkedResult(parkingEvaluation)
+    recordPracticeSession(parkingEvaluation, scenarioId, mode)
   }
 
   const showParkingResult = () => {
