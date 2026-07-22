@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { renderParkingLot } from '../../engine/parkingLotRenderer'
+import { TARGET_PARKING_BAY } from '../../engine/parkingEvaluation'
 import type { VehicleState } from '../../engine/vehiclePhysics'
 
 type RearSide = 'left' | 'right'
@@ -8,9 +9,14 @@ function rearSideFocus(vehicle: VehicleState, sideName: RearSide) {
   const sideSign = sideName === 'left' ? -1 : 1
   const cosine = Math.cos(vehicle.heading)
   const sine = Math.sin(vehicle.heading)
+  const parkingProgress = Math.min(1, Math.max(0, (
+    vehicle.y - (TARGET_PARKING_BAY.top - 1.5)
+  ) / 3.5))
+  const rearOffset = -0.45 + parkingProgress * 0.3
+  const sideOffset = 0.9
   return {
-    x: vehicle.x - cosine * 1.25 + -sine * 0.68 * sideSign,
-    y: vehicle.y - sine * 1.25 + cosine * 0.68 * sideSign,
+    x: vehicle.x + cosine * rearOffset + -sine * sideOffset * sideSign,
+    y: vehicle.y + sine * rearOffset + cosine * sideOffset * sideSign,
   }
 }
 
@@ -31,7 +37,9 @@ function RearSideCanvas({ vehicle, sideName }: { vehicle: VehicleState; sideName
       if (!context) return
       context.setTransform(ratio, 0, 0, ratio, 0, 0)
       const focus = rearSideFocus(vehicle, sideName)
-      renderParkingLot(context, width, height, vehicle, { focus: { ...focus, span: 5.2, heading: vehicle.heading } })
+      renderParkingLot(context, width, height, vehicle, {
+        focus: { ...focus, span: 6, viewWidth: 7.2, heading: vehicle.heading },
+      })
     }
     const observer = new ResizeObserver(draw)
     observer.observe(canvas)

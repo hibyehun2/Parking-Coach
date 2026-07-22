@@ -30,12 +30,12 @@ export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
 }
 
 export const INITIAL_VEHICLE_STATE: VehicleState = {
-  x: 11,
+  x: 5.5,
   y: 3.4,
   heading: 0,
   steeringAngle: 0,
   speed: 0,
-  gear: 'R',
+  gear: 'D',
   braking: true,
 }
 

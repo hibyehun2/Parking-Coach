@@ -3,8 +3,10 @@ import test from 'node:test'
 import { rearSensorDistance } from '../src/engine/driverAssistance.ts'
 import { INITIAL_VEHICLE_STATE } from '../src/engine/vehiclePhysics.ts'
 
-test('후방 5m 안에 장애물이 없으면 거리 없음으로 표시한다', () => {
-  assert.equal(rearSensorDistance(INITIAL_VEHICLE_STATE), null)
+test('왼쪽 출발 위치에서 후방 벽까지 안전거리를 확보한다', () => {
+  const distance = rearSensorDistance(INITIAL_VEHICLE_STATE)
+  assert.ok(distance !== null)
+  assert.ok(distance >= 2 && distance <= 3)
 })
 
 test('차량 뒤쪽 벽까지의 충돌 여유 거리를 계산한다', () => {

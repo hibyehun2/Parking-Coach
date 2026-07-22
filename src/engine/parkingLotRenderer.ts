@@ -204,7 +204,7 @@ export function renderParkingLot(
   options: {
     danger?: Collision | null
     collisions?: Collision[]
-    focus?: { x: number; y: number; span: number; heading?: number }
+    focus?: { x: number; y: number; span: number; viewWidth?: number; heading?: number }
     bottomInsetRatio?: number
   } = {},
 ) {
@@ -213,7 +213,10 @@ export function renderParkingLot(
   const padding = Math.max(12, Math.min(viewportWidth, viewportHeight) * 0.035)
   const usableHeight = viewportHeight * (1 - (options.bottomInsetRatio ?? 0))
   const scale = options.focus
-    ? Math.max(viewportWidth, viewportHeight) / options.focus.span
+    ? Math.min(
+      viewportWidth / (options.focus.viewWidth ?? options.focus.span),
+      viewportHeight / options.focus.span,
+    )
     : Math.min(
       (viewportWidth - padding * 2) / PARKING_WORLD.width,
       (usableHeight - padding * 2) / PARKING_WORLD.height,
