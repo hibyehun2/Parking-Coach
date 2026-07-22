@@ -32,11 +32,14 @@ export function AppInstallPrompt() {
       setVisible(false)
       setInstallPrompt(null)
     }
+    const dismissForPractice = () => setVisible(false)
     window.addEventListener('beforeinstallprompt', capturePrompt)
     window.addEventListener('appinstalled', markInstalled)
+    window.addEventListener('parking-coach:dismiss-install-prompt', dismissForPractice)
     return () => {
       window.removeEventListener('beforeinstallprompt', capturePrompt)
       window.removeEventListener('appinstalled', markInstalled)
+      window.removeEventListener('parking-coach:dismiss-install-prompt', dismissForPractice)
     }
   }, [])
 

@@ -63,6 +63,10 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .preview-caption strong { line-height: 1.5; }
 
 .home-section { padding: 76px 0; border-top: 1px solid var(--border); }
+.selection-flow { width: 100%; min-height: calc(100vh - 152px); padding-top: clamp(48px, 7vw, 82px); border-top: 0; }
+.flow-back { width: fit-content; margin-top: 24px; }
+.selection-flow h2:focus { outline: none; }
+.selection-flow h2:focus-visible { outline: 3px solid #83d0b5; outline-offset: 6px; border-radius: 3px; }
 .section-heading { margin-bottom: 28px; display: flex; align-items: end; justify-content: space-between; gap: 24px; }
 .section-heading > p { margin: 0 0 5px; color: var(--muted); }
 .scenario-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }

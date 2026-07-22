@@ -1,7 +1,7 @@
 import type { PracticeMode } from '../types/practice'
 
 type ModeSelectorProps = {
-  value: PracticeMode
+  value: PracticeMode | null
   onChange: (mode: PracticeMode) => void
 }
 
