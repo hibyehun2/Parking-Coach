@@ -35,17 +35,18 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
   const [isInstalled, setIsInstalled] = useState(isStandalone)
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [showInstallGuide, setShowInstallGuide] = useState(false)
+  const [parkedResult, setParkedResult] = useState<ReturnType<typeof evaluateParking> | null>(null)
   const canUseFullscreen = !isIos && document.fullscreenEnabled
   const {
     vehicle,
     braking,
     collisions,
-    collisionCount,
     canShift,
     setSteeringAngle,
     setBraking,
     setGear,
     centerSteering,
+    setControlsLocked,
     reset,
   } = useVehicleSimulation()
   const danger = learningMode ? detectCollision(vehicle, 0.42) : null
@@ -124,8 +125,20 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
     }
   }
 
+  const resetSimulation = () => {
+    setParkedResult(null)
+    reset()
+  }
+
+  const completeParking = () => {
+    if (!parkingEvaluation.success || parkedResult) return
+    setControlsLocked(true)
+    setParkedResult(parkingEvaluation)
+  }
+
   const showParkingResult = () => {
-    navigate('/result', { state: { result: parkingEvaluation, scenarioId, mode } })
+    if (!parkedResult) return
+    navigate('/result', { state: { result: parkedResult, scenarioId, mode } })
   }
 
   return (
@@ -136,28 +149,25 @@ export function VehicleSimulator({ learningMode, scenarioId, mode }: VehicleSimu
         <div className="driving-console separate-console" aria-label="차량 운전 조작부">
           <SteeringWheel
             steeringAngle={vehicle.steeringAngle}
-            onChange={setSteeringAngle}
-            onCenter={centerSteering}
+            onChange={parkedResult ? () => undefined : setSteeringAngle}
+            onCenter={parkedResult ? () => undefined : centerSteering}
+            disabled={Boolean(parkedResult)}
           />
 
-          <div className="instrument-panel" aria-live="polite">
-            <span className="dashboard-label">차량 상태</span>
-            <div className="gear-display">{vehicle.gear}</div>
-            <strong>{Math.abs(vehicle.speed).toFixed(1)} <small>m/s</small></strong>
-            <span>{braking ? '브레이크 작동' : `${vehicle.gear === 'R' ? '후진' : '전진'} 크리프`}</span>
-            <span className={collisionCount ? 'collision-count active' : 'collision-count'}>충돌 {collisionCount}회</span>
-            <div className="instrument-actions">
-              <button type="button" className="reset-control" onClick={reset}>처음 위치</button>
-              <button type="button" className="result-control" onClick={showParkingResult}>결과 확인</button>
-            </div>
+          <div className="instrument-panel reset-panel">
+            <button type="button" className="reset-control" onClick={resetSimulation}>처음 위치</button>
           </div>
 
           <GearSelector
             gear={vehicle.gear}
             braking={braking}
             canShift={canShift}
-            onChange={setGear}
-            onBrakeChange={setBraking}
+            parkingReady={parkingEvaluation.success}
+            parkingCompleted={Boolean(parkedResult)}
+            onChange={parkedResult ? () => undefined : setGear}
+            onBrakeChange={parkedResult ? () => undefined : setBraking}
+            onPark={completeParking}
+            onShowResult={showParkingResult}
           />
         </div>
       </ParkingLotCanvas>

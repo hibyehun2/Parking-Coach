@@ -5,12 +5,12 @@ import type { VehicleState } from '../../engine/vehiclePhysics'
 type RearSide = 'left' | 'right'
 
 function rearSideFocus(vehicle: VehicleState, sideName: RearSide) {
-  const sideSign = sideName === 'left' ? -1 : 1
+  const sideSign = sideName === 'left' ? 1 : -1
   const cosine = Math.cos(vehicle.heading)
   const sine = Math.sin(vehicle.heading)
   return {
-    x: vehicle.x + cosine * 1.55 + -sine * 2.05 * sideSign,
-    y: vehicle.y + sine * 1.55 + cosine * 2.05 * sideSign,
+    x: vehicle.x - cosine * 1.25 + -sine * 0.68 * sideSign,
+    y: vehicle.y - sine * 1.25 + cosine * 0.68 * sideSign,
   }
 }
 
@@ -31,7 +31,7 @@ function RearSideCanvas({ vehicle, sideName }: { vehicle: VehicleState; sideName
       if (!context) return
       context.setTransform(ratio, 0, 0, ratio, 0, 0)
       const focus = rearSideFocus(vehicle, sideName)
-      renderParkingLot(context, width, height, vehicle, { focus: { ...focus, span: 8.2, heading: vehicle.heading } })
+      renderParkingLot(context, width, height, vehicle, { focus: { ...focus, span: 5.2, heading: vehicle.heading } })
     }
     const observer = new ResizeObserver(draw)
     observer.observe(canvas)
@@ -49,7 +49,7 @@ export function CornerAssistance({ vehicle }: { vehicle: VehicleState }) {
         <div className="corner-view" key={sideName}>
           <span>{sideName === 'left' ? '좌측 후방 평면뷰' : '우측 후방 평면뷰'}</span>
           <RearSideCanvas vehicle={vehicle} sideName={sideName} />
-          <small>↑ 차량 앞 · ↓ 차량 뒤</small>
+          <small>내 차 후측면 · 주차선 간격</small>
         </div>
       ))}
     </div>

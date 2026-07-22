@@ -5,6 +5,7 @@ type SteeringWheelProps = {
   steeringAngle: number
   onChange: (angle: number) => void
   onCenter: () => void
+  disabled?: boolean
 }
 
 const MAX_WHEEL_ROTATION = 450
@@ -26,7 +27,7 @@ function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value))
 }
 
-export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWheelProps) {
+export function SteeringWheel({ steeringAngle, onChange, onCenter, disabled = false }: SteeringWheelProps) {
   const announcedLockRef = useRef<-1 | 0 | 1>(0)
   const dragRef = useRef<{
     pointerId: number
@@ -67,7 +68,7 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
       : `${steeringDegrees > 0 ? '+' : ''}${steeringDegrees}°`
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
-    if (event.pointerType === 'touch' || event.button !== 0 || dragRef.current) return
+    if (disabled || event.pointerType === 'touch' || event.button !== 0 || dragRef.current) return
     event.preventDefault()
     dragRef.current = {
       pointerId: event.pointerId,
@@ -97,7 +98,7 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
   }
 
   const handleTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-    if (touchDragRef.current) return
+    if (disabled || touchDragRef.current) return
     const touch = event.changedTouches.item(0)
     if (!touch) return
     event.preventDefault()
@@ -140,6 +141,7 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (disabled) return
     const step = Math.PI / 90
     if (event.key === 'ArrowLeft') {
       event.preventDefault()
@@ -161,7 +163,8 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
       <div
         className={`steering-wheel-touch-area${lockDirection ? ' at-lock' : ''}`}
         role="slider"
-        tabIndex={0}
+        tabIndex={disabled ? -1 : 0}
+        aria-disabled={disabled}
         aria-label="가상 핸들"
         aria-valuemin={-35}
         aria-valuemax={35}
@@ -187,7 +190,7 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter }: SteeringWhe
           <span className="wheel-center-mark" />
         </div>
       </div>
-      <button type="button" className="center-steering-button" onClick={onCenter}>핸들 중앙</button>
+      <button type="button" className="center-steering-button" onClick={onCenter} disabled={disabled}>핸들 중앙</button>
     </div>
   )
 }

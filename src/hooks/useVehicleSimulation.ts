@@ -20,6 +20,7 @@ const INITIAL_INPUT: VehicleInput = {
 export function useVehicleSimulation() {
   const stateRef = useRef<VehicleState>({ ...INITIAL_VEHICLE_STATE })
   const inputRef = useRef<VehicleInput>({ ...INITIAL_INPUT })
+  const controlsLockedRef = useRef(false)
   const [vehicle, setVehicle] = useState<VehicleState>(() => ({ ...INITIAL_VEHICLE_STATE }))
   const [braking, setBrakingState] = useState(INITIAL_INPUT.braking)
   const [collisions, setCollisions] = useState<Collision[]>([])
@@ -46,42 +47,56 @@ export function useVehicleSimulation() {
   }, [])
 
   const setSteeringDirection = useCallback((direction: -1 | 0 | 1) => {
+    if (controlsLockedRef.current) return
     inputRef.current = { ...inputRef.current, steeringDirection: direction }
   }, [])
 
   const setBraking = useCallback((braking: boolean) => {
+    if (controlsLockedRef.current) return
     inputRef.current = { ...inputRef.current, braking }
     setBrakingState(braking)
   }, [])
 
   const toggleBrake = useCallback(() => {
+    if (controlsLockedRef.current) return
     const braking = !inputRef.current.braking
     inputRef.current = { ...inputRef.current, braking }
     setBrakingState(braking)
   }, [])
 
   const setGear = useCallback((gear: Gear) => {
+    if (controlsLockedRef.current) return
     if (!inputRef.current.braking || Math.abs(stateRef.current.speed) >= 0.05) return
     stateRef.current = withGear(stateRef.current, gear)
     setVehicle(stateRef.current)
   }, [])
 
   const setSteeringAngle = useCallback((steeringAngle: number) => {
+    if (controlsLockedRef.current) return
     stateRef.current = withSteeringAngle(stateRef.current, steeringAngle)
     setVehicle(stateRef.current)
   }, [])
 
   const centerSteering = useCallback(() => {
+    if (controlsLockedRef.current) return
     stateRef.current = withCenteredSteering(stateRef.current)
     setVehicle(stateRef.current)
   }, [])
 
   const reset = useCallback(() => {
+    controlsLockedRef.current = false
     stateRef.current = { ...INITIAL_VEHICLE_STATE }
     inputRef.current = { ...INITIAL_INPUT }
     setBrakingState(INITIAL_INPUT.braking)
     setCollisions([])
     setVehicle(stateRef.current)
+  }, [])
+
+  const setControlsLocked = useCallback((locked: boolean) => {
+    controlsLockedRef.current = locked
+    if (!locked) return
+    inputRef.current = { ...inputRef.current, braking: true, steeringDirection: 0 }
+    setBrakingState(true)
   }, [])
 
   useEffect(() => {
@@ -123,6 +138,7 @@ export function useVehicleSimulation() {
     toggleBrake,
     setGear,
     centerSteering,
+    setControlsLocked,
     reset,
   }
 }
