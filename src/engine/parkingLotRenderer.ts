@@ -1,5 +1,5 @@
 export const PARKING_WORLD = {
-  width: 26,
+  width: 30,
   height: 14,
 } as const
 
@@ -45,7 +45,7 @@ function drawVehicle(
   context.translate(x, y)
   context.rotate(heading)
 
-  context.fillStyle = 'rgba(10, 20, 17, 0.25)'
+  context.fillStyle = 'rgba(0, 0, 0, 0.3)'
   roundedRect(context, -length / 2 + 0.1, -width / 2 + 0.12, length, width, 0.28)
   context.fill()
 
@@ -113,22 +113,22 @@ function drawParkingLines(context: CanvasRenderingContext2D) {
 
   const bayTop = 6.5
   const bayBottom = 13.45
-  for (const x of [8.95, 11.65, 14.35, 17.05]) {
+  for (const x of [10.95, 13.65, 16.35, 19.05]) {
     context.beginPath()
     context.moveTo(x, bayTop)
     context.lineTo(x, bayBottom)
     context.stroke()
   }
   context.beginPath()
-  context.moveTo(8.95, bayBottom)
-  context.lineTo(17.05, bayBottom)
+  context.moveTo(10.95, bayBottom)
+  context.lineTo(19.05, bayBottom)
   context.stroke()
 
   context.restore()
 
   context.fillStyle = 'rgba(113, 219, 182, 0.14)'
   context.fillRect(
-    11.65,
+    13.65,
     bayTop,
     2.7,
     bayBottom - bayTop,
@@ -201,9 +201,6 @@ export function renderParkingLot(
   } = {},
 ) {
   context.clearRect(0, 0, viewportWidth, viewportHeight)
-  context.fillStyle = '#59625e'
-  context.fillRect(0, 0, viewportWidth, viewportHeight)
-
   const padding = options.focus
     ? Math.max(8, Math.min(viewportWidth, viewportHeight) * 0.025)
     : 0
@@ -231,7 +228,7 @@ export function renderParkingLot(
     context.scale(scale, scale)
   }
 
-  context.fillStyle = '#59625e'
+  context.fillStyle = '#484f4c'
   context.fillRect(0, 0, PARKING_WORLD.width, PARKING_WORLD.height)
 
   context.strokeStyle = 'rgba(255, 255, 255, 0.035)'
@@ -259,10 +256,9 @@ export function renderParkingLot(
     outline: '#7e8e9a',
   })
   drawVehicle(context, vehicle.x, vehicle.y, vehicle.heading, {
-    body: options.danger ? '#a86b24' : '#13805f',
-    roof: options.danger ? '#744516' : '#0b5c44',
-    outline: options.danger ? '#ffd275' : '#8ee0c3',
-    label: '내 차',
+    body: options.danger ? '#db8b24' : '#20a978',
+    roof: options.danger ? '#72440f' : '#105440',
+    outline: options.danger ? '#ffd275' : '#b7ffe4',
   })
 
   for (const collision of options.collisions ?? []) {

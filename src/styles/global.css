@@ -11,11 +11,17 @@
   --muted: #68746f;
   --border: #dce6e1;
   --shadow: 0 18px 50px rgba(35, 74, 61, 0.09);
+  --ios-blue: #0a84ff;
+  --ios-green: #30d158;
+  --ios-red: #ff453a;
+  --glass-dark: rgba(19, 25, 23, .56);
+  --glass-light: rgba(255, 255, 255, .72);
+  --radius-card: 24px;
 }
 
 * { box-sizing: border-box; }
 html { min-width: 320px; scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; min-height: 100vh; overflow-x: hidden; }
+body { margin: 0; min-width: 320px; min-height: 100vh; overflow-x: hidden; background: radial-gradient(circle at 50% -20%, #ffffff 0, #f2f5f3 48%, #e9eeeb 100%); }
 a { color: inherit; text-decoration: none; }
 button, a { font: inherit; -webkit-tap-highlight-color: transparent; }
 button { color: inherit; }
@@ -42,8 +48,8 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .simulator-shell h1 { font-size: clamp(2rem, 4vw, 3.25rem); }
 .page-description { max-width: 650px; margin: 22px 0 32px; color: var(--muted); font-size: clamp(1rem, 1.8vw, 1.14rem); line-height: 1.75; word-break: keep-all; }
 
-.primary-button, .secondary-button { min-height: 50px; border-radius: 13px; display: inline-flex; align-items: center; justify-content: center; gap: 28px; font-weight: 800; cursor: pointer; }
-.primary-button { padding: 0 22px; border: 0; color: white; background: var(--brand); box-shadow: 0 10px 22px rgba(22, 115, 87, 0.2); transition: background 160ms ease, transform 160ms ease; }
+.primary-button, .secondary-button { min-height: 50px; border-radius: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 28px; font-weight: 800; cursor: pointer; }
+.primary-button { padding: 0 22px; border: 0; color: white; background: linear-gradient(180deg, #1c8d69, #116c50); box-shadow: 0 10px 24px rgba(17,108,80,.24), inset 0 1px rgba(255,255,255,.25); transition: background 160ms ease, transform 160ms ease; }
 .primary-button:hover { background: var(--brand-dark); transform: translateY(-1px); }
 .secondary-button { padding: 0 18px; border: 1px solid var(--border); color: var(--brand-dark); background: var(--surface); }
 .primary-button:focus-visible, .secondary-button:focus-visible, .scenario-card:focus-visible, .mode-card:focus-visible, .primary-nav a:focus-visible, .brand:focus-visible { outline: 3px solid #83d0b5; outline-offset: 3px; }
@@ -468,4 +474,71 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
+}
+
+/* Modern iOS-style application surfaces */
+.site-header { margin-top: 10px; padding: 10px 14px; min-height: 60px; border: 1px solid rgba(255,255,255,.75); border-radius: 22px; background: rgba(255,255,255,.62); box-shadow: 0 12px 40px rgba(33,53,45,.08); backdrop-filter: blur(24px) saturate(1.35); }
+.brand-mark { border-radius: 12px; background: linear-gradient(145deg, #26a77b, #0d6148); box-shadow: inset 0 1px rgba(255,255,255,.35), 0 5px 14px rgba(12,93,68,.22); }
+.primary-nav { padding: 3px; border-radius: 13px; background: rgba(115,130,123,.1); }
+.primary-nav a { border-radius: 10px; }
+.primary-nav a.active { color: #12231d; background: rgba(255,255,255,.88); box-shadow: 0 2px 8px rgba(32,51,44,.09); }
+
+.home-hero { min-height: calc(100vh - 92px); }
+.hero-copy .eyebrow { letter-spacing: .16em; }
+.hero-copy h1 { max-width: 720px; font-size: clamp(3rem, 6vw, 5.7rem); }
+.hero-start { min-width: 190px; min-height: 58px; border-radius: 18px; font-size: 1.02rem; }
+.hero-preview { border-color: rgba(255,255,255,.8); border-radius: 34px; background: rgba(255,255,255,.74); box-shadow: 0 30px 80px rgba(38,62,52,.16); backdrop-filter: blur(22px); }
+
+.choice-page { max-width: 1080px; margin-inline: auto; animation: ios-page-enter 260ms cubic-bezier(.22,.8,.28,1) both; }
+@keyframes ios-page-enter { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
+.choice-header { margin-bottom: 36px; display: flex; align-items: flex-start; gap: 18px; }
+.choice-header > div { display: grid; gap: 7px; }
+.choice-header h1 { font-size: clamp(2.5rem, 5vw, 4.6rem); }
+.choice-header p { margin: 0; color: var(--muted); }
+.choice-header .eyebrow { color: var(--brand); }
+.icon-back { flex: none; width: 46px; height: 46px; border: 1px solid rgba(255,255,255,.8); border-radius: 50%; color: #16362b; background: rgba(255,255,255,.72); box-shadow: 0 8px 24px rgba(30,55,45,.1); font-size: 2rem; line-height: 1; backdrop-filter: blur(18px); }
+.scenario-card, .mode-card { border-color: rgba(255,255,255,.85); border-radius: var(--radius-card); background: rgba(255,255,255,.68); box-shadow: 0 14px 38px rgba(32,58,47,.09); backdrop-filter: blur(18px); }
+.scenario-card:hover, .mode-card:hover { border-color: #91d2ba; box-shadow: 0 18px 48px rgba(29,91,69,.15); }
+.scenario-visual { border-radius: 18px; }
+.mode-card { min-height: 180px; }
+.floating-start { position: sticky; bottom: 18px; margin-top: 28px; border: 1px solid rgba(255,255,255,.3); background: rgba(21,55,44,.88); box-shadow: 0 20px 55px rgba(11,42,32,.3); backdrop-filter: blur(24px); }
+
+.parking-canvas-frame { border-color: rgba(255,255,255,.25); box-shadow: 0 24px 70px rgba(11,24,19,.25); }
+.driving-console.separate-console { pointer-events: none; }
+.driving-console.separate-console .steering-module,
+.driving-console.separate-console .gear-module { pointer-events: auto; padding: 8px; border: 1px solid rgba(255,255,255,.12); border-radius: 24px; background: var(--glass-dark); box-shadow: 0 14px 40px rgba(0,0,0,.22); backdrop-filter: blur(18px) saturate(1.2); }
+.steering-wheel { filter: drop-shadow(0 8px 16px rgba(0,0,0,.42)); }
+.wheel-rim { border-color: #111513; box-shadow: inset 0 0 0 3px #66716d, inset 0 8px 10px rgba(255,255,255,.06), 0 7px 16px rgba(0,0,0,.45); }
+.wheel-spoke { background: linear-gradient(#4c5652, #171d1b); }
+.wheel-hub { border-color: #5f6b66; background: linear-gradient(145deg, #28312e, #101513); }
+.center-steering-button { min-height: 36px; border-radius: 12px; background: rgba(255,255,255,.07); }
+.integrated-brake { border-color: rgba(255,108,98,.48); border-radius: 20px; background: rgba(111,38,33,.52); box-shadow: inset 0 1px rgba(255,255,255,.08); }
+.integrated-brake.active { border-color: #ff9a93; background: linear-gradient(180deg, #d1544b, #9f332c); }
+.gear-gate { border-color: rgba(255,255,255,.15); border-radius: 20px; background: rgba(4,8,7,.72); box-shadow: inset 0 1px rgba(255,255,255,.08); }
+.gear-gate button { border-radius: 14px; }
+.gear-gate button.active { background: rgba(48,209,88,.24); box-shadow: inset 0 0 0 1px rgba(111,240,147,.65); }
+.parking-control, .gear-module .result-control { border-radius: 14px; background: linear-gradient(180deg, #24a97c, #0d704f); box-shadow: inset 0 1px rgba(255,255,255,.22), 0 8px 20px rgba(10,91,64,.22); }
+.top-reset-control, .immersive-control { border-color: rgba(255,255,255,.25); border-radius: 999px; background: rgba(18,25,22,.62); backdrop-filter: blur(18px); }
+.learning-hint { border-color: rgba(255,255,255,.18); border-radius: 16px; background: rgba(21,29,26,.94); box-shadow: 0 14px 34px rgba(0,0,0,.28); }
+.corner-view { background: linear-gradient(145deg, #59625f, #151a18 50%, #050706); filter: drop-shadow(0 10px 14px rgba(0,0,0,.48)); }
+.mirror-glass { border: 3px solid #77817d; background: #303937; box-shadow: inset 0 0 0 1px rgba(255,255,255,.2), inset 0 8px 18px rgba(176,215,205,.08); }
+
+.single-column { max-width: 920px; margin-inline: auto; }
+.result-summary-grid { gap: 16px; }
+.result-card { border-color: rgba(255,255,255,.84); border-radius: 24px; background: rgba(255,255,255,.7); box-shadow: 0 12px 36px rgba(30,53,44,.08); backdrop-filter: blur(18px); }
+.result-card.good { border-color: rgba(48,209,88,.34); background: rgba(241,255,246,.78); }
+.result-card.needs-work { border-color: rgba(255,69,58,.3); background: rgba(255,246,245,.8); }
+
+@media (max-width: 720px) {
+  .site-header { margin-top: 7px; padding: 7px 9px; border-radius: 17px; }
+  .choice-page { padding-top: 36px; }
+  .choice-header { gap: 12px; }
+  .choice-header h1 { font-size: 2.45rem; }
+  .floating-start { bottom: 8px; }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .driving-console.separate-console .steering-module,
+  .driving-console.separate-console .gear-module { padding: 3px; border-radius: 17px; }
+  .top-reset-control { min-height: 34px; }
 }

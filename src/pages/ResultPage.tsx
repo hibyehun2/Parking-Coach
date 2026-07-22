@@ -76,7 +76,7 @@ export function ResultPage() {
       <div className="result-actions">
         <Link className="primary-button" to={retryPath}>다시 연습하기</Link>
         <Link className="secondary-button" to={`${retryPath}&lesson=1`}>미니 레슨 다시 보기</Link>
-        <Link className="secondary-button" to="/">상황 선택</Link>
+        <Link className="secondary-button" to="/practice/scenario">상황 선택</Link>
       </div>
     </section>
   )

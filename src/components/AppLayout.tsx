@@ -3,7 +3,7 @@ import { AppInstallPrompt } from './AppInstallPrompt'
 
 const navigation = [
   { to: '/', label: '홈', end: true },
-  { to: '/simulator', label: '연습', end: false },
+  { to: '/practice/scenario', label: '연습', end: false },
   { to: '/result', label: '결과', end: false },
 ]
 
