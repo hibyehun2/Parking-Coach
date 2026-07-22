@@ -1,6 +1,7 @@
 import { detectCollision } from './collisionDetection.ts'
 import { rearSensorDistance } from './driverAssistance.ts'
 import { TARGET_PARKING_BAY } from './parkingEvaluation.ts'
+import { redGuideParkingLineDistance } from './parkingLotRenderer.ts'
 import type { VehicleState } from './vehiclePhysics.ts'
 import type { ScenarioId } from '../types/practice.ts'
 
@@ -47,6 +48,23 @@ export function getLearningHint(vehicle: VehicleState, scenarioId: ScenarioId): 
   const insideParkingArea = vehicle.y >= TARGET_PARKING_BAY.top - 1
 
   if (vehicle.gear === 'R' && Math.abs(vehicle.steeringAngle) < 0.06 && !insideParkingArea) {
+    const guideDistance = redGuideParkingLineDistance(vehicle)
+    if (guideDistance <= 0.08) {
+      return {
+        id: 'rear-red-guide-aligned',
+        level: 'caution',
+        title: '기준점 일치 · 정지',
+        message: '브레이크로 정지한 뒤 주차 방향으로 핸들을 끝까지 돌리세요.',
+      }
+    }
+    if (guideDistance <= 0.25) {
+      return {
+        id: 'rear-red-guide-near',
+        level: 'info',
+        title: '빨간 기준점에 접근 중',
+        message: '속도를 줄이고 빨간선 모서리와 주차 라인이 겹치는 순간 정지하세요.',
+      }
+    }
     return {
       id: 'rear-red-guide',
       level: 'info',
