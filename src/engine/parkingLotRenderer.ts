@@ -224,11 +224,13 @@ function drawRooftopAsphalt(context: CanvasRenderingContext2D) {
 
 export const REVERSE_GUIDE_LEVELS = [
   { distance: 0.5, halfWidth: 1.3, color: '#ff453a' },
-  { distance: 1.5, halfWidth: 1.04, color: '#ffd60a' },
-  { distance: 3, halfWidth: 0.72, color: '#ffd60a' },
+  { distance: 1, halfWidth: 1.3, color: '#ffd60a' },
+  { distance: 2.3, halfWidth: 1.3, color: '#32a8ff' },
 ] as const
 
 export const REVERSE_PATH_COLOR = '#ffd60a'
+export const REVERSE_NEUTRAL_PATH_COLOR = '#32a8ff'
+export const RED_GUIDE_ALIGNMENT_THRESHOLD = 0.12
 
 type ReverseGuideVehicle = Pick<VehicleState, 'x' | 'y' | 'heading' | 'steeringAngle'>
 
@@ -267,18 +269,16 @@ export function predictedReverseGuidePoint(
   }
 }
 
-function reverseGuideHalfWidth(distance: number) {
-  const nearWidth = 1.43
-  const farLevel = REVERSE_GUIDE_LEVELS.at(-1)!
-  return nearWidth + (farLevel.halfWidth - nearWidth) * distance / farLevel.distance
-}
-
 export function reverseTrapezoidGeometry(vehicle: ReverseGuideVehicle) {
   return REVERSE_GUIDE_LEVELS.map((level) => ({
     ...level,
     left: predictedReverseGuidePoint(vehicle, level.distance, -level.halfWidth),
     right: predictedReverseGuidePoint(vehicle, level.distance, level.halfWidth),
   }))
+}
+
+export function reverseNeutralGuideGeometry(vehicle: ReverseGuideVehicle) {
+  return reverseTrapezoidGeometry({ ...vehicle, steeringAngle: 0 })
 }
 
 function pointToSegmentDistance(
@@ -309,24 +309,48 @@ export function redGuideParkingLineDistance(vehicle: ReverseGuideVehicle) {
   )))
 }
 
+export function isRedGuideAlignedWithParkingLine(vehicle: ReverseGuideVehicle) {
+  return redGuideParkingLineDistance(vehicle) <= RED_GUIDE_ALIGNMENT_THRESHOLD
+}
+
 function drawDistanceTrapezoid(context: CanvasRenderingContext2D, vehicle: VehicleState) {
   const levels = reverseTrapezoidGeometry(vehicle)
-  const paths: { x: number; y: number }[][] = [[], []]
-  for (let step = 0; step <= 30; step += 1) {
+  const emphasizeRedGuide = isRedGuideAlignedWithParkingLine(vehicle)
+  const dynamicPaths: { x: number; y: number }[][] = [[], []]
+  const neutralPaths: { x: number; y: number }[][] = [[], []]
+  const maximumDistance = REVERSE_GUIDE_LEVELS.at(-1)!.distance
+  for (let step = 0; step <= Math.round(maximumDistance * 10); step += 1) {
     const distance = step / 10
-    const halfWidth = reverseGuideHalfWidth(distance)
-    paths[0].push(predictedReverseGuidePoint(vehicle, distance, -halfWidth))
-    paths[1].push(predictedReverseGuidePoint(vehicle, distance, halfWidth))
+    const halfWidth = REVERSE_GUIDE_LEVELS[0].halfWidth
+    dynamicPaths[0].push(predictedReverseGuidePoint(vehicle, distance, -halfWidth))
+    dynamicPaths[1].push(predictedReverseGuidePoint(vehicle, distance, halfWidth))
+    neutralPaths[0].push(predictedReverseGuidePoint(
+      { ...vehicle, steeringAngle: 0 }, distance, -halfWidth,
+    ))
+    neutralPaths[1].push(predictedReverseGuidePoint(
+      { ...vehicle, steeringAngle: 0 }, distance, halfWidth,
+    ))
   }
 
   context.save()
   context.lineCap = 'round'
   context.lineJoin = 'round'
 
+  context.strokeStyle = REVERSE_NEUTRAL_PATH_COLOR
+  context.lineWidth = 0.11
+  context.setLineDash([0.12, 0.1])
+  for (const path of neutralPaths) {
+    context.beginPath()
+    path.forEach((point, index) => index
+      ? context.lineTo(point.x, point.y)
+      : context.moveTo(point.x, point.y))
+    context.stroke()
+  }
+
   context.strokeStyle = REVERSE_PATH_COLOR
   context.lineWidth = 0.1
-  context.setLineDash([0.18, 0.09])
-  for (const path of paths) {
+  context.setLineDash([])
+  for (const path of dynamicPaths) {
     context.beginPath()
     path.forEach((point, index) => index
       ? context.lineTo(point.x, point.y)
@@ -336,8 +360,11 @@ function drawDistanceTrapezoid(context: CanvasRenderingContext2D, vehicle: Vehic
   context.setLineDash([])
 
   for (const level of levels) {
+    const isEmphasized = level.distance === 0.5 && emphasizeRedGuide
     context.strokeStyle = level.color
-    context.lineWidth = level.distance === 0.5 ? 0.13 : 0.1
+    context.lineWidth = isEmphasized ? 0.2 : level.distance === 0.5 ? 0.13 : 0.1
+    context.shadowColor = isEmphasized ? 'rgba(255, 69, 58, .95)' : 'transparent'
+    context.shadowBlur = isEmphasized ? 0.22 : 0
     context.beginPath()
     context.moveTo(level.left.x, level.left.y)
     context.lineTo(level.right.x, level.right.y)
