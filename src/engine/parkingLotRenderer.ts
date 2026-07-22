@@ -22,8 +22,11 @@ type VehicleStyle = {
   body: string
   roof: string
   outline: string
+  variant: 'hatchback' | 'sedan' | 'suv'
   label?: string
   highlight?: boolean
+  reverseLights?: boolean
+  braking?: boolean
 }
 
 function roundedRect(
@@ -75,33 +78,81 @@ function drawVehicle(
   context.fill()
   context.stroke()
 
+  const roofStart = style.variant === 'hatchback' ? -length * .32 : style.variant === 'sedan' ? -length * .16 : -length * .29
+  const roofLength = style.variant === 'sedan' ? length * .43 : style.variant === 'suv' ? length * .58 : length * .52
+  const roofWidth = style.variant === 'suv' ? width * .76 : width * .72
   context.fillStyle = style.roof
-  roundedRect(context, -length * 0.22, -width * 0.39, length * 0.47, width * 0.78, 0.2)
+  roundedRect(context, roofStart, -roofWidth / 2, roofLength, roofWidth, style.variant === 'suv' ? 0.13 : 0.2)
   context.fill()
 
-  context.fillStyle = 'rgba(201, 230, 225, 0.78)'
+  context.fillStyle = style.variant === 'sedan' ? 'rgba(157, 183, 191, .72)' : 'rgba(190, 220, 215, .78)'
   context.beginPath()
-  context.moveTo(-length * 0.23, -width * 0.34)
-  context.lineTo(-length * 0.06, -width * 0.34)
-  context.lineTo(-length * 0.06, width * 0.34)
-  context.lineTo(-length * 0.23, width * 0.34)
+  context.moveTo(roofStart + 0.04, -roofWidth * .43)
+  context.lineTo(roofStart + roofLength * .3, -roofWidth * .43)
+  context.lineTo(roofStart + roofLength * .3, roofWidth * .43)
+  context.lineTo(roofStart + 0.04, roofWidth * .43)
   context.closePath()
   context.fill()
 
   context.beginPath()
-  context.moveTo(length * 0.08, -width * 0.34)
-  context.lineTo(length * 0.22, -width * 0.3)
-  context.lineTo(length * 0.22, width * 0.3)
-  context.lineTo(length * 0.08, width * 0.34)
+  context.moveTo(roofStart + roofLength * .7, -roofWidth * .43)
+  context.lineTo(roofStart + roofLength - 0.04, -roofWidth * .36)
+  context.lineTo(roofStart + roofLength - 0.04, roofWidth * .36)
+  context.lineTo(roofStart + roofLength * .7, roofWidth * .43)
   context.closePath()
   context.fill()
+
+  context.strokeStyle = 'rgba(236, 247, 243, .32)'
+  context.lineWidth = 0.045
+  if (style.variant === 'sedan') {
+    context.beginPath()
+    context.moveTo(-length * .48, -width * .34)
+    context.lineTo(-length * .48, width * .34)
+    context.stroke()
+  }
+  if (style.variant === 'suv') {
+    context.strokeStyle = '#687570'
+    context.lineWidth = 0.09
+    for (const side of [-1, 1]) {
+      context.beginPath()
+      context.moveTo(-length * .25, side * width * .35)
+      context.lineTo(length * .24, side * width * .35)
+      context.stroke()
+    }
+  }
+
+  context.fillStyle = style.body
+  for (const side of [-1, 1]) {
+    const mirrorY = side < 0 ? -width / 2 - .06 : width / 2 - .07
+    roundedRect(context, -0.2, mirrorY, 0.38, 0.13, 0.05)
+    context.fill()
+  }
 
   context.fillStyle = '#f1d47a'
   context.fillRect(length / 2 - 0.12, -width * 0.31, 0.08, width * 0.2)
   context.fillRect(length / 2 - 0.12, width * 0.11, 0.08, width * 0.2)
-  context.fillStyle = '#df6c66'
-  context.fillRect(-length / 2 + 0.04, -width * 0.31, 0.08, width * 0.2)
-  context.fillRect(-length / 2 + 0.04, width * 0.11, 0.08, width * 0.2)
+  context.fillStyle = style.braking ? '#ff3b30' : '#df6c66'
+  context.shadowColor = style.braking ? 'rgba(255,59,48,.9)' : 'transparent'
+  context.shadowBlur = style.braking ? .16 : 0
+  if (style.variant === 'suv') {
+    context.fillRect(-length / 2 + .04, -width * .38, .34, .1)
+    context.fillRect(-length / 2 + .04, width * .28, .34, .1)
+  } else if (style.variant === 'sedan') {
+    context.fillRect(-length / 2 + .04, -width * .34, .09, width * .25)
+    context.fillRect(-length / 2 + .04, width * .09, .09, width * .25)
+  } else {
+    context.fillRect(-length / 2 + .04, -width * .36, .16, width * .23)
+    context.fillRect(-length / 2 + .04, width * .13, .16, width * .23)
+  }
+  context.shadowBlur = 0
+  if (style.reverseLights) {
+    context.fillStyle = '#f7fff9'
+    context.shadowColor = 'rgba(235,255,246,.95)'
+    context.shadowBlur = .18
+    context.fillRect(-length / 2 + .04, -width * .09, .13, .12)
+    context.fillRect(-length / 2 + .04, width * .02, .13, .12)
+    context.shadowBlur = 0
+  }
 
   if (style.label) {
     context.fillStyle = '#ffffff'
@@ -138,16 +189,16 @@ function drawParkingLines(context: CanvasRenderingContext2D) {
   context.save()
   context.strokeStyle = 'rgba(255, 255, 255, .38)'
   context.lineWidth = 0.08
-  for (const [left, right] of [[8.25, 10.95], [19.05, 21.75]]) {
-    context.beginPath()
-    context.moveTo(left, bayTop)
-    context.lineTo(left, bayBottom)
-    context.moveTo(right, bayTop)
-    context.lineTo(right, bayBottom)
-    context.moveTo(left, bayBottom)
-    context.lineTo(right, bayBottom)
-    context.stroke()
-  }
+  const evLeft = 19.05
+  const evRight = 21.75
+  context.beginPath()
+  context.moveTo(evLeft, bayTop)
+  context.lineTo(evLeft, bayBottom)
+  context.moveTo(evRight, bayTop)
+  context.lineTo(evRight, bayBottom)
+  context.moveTo(evLeft, bayBottom)
+  context.lineTo(evRight, bayBottom)
+  context.stroke()
 
   context.translate(20.4, 10.3)
   context.strokeStyle = 'rgba(132, 205, 181, .34)'
@@ -205,27 +256,34 @@ function drawStructure(context: CanvasRenderingContext2D) {
   context.fillStyle = '#dce5e1'
   context.strokeStyle = '#81948d'
   context.lineWidth = 0.05
-  roundedRect(context, 21.22, 6.72, 0.36, 0.62, 0.06)
+  roundedRect(context, 21.86, 12.45, 0.42, 0.7, 0.06)
   context.fill()
   context.stroke()
   context.fillStyle = '#64b99a'
   context.beginPath()
-  context.arc(21.4, 6.9, 0.07, 0, Math.PI * 2)
+  context.arc(22.07, 12.66, 0.075, 0, Math.PI * 2)
   context.fill()
   context.strokeStyle = '#8aa69c'
   context.beginPath()
-  context.arc(21.38, 7.18, 0.18, -Math.PI / 2, Math.PI / 1.7)
+  context.moveTo(22.03, 13.04)
+  context.bezierCurveTo(21.85, 12.98, 21.68, 12.84, 21.58, 12.63)
   context.stroke()
   context.restore()
 }
 
-export const WHEEL_STOP = { left: 14.02, right: 15.98, y: 8.05 } as const
+export const WHEEL_STOP = {
+  segments: [
+    { left: 14.02, right: 14.62 },
+    { left: 15.38, right: 15.98 },
+  ],
+  y: 8.05,
+} as const
 
 export function isRearWheelAtStop(vehicle: ReverseGuideVehicle) {
   const rearAxleX = vehicle.x - Math.cos(vehicle.heading) * DEFAULT_VEHICLE_CONFIG.wheelbase / 2
   const rearAxleY = vehicle.y - Math.sin(vehicle.heading) * DEFAULT_VEHICLE_CONFIG.wheelbase / 2
-  return rearAxleX >= WHEEL_STOP.left - 0.2
-    && rearAxleX <= WHEEL_STOP.right + 0.2
+  return rearAxleX >= WHEEL_STOP.segments[0].left - 0.2
+    && rearAxleX <= WHEEL_STOP.segments[1].right + 0.2
     && Math.abs(rearAxleY - WHEEL_STOP.y) <= 0.16
 }
 
@@ -237,11 +295,12 @@ function drawWheelStop(context: CanvasRenderingContext2D, active: boolean) {
   gradient.addColorStop(0, active ? '#74664b' : '#545955')
   gradient.addColorStop(1, '#252a28')
   context.fillStyle = gradient
-  roundedRect(context, WHEEL_STOP.left, WHEEL_STOP.y - 0.12, WHEEL_STOP.right - WHEEL_STOP.left, 0.24, 0.08)
-  context.fill()
-  context.fillStyle = 'rgba(235, 238, 226, .72)'
-  for (const x of [WHEEL_STOP.left + 0.32, WHEEL_STOP.right - 0.46]) {
-    context.fillRect(x, WHEEL_STOP.y - 0.12, 0.14, 0.24)
+  for (const segment of WHEEL_STOP.segments) {
+    roundedRect(context, segment.left, WHEEL_STOP.y - 0.12, segment.right - segment.left, 0.24, 0.08)
+    context.fill()
+    context.fillStyle = 'rgba(235, 238, 226, .72)'
+    context.fillRect((segment.left + segment.right) / 2 - 0.06, WHEEL_STOP.y - 0.12, 0.12, 0.24)
+    context.fillStyle = gradient
   }
   context.restore()
 }
@@ -294,25 +353,53 @@ function drawViewportScenery(
   context.fillRect(0, 0, width, height)
 
   context.save()
-  context.globalAlpha = 0.34
+  context.globalAlpha = 0.46
   for (const side of [-1, 1]) {
     const edge = side < 0 ? 0 : width
-    context.fillStyle = '#596a63'
-    for (let index = 0; index < 4; index += 1) {
-      const blockWidth = Math.max(20, width * (0.035 + index * 0.007))
-      const blockHeight = height * (0.16 + (index % 2) * 0.07)
-      const x = edge + side * -(index * width * 0.035 + blockWidth * (side < 0 ? 1 : 0))
-      context.fillRect(x, height * 0.16, blockWidth, blockHeight)
+    for (let index = 0; index < 3; index += 1) {
+      const blockWidth = Math.max(28, width * (0.055 + index * 0.008))
+      const blockHeight = height * (0.18 + (index % 2) * 0.08)
+      const inward = index * width * 0.052
+      const x = side < 0 ? inward : edge - inward - blockWidth
+      const y = height * (0.09 + index * 0.055)
+      context.fillStyle = index % 2 ? '#697875' : '#77827d'
+      context.fillRect(x, y, blockWidth, blockHeight)
+      context.strokeStyle = 'rgba(231, 224, 205, .38)'
+      context.lineWidth = 2
+      context.strokeRect(x + 3, y + 3, blockWidth - 6, blockHeight - 6)
+      context.fillStyle = 'rgba(56, 68, 65, .55)'
+      context.fillRect(x + blockWidth * .24, y + blockHeight * .2, blockWidth * .24, blockHeight * .18)
+      context.fillRect(x + blockWidth * .58, y + blockHeight * .5, blockWidth * .17, blockHeight * .14)
+      context.strokeStyle = 'rgba(232, 218, 187, .3)'
+      context.lineWidth = 1
+      for (let windowIndex = 0; windowIndex < 3; windowIndex += 1) {
+        const windowX = x + blockWidth * (.18 + windowIndex * .25)
+        context.beginPath()
+        context.moveTo(windowX, y + blockHeight - 8)
+        context.lineTo(windowX + blockWidth * .1, y + blockHeight - 8)
+        context.stroke()
+      }
     }
 
-    for (let index = 0; index < 7; index += 1) {
-      const radius = Math.max(12, Math.min(width, height) * (0.035 + (index % 3) * 0.009))
-      const x = edge + side * -(index * radius * 0.72 + radius * 0.25)
-      const y = height * (0.52 + (index % 2) * 0.12)
-      context.fillStyle = index % 2 ? '#446a54' : '#587b60'
-      context.beginPath()
-      context.arc(x, y, radius, 0, Math.PI * 2)
-      context.fill()
+    for (let index = 0; index < 4; index += 1) {
+      const radius = Math.max(14, Math.min(width, height) * (0.045 + (index % 2) * 0.008))
+      const centerX = side < 0
+        ? index * radius * 1.35 + radius * .35
+        : width - index * radius * 1.35 - radius * .35
+      const centerY = height * (0.58 + (index % 2) * 0.13)
+      context.fillStyle = 'rgba(91, 72, 49, .42)'
+      context.fillRect(centerX - radius * .9, centerY + radius * .45, radius * 1.8, radius * .65)
+      for (const [offsetX, offsetY, scale, color] of [
+        [-.42, .06, .72, '#365c48'],
+        [.35, .12, .8, '#426d50'],
+        [0, -.3, .92, '#5b825d'],
+        [-.12, -.5, .48, '#76946b'],
+      ] as const) {
+        context.fillStyle = color
+        context.beginPath()
+        context.arc(centerX + radius * offsetX, centerY + radius * offsetY, radius * scale, 0, Math.PI * 2)
+        context.fill()
+      }
     }
   }
   context.restore()
@@ -330,25 +417,6 @@ export const RED_GUIDE_ALIGNMENT_THRESHOLD = 0.12
 
 type ReverseGuideVehicle = Pick<VehicleState, 'x' | 'y' | 'heading' | 'steeringAngle'>
 type AssistanceSide = 'left' | 'right'
-
-export function assistanceVisibilityPolygon(vehicle: ReverseGuideVehicle, side: AssistanceSide) {
-  const sideDirection = side === 'left' ? -1 : 1
-  const cosine = Math.cos(vehicle.heading)
-  const sine = Math.sin(vehicle.heading)
-  const toWorld = (forward: number, signedSide: number) => {
-    const lateral = signedSide * sideDirection
-    return {
-      x: vehicle.x + cosine * forward - sine * lateral,
-      y: vehicle.y + sine * forward + cosine * lateral,
-    }
-  }
-  return [
-    toWorld(1.15, -0.18),
-    toWorld(1.15, 2.7),
-    toWorld(-6, 4.8),
-    toWorld(-6, -0.18),
-  ]
-}
 
 function reverseGuidePose(vehicle: ReverseGuideVehicle, distanceBehindBumper: number) {
   const targetDistance = distanceBehindBumper
@@ -548,16 +616,6 @@ export function renderParkingLot(
 
   drawRooftopAsphalt(context)
 
-  if (options.assistanceSide) {
-    const visibility = assistanceVisibilityPolygon(vehicle, options.assistanceSide)
-    context.beginPath()
-    visibility.forEach((point, index) => index
-      ? context.lineTo(point.x, point.y)
-      : context.moveTo(point.x, point.y))
-    context.closePath()
-    context.clip()
-  }
-
   drawStructure(context)
   drawParkingLines(context)
   drawWheelStop(context, Boolean(options.wheelStopActive))
@@ -571,6 +629,7 @@ export function renderParkingLot(
       body: '#171c20',
       roof: '#303940',
       outline: '#737c81',
+      variant: 'sedan',
       highlight: options.assistanceSide === 'right' || options.highlightParkedSide === 'left',
     })
   }
@@ -579,6 +638,7 @@ export function renderParkingLot(
       body: '#e7e5df',
       roof: '#aeb8bb',
       outline: '#ffffff',
+      variant: 'suv',
       highlight: options.assistanceSide === 'left' || options.highlightParkedSide === 'right',
     })
   }
@@ -586,6 +646,9 @@ export function renderParkingLot(
     body: options.danger ? '#db8b24' : '#128356',
     roof: options.danger ? '#72440f' : '#0b4934',
     outline: options.danger ? '#ffd275' : '#b7ffe4',
+    variant: 'hatchback',
+    reverseLights: vehicle.gear === 'R',
+    braking: vehicle.braking,
   })
 
   for (const collision of options.collisions ?? []) {

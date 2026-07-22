@@ -302,7 +302,11 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .spoke-bottom { transform: rotate(90deg); }
 .wheel-hub { position: absolute; z-index: 2; left: 50%; top: 50%; width: 62px; height: 62px; border: 4px solid #3d4944; border-radius: 50%; display: grid; place-items: center; color: #c9d8d2; background: #151c19; font-size: 1.15rem; font-weight: 900; transform: translate(-50%, -50%); }
 .wheel-center-mark { position: absolute; z-index: 3; left: 50%; top: 6px; width: 5px; height: 23px; border-radius: 4px; background: #d9b853; transform: translateX(-50%); }
-.center-steering-button { grid-column: 1 / -1; padding: 5px 10px; border: 1px solid #43534d; border-radius: 7px; color: #b8c9c2; background: transparent; font-size: .73rem; cursor: pointer; }
+.center-steering-button { position: relative; z-index: 4; grid-column: 1 / -1; min-height: 40px; padding: 5px 12px; border: 2px solid #a9cec0; border-radius: 12px; color: #f5fffb; background: #17231f; box-shadow: 0 4px 12px rgba(0,0,0,.48), inset 0 1px rgba(255,255,255,.12); font-size: .73rem; font-weight: 850; cursor: pointer; }
+.center-steering-button:hover { background: #21322c; }
+.center-steering-button:active { border-color: #d9fff1; background: #0d7655; transform: translateY(1px); }
+.center-steering-button:focus-visible { outline: 3px solid #83d0b5; outline-offset: 2px; }
+.center-steering-button:disabled { color: #9aaba4; border-color: #65756f; background: #1a211f; box-shadow: 0 3px 9px rgba(0,0,0,.32); cursor: default; }
 
 .instrument-panel, .gear-module { min-height: 220px; padding-left: 0; border-left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 11px; }
 .gear-module { min-height: 0; grid-column: 3; justify-self: end; }
@@ -658,7 +662,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .wheel-rim { border-color: #111513; box-shadow: inset 0 0 0 3px #66716d, inset 0 8px 10px rgba(255,255,255,.06), 0 7px 16px rgba(0,0,0,.45); }
 .wheel-spoke { background: linear-gradient(#4c5652, #171d1b); }
 .wheel-hub { border-color: #5f6b66; background: linear-gradient(145deg, #28312e, #101513); }
-.center-steering-button { min-height: 36px; border-radius: 12px; background: rgba(255,255,255,.07); }
+.center-steering-button { border-color: #a9cec0; background: #17231f; }
 .integrated-brake { border-color: rgba(255,108,98,.48); border-radius: 20px; background: rgba(111,38,33,.52); box-shadow: inset 0 1px rgba(255,255,255,.08); }
 .integrated-brake.active { border-color: #ff9a93; background: linear-gradient(180deg, #d1544b, #9f332c); }
 .gear-gate { border-color: rgba(255,255,255,.15); border-radius: 20px; background: rgba(4,8,7,.72); box-shadow: inset 0 1px rgba(255,255,255,.08); }
