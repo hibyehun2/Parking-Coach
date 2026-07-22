@@ -190,29 +190,39 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .lesson-user-car rect { fill: #087858; stroke: #aff0d9; stroke-width: 2; filter: drop-shadow(0 4px 3px rgba(0,0,0,.35)); }
 .lesson-user-car path { fill: none; stroke: #b7e4d5; stroke-width: 7; }
 .lesson-user-car circle { fill: #ff645b; }
-.lesson-motion-path { fill: none; stroke: #9aefd1; stroke-width: 3; stroke-dasharray: 7 5; }
+.lesson-motion-path { fill: none; stroke: #9aefd1; stroke-width: 3; stroke-dasharray: 7 5; opacity: .16; }
+.lesson-stage-0 .lesson-path-approach,
+.lesson-stage-1 .lesson-path-angle,
+.lesson-stage-3 .lesson-path-reverse-turn,
+.lesson-stage-4 .lesson-path-straight { opacity: 1; }
 .lesson-reference { stroke: #ffe078; stroke-width: 2.5; stroke-dasharray: 4 4; }
+.lesson-reference { display: none; }
+.lesson-stage-0 .lesson-reference-entry, .lesson-stage-1 .lesson-reference-middle { display: block; }
 .lesson-stop { display: none; }
 .lesson-stop circle { fill: rgba(94,35,29,.92); stroke: #ff8a80; stroke-width: 2; }
 .lesson-stop text { fill: white; font-size: 8px; font-weight: 900; text-anchor: middle; }
-.lesson-stage-0 .lesson-stop-entry, .lesson-stage-2 .lesson-stop-align { display: block; }
+.lesson-stage-0 .lesson-stop-entry,
+.lesson-stage-1 .lesson-stop-angle,
+.lesson-stage-4 .lesson-stop-align { display: block; }
 .lesson-mirror-check { display: none; animation: lesson-mirror-pulse 1.4s ease-in-out infinite; }
-.lesson-stage-1 .lesson-mirror-check { display: block; }
+.lesson-stage-3 .lesson-mirror-check { display: block; }
 .lesson-mirror-check path { fill: rgba(9,20,16,.82); stroke: #9aefd1; stroke-width: 2; }
 .lesson-mirror-check circle { fill: #9aefd1; }
 .lesson-mirror-check text { fill: white; font-size: 9px; font-weight: 850; text-anchor: middle; }
 .lesson-mirror-right { animation-delay: .7s; }
 @keyframes lesson-mirror-pulse { 50% { opacity: .35; } }
-.lesson-stage-1 .lesson-path-approach, .lesson-stage-1 .lesson-path-straight,
-.lesson-stage-2 .lesson-path-approach, .lesson-stage-2 .lesson-path-turn,
-.lesson-stage-0 .lesson-path-turn, .lesson-stage-0 .lesson-path-straight { opacity: .18; }
-.lesson-stage-1 .lesson-reference, .lesson-stage-2 .lesson-reference { display: none; }
 .lesson-danger { fill: rgba(255,91,80,.14); stroke: #ff756b; stroke-width: 3; opacity: 0; animation: lesson-danger-pulse 1.2s ease-in-out infinite; }
-.lesson-stage-1.lesson-scene-left-side .lesson-danger-left,
-.lesson-stage-1.lesson-scene-right-side .lesson-danger-right,
-.lesson-stage-1.lesson-scene-both-sides .lesson-danger-left,
-.lesson-stage-1.lesson-scene-both-sides .lesson-danger-right,
-.lesson-stage-1.lesson-scene-pillar-side .lesson-danger-pillar { opacity: 1; }
+.lesson-stage-3.lesson-scene-left-side .lesson-danger-left,
+.lesson-stage-3.lesson-scene-right-side .lesson-danger-right,
+.lesson-stage-3.lesson-scene-both-sides .lesson-danger-left,
+.lesson-stage-3.lesson-scene-both-sides .lesson-danger-right,
+.lesson-stage-3.lesson-scene-pillar-side .lesson-danger-pillar { opacity: 1; }
+.lesson-reverse-guide { display: none; fill: none; stroke-linecap: round; }
+.lesson-stage-4 .lesson-reverse-guide { display: block; }
+.lesson-guide-neutral { stroke: #32a8ff; stroke-width: 3; stroke-dasharray: 5 4; }
+.lesson-guide-dynamic { stroke: #ffd60a; stroke-width: 2; }
+.lesson-guide-red { stroke: #ff453a; stroke-width: 4; }
+.lesson-guide-yellow { stroke: #ffd60a; stroke-width: 3; }
 .lesson-scene-left-side .lesson-parked-right, .lesson-scene-right-side .lesson-parked-left { opacity: .16; }
 .lesson-scene-pillar-side .lesson-parked-right { opacity: .14; }
 .lesson-scene-both-sides .lesson-pillar, .lesson-scene-left-side .lesson-pillar, .lesson-scene-right-side .lesson-pillar { display: none; }
@@ -228,7 +238,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .lesson-copy p { margin: 0; color: var(--muted); line-height: 1.65; }
 .lesson-copy small { color: #52645d; font-weight: 800; line-height: 1.45; }
 .lesson-copy > strong { padding: 11px 13px; border-radius: 10px; color: var(--brand-dark); background: var(--brand-soft); line-height: 1.45; }
-.lesson-progress { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+.lesson-progress { display: grid; gap: 7px; }
 .lesson-progress span { height: 5px; border-radius: 99px; background: #dce6e1; }
 .lesson-progress span.active { background: var(--brand); }
 .lesson-footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; }

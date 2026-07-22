@@ -13,7 +13,7 @@ export type LessonStep = {
 export type MiniLesson = {
   scenarioId: ScenarioId
   title: string
-  steps: [LessonStep, LessonStep, LessonStep]
+  steps: [LessonStep, LessonStep, LessonStep, LessonStep, LessonStep]
 }
 
 export const lessons: Record<ScenarioId, MiniLesson> = {
@@ -21,36 +21,44 @@ export const lessons: Record<ScenarioId, MiniLesson> = {
     scenarioId: 'both-sides',
     title: '양옆 차량 사이에 안전하게 넣기',
     steps: [
-      { title: '간격을 두고 진입 각도 만들기', description: '주차선과 약 50cm~2m 간격을 두고 진입해 주차 공간 끝 선에 운전자 어깨를 맞춥니다. 주차 반대 방향인 왼쪽으로 핸들을 끝까지 돌려 전진하고, 사이드미러에서 내 차 뒷부분이 주차 공간 중간쯤 오면 정지합니다.', cue: '회전 전에 양옆 공간이 충분한지 확인하고, 기준점에서는 완전히 정지하세요.', durationSeconds: 18, gear: 'D', steering: '좌측 끝까지', check: '주차선 간격 · 끝 선과 어깨 · 사이드미러의 뒤 모서리' },
-      { title: '양쪽 사이드미러로 후진 진입', description: 'R로 바꾸고 주차 방향인 오른쪽으로 핸들을 끝까지 돌려 천천히 후진합니다. 후방카메라보다 좌우 사이드미러를 번갈아 보며 양옆 차량과 주차선 간격을 확인하세요.', cue: '한쪽만 오래 보지 말고 왼쪽과 오른쪽 간격을 짧게 교차 확인하세요.', durationSeconds: 18, gear: 'R', steering: '우측 끝까지', check: '좌측 미러 ↔ 우측 미러 · 양옆 차량 앞 모서리' },
-      { title: '평행하면 중앙 복귀 후 마무리', description: '차체와 주차선이 평행해지면 정지하고 핸들을 정중앙으로 풀어 바퀴를 일자로 만듭니다. 이제 후방 가이드로 뒤쪽 장애물과 거리를 확인하며 직선 후진해 마무리합니다.', cue: '핸들을 중앙으로 돌릴 때와 최종 정지 전에는 반드시 브레이크로 차를 멈추세요.', durationSeconds: 16, gear: 'R', steering: '중앙', check: '차체와 주차선 평행 · 후방 거리 가이드' },
+      { title: '진입 위치 맞추기', description: '핸들을 중앙에 두고 주차선과 약 50cm~2m 간격을 유지하며 직진합니다. 주차 공간 끝 선에 운전자 어깨를 맞추고 정지합니다.', cue: '먼저 나란히 진입해 회전할 공간을 확보하세요.', durationSeconds: 10, gear: 'D', steering: '중앙', check: '주차선 간격 · 끝 선과 운전자 어깨' },
+      { title: '진입 각도 만들기', description: '주차 반대 방향인 왼쪽으로 핸들을 끝까지 돌려 전진합니다. 사이드미러에서 내 차 뒷부분이 주차 공간 중간쯤 오면 정지합니다.', cue: '양옆 차량과 앞부분의 회전 여유를 함께 확인하세요.', durationSeconds: 12, gear: 'D', steering: '좌측 끝까지', check: '양옆 차량 · 내 차 뒤 모서리의 위치' },
+      { title: '후진 준비하기', description: '완전히 정지한 상태에서 R로 바꾸고 주차 방향인 오른쪽으로 핸들을 끝까지 돌립니다. 움직이기 전에 양쪽 차량의 가까운 모서리를 확인합니다.', cue: '기어와 핸들 조작은 브레이크로 멈춘 상태에서 하세요.', durationSeconds: 8, gear: 'R', steering: '우측 끝까지', check: 'R 기어 · 오른쪽 최대 조향 · 양옆 모서리' },
+      { title: '양쪽 간격을 보며 곡선 후진', description: '천천히 곡선 후진하며 좌우 간격뷰를 짧게 번갈아 봅니다. 양옆 차량 앞 모서리와 내 차가 가까워지는 쪽을 우선 확인하세요.', cue: '한쪽만 오래 보지 말고 왼쪽과 오른쪽을 교차 확인하세요.', durationSeconds: 14, gear: 'R', steering: '우측 끝까지', check: '좌측 간격뷰 ↔ 우측 간격뷰 · 양옆 앞 모서리' },
+      { title: '평행 정렬 후 직선 후진', description: '차체와 주차선이 평행해지면 정지하고 핸들을 중앙으로 풉니다. 파란 기준선과 노란 예측선이 겹친 상태로 후방 거리를 확인하며 직선 후진합니다.', cue: '마지막에는 양쪽 주차선 간격과 뒤쪽 여유를 함께 확인하세요.', durationSeconds: 12, gear: 'R', steering: '중앙', check: '차체 평행 · 핸들 중앙 · 후방 거리선' },
     ],
   },
   'left-side': {
     scenarioId: 'left-side',
     title: '왼쪽 차량의 앞 모서리 피하기',
     steps: [
-      { title: '왼쪽 차량과 간격 두고 각도 만들기', description: '주차선과 50cm~2m 간격을 두고 끝 선에 어깨를 맞춥니다. 핸들을 왼쪽 끝까지 돌려 전진하고, 내 차 뒷부분이 주차 공간 중간에 오면 정지합니다.', cue: '왼쪽 차량과 내 차 앞부분이 가까워지지 않는지 함께 확인하세요.', durationSeconds: 18, gear: 'D', steering: '좌측 끝까지', check: '끝 선과 어깨 · 왼쪽 차량 · 뒤 모서리 위치' },
-      { title: '좌우 미러를 번갈아 보며 진입', description: 'R과 오른쪽 최대 조향으로 후진합니다. 특히 왼쪽 차량 앞 모서리를 확인하되, 오른쪽 미러도 번갈아 보며 양쪽 선 간격을 비교하세요.', cue: '후방카메라보다 좌우 사이드미러의 간격 확인이 우선입니다.', durationSeconds: 18, gear: 'R', steering: '우측 끝까지', check: '좌측 미러 ↔ 우측 미러' },
-      { title: '평행에서 핸들 중앙과 후방 확인', description: '차체와 주차선이 평행하면 정지해 핸들을 중앙으로 돌립니다. 후방 가이드로 장애물과 남은 거리를 확인하며 직선 후진합니다.', cue: '마지막에도 양쪽 주차선 간격이 비슷한지 한 번 더 확인하세요.', durationSeconds: 15, gear: 'R', steering: '중앙', check: '평행 상태 · 후방 거리 · 좌우 간격' },
+      { title: '진입 위치 맞추기', description: '핸들을 중앙에 두고 주차선과 50cm~2m 간격으로 직진해 끝 선에 운전자 어깨를 맞추고 정지합니다.', cue: '왼쪽 차량과 나란한 간격부터 안정적으로 만드세요.', durationSeconds: 10, gear: 'D', steering: '중앙', check: '끝 선과 어깨 · 왼쪽 차량 간격' },
+      { title: '진입 각도 만들기', description: '핸들을 왼쪽 끝까지 돌려 전진하고 내 차 뒷부분이 주차 공간 중간에 오면 정지합니다.', cue: '회전하는 내 차 앞부분과 왼쪽 차량을 함께 확인하세요.', durationSeconds: 12, gear: 'D', steering: '좌측 끝까지', check: '왼쪽 차량 · 내 차 뒤 모서리' },
+      { title: '후진 준비하기', description: '멈춘 상태에서 R로 바꾸고 핸들을 오른쪽 끝까지 돌립니다. 왼쪽 차량 앞 모서리의 위치를 먼저 확인합니다.', cue: '움직이기 전에 가까워질 지점을 미리 찾으세요.', durationSeconds: 8, gear: 'R', steering: '우측 끝까지', check: 'R 기어 · 오른쪽 최대 조향 · 왼쪽 앞 모서리' },
+      { title: '간격을 보며 곡선 후진', description: '왼쪽 간격뷰를 우선 확인하면서 천천히 후진하되 오른쪽도 번갈아 보며 양쪽 주차선 간격을 비교합니다.', cue: '가까운 왼쪽을 우선 보되 반대쪽 확인을 놓치지 마세요.', durationSeconds: 14, gear: 'R', steering: '우측 끝까지', check: '왼쪽 간격뷰 ↔ 오른쪽 간격뷰' },
+      { title: '평행 정렬 후 직선 후진', description: '주차선과 평행해지면 정지해 핸들을 중앙으로 돌립니다. 후방 가이드와 양쪽 선 간격을 확인하며 직선 후진합니다.', cue: '파란 기준선과 노란 예측선이 겹치는지 확인하세요.', durationSeconds: 12, gear: 'R', steering: '중앙', check: '평행 상태 · 후방 거리 · 좌우 간격' },
     ],
   },
   'right-side': {
     scenarioId: 'right-side',
     title: '오른쪽 차량과 안전거리 유지하기',
     steps: [
-      { title: '오른쪽 차량과 간격 두고 각도 만들기', description: '주차선과 50cm~2m 간격을 유지해 끝 선에 어깨를 맞춥니다. 핸들을 왼쪽 끝까지 돌려 전진하고, 뒤 모서리가 주차 공간 중간에 오면 정지합니다.', cue: '각도를 만들 때 오른쪽 차량과 뒤 범퍼 사이 여유를 기억하세요.', durationSeconds: 18, gear: 'D', steering: '좌측 끝까지', check: '우측 차량 간격 · 끝 선과 어깨' },
-      { title: '우측 간격과 반대편을 교차 확인', description: 'R과 오른쪽 최대 조향으로 천천히 후진합니다. 우측 미러에서 가까운 뒤 모서리를 확인한 뒤 좌측 미러도 번갈아 확인하세요.', cue: '간격이 빠르게 줄면 즉시 정지하고 양쪽 상황을 다시 확인하세요.', durationSeconds: 18, gear: 'R', steering: '우측 끝까지', check: '우측 미러 ↔ 좌측 미러' },
-      { title: '평행에서 중앙 복귀 후 마무리', description: '주차선과 평행하면 정지해 핸들을 중앙으로 돌립니다. 후방 가이드로 장애물과 거리를 확인하면서 직선 후진하세요.', cue: '후방 가이드는 마지막 깊이 조절에 사용하고 좌우 간격은 미러로 확인하세요.', durationSeconds: 15, gear: 'R', steering: '중앙', check: '평행 상태 · 후방 거리' },
+      { title: '진입 위치 맞추기', description: '핸들을 중앙에 두고 주차선과 50cm~2m 간격으로 직진해 끝 선에 운전자 어깨를 맞추고 정지합니다.', cue: '오른쪽 차량과 나란한 초기 간격을 확인하세요.', durationSeconds: 10, gear: 'D', steering: '중앙', check: '끝 선과 어깨 · 오른쪽 차량 간격' },
+      { title: '진입 각도 만들기', description: '핸들을 왼쪽 끝까지 돌려 전진하고 내 차 뒷부분이 주차 공간 중간에 오면 정지합니다.', cue: '오른쪽 차량과 내 차 뒤 범퍼의 여유를 기억하세요.', durationSeconds: 12, gear: 'D', steering: '좌측 끝까지', check: '오른쪽 차량 · 내 차 뒤 모서리' },
+      { title: '후진 준비하기', description: '멈춘 상태에서 R로 바꾸고 핸들을 오른쪽 끝까지 돌립니다. 오른쪽 차량의 가까운 모서리를 먼저 확인합니다.', cue: '기어와 핸들을 확인한 다음 천천히 움직이세요.', durationSeconds: 8, gear: 'R', steering: '우측 끝까지', check: 'R 기어 · 오른쪽 최대 조향 · 오른쪽 모서리' },
+      { title: '간격을 보며 곡선 후진', description: '오른쪽 간격뷰를 우선 확인하며 천천히 후진하고 왼쪽도 번갈아 보며 양쪽 여유를 비교합니다.', cue: '간격이 빠르게 줄면 브레이크로 멈추고 다시 확인하세요.', durationSeconds: 14, gear: 'R', steering: '우측 끝까지', check: '오른쪽 간격뷰 ↔ 왼쪽 간격뷰' },
+      { title: '평행 정렬 후 직선 후진', description: '주차선과 평행해지면 정지해 핸들을 중앙으로 돌리고 후방 거리선을 보며 직선 후진합니다.', cue: '깊이는 후방 가이드로, 좌우 간격은 양쪽 선으로 확인하세요.', durationSeconds: 12, gear: 'R', steering: '중앙', check: '평행 상태 · 핸들 중앙 · 후방 거리' },
     ],
   },
   'pillar-side': {
     scenarioId: 'pillar-side',
     title: '기둥과 회전 여유 확보하기',
     steps: [
-      { title: '기둥 위치를 기억하고 각도 만들기', description: '주차선과 50cm~2m 간격으로 끝 선에 어깨를 맞춥니다. 기둥 위치를 확인한 뒤 핸들을 왼쪽 끝까지 돌려 전진하고, 뒤 모서리가 주차 공간 중간에 오면 정지합니다.', cue: '기둥이 미러 사각지대로 사라지기 전 위치와 거리를 기억하세요.', durationSeconds: 18, gear: 'D', steering: '좌측 끝까지', check: '기둥 위치 · 끝 선과 어깨 · 뒤 모서리' },
-      { title: '기둥 쪽 미러와 반대편 교차 확인', description: 'R과 오른쪽 최대 조향으로 후진합니다. 기둥 쪽 미러를 우선 보되 반대편 미러도 번갈아 보며 양쪽 여유를 확인하세요.', cue: '기둥과의 간격이 불확실하면 즉시 정지하세요.', durationSeconds: 18, gear: 'R', steering: '우측 끝까지', check: '기둥 쪽 미러 ↔ 반대편 미러' },
-      { title: '평행에서 중앙 복귀 후 깊이 조절', description: '차체가 주차선과 평행하면 정지해 핸들을 중앙으로 돌립니다. 후방 가이드로 장애물과 거리를 확인하며 직선 후진합니다.', cue: '기둥 쪽 문을 열 공간도 남았는지 마지막으로 확인하세요.', durationSeconds: 15, gear: 'R', steering: '중앙', check: '평행 상태 · 후방 거리 · 기둥 여유' },
+      { title: '진입 위치 맞추기', description: '핸들을 중앙에 두고 주차선과 간격을 유지해 끝 선에 운전자 어깨를 맞춘 뒤 정지합니다.', cue: '기둥이 사각지대로 사라지기 전 위치를 기억하세요.', durationSeconds: 10, gear: 'D', steering: '중앙', check: '기둥 위치 · 끝 선과 어깨' },
+      { title: '진입 각도 만들기', description: '핸들을 왼쪽 끝까지 돌려 전진하고 내 차 뒷부분이 주차 공간 중간에 오면 정지합니다.', cue: '회전 중 기둥과 차체의 여유를 계속 확인하세요.', durationSeconds: 12, gear: 'D', steering: '좌측 끝까지', check: '기둥 · 내 차 뒤 모서리' },
+      { title: '후진 준비하기', description: '멈춘 상태에서 R로 바꾸고 핸들을 오른쪽 끝까지 돌립니다. 기둥과 가까워질 차체 모서리를 먼저 확인합니다.', cue: '기둥 위치가 불확실하면 움직이기 전에 다시 확인하세요.', durationSeconds: 8, gear: 'R', steering: '우측 끝까지', check: 'R 기어 · 오른쪽 최대 조향 · 기둥 위치' },
+      { title: '간격을 보며 곡선 후진', description: '기둥 쪽 간격뷰를 우선 보며 후진하고 반대편도 번갈아 확인해 양쪽 여유를 유지합니다.', cue: '기둥 쪽을 우선 확인하되 반대쪽 선도 놓치지 마세요.', durationSeconds: 14, gear: 'R', steering: '우측 끝까지', check: '기둥 쪽 간격뷰 ↔ 반대편 간격뷰' },
+      { title: '평행 정렬 후 직선 후진', description: '차체가 평행해지면 정지해 핸들을 중앙으로 돌립니다. 후방 거리와 기둥 쪽 여유를 확인하며 직선 후진합니다.', cue: '마지막에는 기둥 쪽 문을 열 공간도 확인하세요.', durationSeconds: 12, gear: 'R', steering: '중앙', check: '평행 상태 · 후방 거리 · 기둥 여유' },
     ],
   },
 }

@@ -39,7 +39,7 @@ export function MiniLessonView({ lesson, onFinish }: MiniLessonProps) {
       <section className="mini-lesson" role="dialog" aria-modal="true" aria-labelledby="lesson-title">
         <header className="lesson-header">
           <div>
-            <span>3단계 · 약 {lessonDuration(lesson)}초</span>
+            <span>{lesson.steps.length}단계 · 약 {lessonDuration(lesson)}초</span>
             <strong id="lesson-title">{lesson.title}</strong>
           </div>
           <button type="button" className="lesson-skip" onClick={finish}>건너뛰고 시작</button>
@@ -63,24 +63,34 @@ export function MiniLessonView({ lesson, onFinish }: MiniLessonProps) {
               <path d="M203 147H227M203 199H227" />
             </g>
             <g className="lesson-pillar"><rect x="246" y="104" width="24" height="24" rx="2" /><path d="M249 125L267 107M256 128L270 114" /></g>
-            <path className="lesson-motion-path lesson-path-approach" d="M160 54H205C222 54 232 42 236 28" markerEnd="url(#lesson-arrow)" />
-            <path className="lesson-motion-path lesson-path-turn" d="M236 28C232 70 190 74 160 126" markerEnd="url(#lesson-arrow)" />
-            <path className="lesson-motion-path lesson-path-straight" d="M160 126V204" markerEnd="url(#lesson-arrow)" />
-            <line className="lesson-reference" x1="190" y1="36" x2="190" y2="94" />
-            <g className="lesson-stop lesson-stop-entry" transform="translate(236 28)"><circle r="13" /><text y="4">정지</text></g>
-            <g className="lesson-stop lesson-stop-align" transform="translate(160 126)"><circle r="13" /><text y="4">정지</text></g>
+            <path className="lesson-motion-path lesson-path-approach" d="M112 42H190" markerEnd="url(#lesson-arrow)" />
+            <path className="lesson-motion-path lesson-path-angle" d="M190 42C218 42 238 48 240 70" markerEnd="url(#lesson-arrow)" />
+            <path className="lesson-motion-path lesson-path-reverse-turn" d="M240 70C236 108 196 112 160 142" markerEnd="url(#lesson-arrow)" />
+            <path className="lesson-motion-path lesson-path-straight" d="M160 142V204" markerEnd="url(#lesson-arrow)" />
+            <line className="lesson-reference lesson-reference-entry" x1="190" y1="18" x2="190" y2="91" />
+            <line className="lesson-reference lesson-reference-middle" x1="130" y1="105" x2="190" y2="105" />
+            <g className="lesson-stop lesson-stop-entry" transform="translate(190 42)"><circle r="13" /><text y="4">정지</text></g>
+            <g className="lesson-stop lesson-stop-angle" transform="translate(240 70)"><circle r="13" /><text y="4">정지</text></g>
+            <g className="lesson-stop lesson-stop-align" transform="translate(160 142)"><circle r="13" /><text y="4">정지</text></g>
             <g className="lesson-mirror-check lesson-mirror-left" transform="translate(48 104)"><path d="M-16 0Q0-13 16 0Q0 13-16 0Z" /><circle r="4" /><text y="25">좌측</text></g>
             <g className="lesson-mirror-check lesson-mirror-right" transform="translate(272 104)"><path d="M-16 0Q0-13 16 0Q0 13-16 0Z" /><circle r="4" /><text y="25">우측</text></g>
             <circle className="lesson-danger lesson-danger-left" cx="102" cy="128" r="15" />
             <circle className="lesson-danger lesson-danger-right" cx="216" cy="128" r="15" />
             <circle className="lesson-danger lesson-danger-pillar" cx="258" cy="116" r="17" />
-            <g className="lesson-user-car">
+            <g className="lesson-reverse-guide">
+              <path className="lesson-guide-neutral" d="M145 158V218M175 158V218" />
+              <path className="lesson-guide-dynamic" d="M145 158V218M175 158V218" />
+              <path className="lesson-guide-red" d="M145 175H175" />
+              <path className="lesson-guide-yellow" d="M145 198H175M145 218H175" />
+            </g>
+            <g className="lesson-user-car" transform={stepIndex === 2 ? 'translate(240 70) rotate(90)' : undefined}>
               <rect x="-34" y="-15" width="68" height="30" rx="7" />
               <path d="M-18 -11V11M18 -11V11" />
               <circle cx="-25" cy="-10" r="2" /><circle cx="-25" cy="10" r="2" />
-              {stepIndex === 0 && <animateMotion dur="3.2s" path="M160 54 H205 C222 54 232 42 236 28" rotate="auto" repeatCount="indefinite" />}
-              {stepIndex === 1 && <animateMotion dur="3.6s" path="M236 28 C232 70 190 74 160 126" rotate="auto-reverse" repeatCount="indefinite" />}
-              {stepIndex === 2 && <animateMotion dur="3s" path="M160 126 V204" rotate="auto-reverse" repeatCount="indefinite" />}
+              {stepIndex === 0 && <animateMotion dur="3s" path="M112 42 H190" rotate="auto" repeatCount="indefinite" />}
+              {stepIndex === 1 && <animateMotion dur="3.2s" path="M190 42 C218 42 238 48 240 70" rotate="auto" repeatCount="indefinite" />}
+              {stepIndex === 3 && <animateMotion dur="3.6s" path="M240 70 C236 108 196 112 160 142" rotate="auto-reverse" repeatCount="indefinite" />}
+              {stepIndex === 4 && <animateMotion dur="3s" path="M160 142 V204" rotate="auto-reverse" repeatCount="indefinite" />}
             </g>
             <g className="lesson-steering-symbol" transform="translate(43 190)">
               <circle r="19" /><circle r="5" /><path d="M0-5V-18M-4 3L-16 11M4 3L16 11" />
@@ -102,7 +112,7 @@ export function MiniLessonView({ lesson, onFinish }: MiniLessonProps) {
           <strong>{step.cue}</strong>
         </div>
 
-        <div className="lesson-progress" aria-label={`레슨 ${stepIndex + 1}단계`}>
+        <div className="lesson-progress" style={{ gridTemplateColumns: `repeat(${lesson.steps.length}, 1fr)` }} aria-label={`레슨 ${stepIndex + 1}단계`}>
           {lesson.steps.map((item, index) => (
             <span key={item.title} className={index <= stepIndex ? 'active' : ''} />
           ))}

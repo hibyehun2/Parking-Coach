@@ -225,7 +225,7 @@ function drawRooftopAsphalt(context: CanvasRenderingContext2D) {
 export const REVERSE_GUIDE_LEVELS = [
   { distance: 0.5, halfWidth: 1.3, color: '#ff453a' },
   { distance: 1, halfWidth: 1.3, color: '#ffd60a' },
-  { distance: 2.3, halfWidth: 1.3, color: '#32a8ff' },
+  { distance: 2.3, halfWidth: 1.3, color: '#ffd60a' },
 ] as const
 
 export const REVERSE_PATH_COLOR = '#ffd60a'
@@ -347,15 +347,21 @@ function drawDistanceTrapezoid(context: CanvasRenderingContext2D, vehicle: Vehic
     context.stroke()
   }
 
-  context.strokeStyle = REVERSE_PATH_COLOR
-  context.lineWidth = 0.1
-  context.setLineDash([])
-  for (const path of dynamicPaths) {
-    context.beginPath()
-    path.forEach((point, index) => index
-      ? context.lineTo(point.x, point.y)
-      : context.moveTo(point.x, point.y))
-    context.stroke()
+  const redSegmentEnd = Math.round(REVERSE_GUIDE_LEVELS[0].distance * 10)
+  for (const [index, path] of dynamicPaths.entries()) {
+    for (const segment of [
+      { points: path.slice(0, redSegmentEnd + 1), color: REVERSE_GUIDE_LEVELS[0].color },
+      { points: path.slice(redSegmentEnd), color: REVERSE_PATH_COLOR },
+    ]) {
+      context.strokeStyle = segment.color
+      context.lineWidth = index < 2 && segment.color === REVERSE_GUIDE_LEVELS[0].color ? 0.13 : 0.1
+      context.setLineDash([])
+      context.beginPath()
+      segment.points.forEach((point, pointIndex) => pointIndex
+        ? context.lineTo(point.x, point.y)
+        : context.moveTo(point.x, point.y))
+      context.stroke()
+    }
   }
   context.setLineDash([])
 

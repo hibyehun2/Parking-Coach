@@ -13,13 +13,13 @@ import {
 import { INITIAL_VEHICLE_STATE } from '../src/engine/vehiclePhysics.ts'
 import { TARGET_PARKING_BAY } from '../src/engine/parkingEvaluation.ts'
 
-test('후방 거리 가이드는 50cm부터 빨강, 노랑, 파랑 순서다', () => {
+test('후방 거리 가이드는 50cm부터 빨강, 노랑, 노랑 순서다', () => {
   assert.deepEqual(
     REVERSE_GUIDE_LEVELS.map(({ distance, color }) => ({ distance, color })),
     [
       { distance: 0.5, color: '#ff453a' },
       { distance: 1, color: '#ffd60a' },
-      { distance: 2.3, color: '#32a8ff' },
+      { distance: 2.3, color: '#ffd60a' },
     ],
   )
   assert.equal(REVERSE_PATH_COLOR, '#ffd60a')
