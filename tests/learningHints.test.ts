@@ -35,11 +35,12 @@ test('후진 조향 중에는 상황에 맞는 간격 화면 확인을 권장한
     gear: 'R',
     steeringAngle: 0.3,
   }, 'right-side')
-  assert.equal(hint?.id, 'clearance-view-우측 후방 평면뷰')
-  assert.match(hint?.title ?? '', /우측 후방 평면뷰/)
+  assert.equal(hint?.id, 'alternate-side-mirrors')
+  assert.match(hint?.title ?? '', /좌우 사이드미러/)
+  assert.match(hint?.message ?? '', /우측 미러.*좌측 미러/)
 })
 
-test('핸들을 중앙에 두고 진입점에서 후진하면 빨간 50cm 기준선을 안내한다', () => {
+test('후진을 시작했지만 조향하지 않았으면 주차 방향 최대 조향을 안내한다', () => {
   const hint = getLearningHint({
     ...INITIAL_VEHICLE_STATE,
     x: TARGET_PARKING_BAY.center.x,
@@ -48,8 +49,33 @@ test('핸들을 중앙에 두고 진입점에서 후진하면 빨간 50cm 기준
     steeringAngle: 0,
   }, 'both-sides')
 
-  assert.equal(hint?.id, 'rear-red-guide')
-  assert.match(hint?.message ?? '', /빨간선/)
+  assert.equal(hint?.id, 'turn-toward-space')
+  assert.match(hint?.message ?? '', /오른쪽 끝까지/)
+})
+
+test('평행 정렬 후에는 후방 가이드로 직선 후진을 안내한다', () => {
+  const hint = getLearningHint({
+    ...INITIAL_VEHICLE_STATE,
+    x: TARGET_PARKING_BAY.center.x,
+    y: TARGET_PARKING_BAY.top + 1.5,
+    heading: TARGET_PARKING_BAY.heading,
+    gear: 'R',
+    steeringAngle: 0,
+  }, 'both-sides')
+
+  assert.equal(hint?.id, 'rear-camera-finish')
+  assert.match(hint?.message ?? '', /장애물.*거리/)
+})
+
+test('반대 방향 최대 조향 중에는 사이드미러 기준점을 안내한다', () => {
+  const hint = getLearningHint({
+    ...INITIAL_VEHICLE_STATE,
+    gear: 'D',
+    steeringAngle: -0.3,
+  }, 'both-sides')
+
+  assert.equal(hint?.id, 'make-entry-angle')
+  assert.match(hint?.message ?? '', /주차 공간 중간/)
 })
 
 test('진입점 전에는 위치 기반 안내를 제공한다', () => {

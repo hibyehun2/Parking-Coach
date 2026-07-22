@@ -81,6 +81,7 @@ export function MiniLessonView({ lesson, onFinish }: MiniLessonProps) {
             <g className="lesson-steering-symbol" transform="translate(43 190)">
               <circle r="19" /><circle r="5" /><path d="M0-5V-18M-4 3L-16 11M4 3L16 11" />
               {step.steering === '우측 끝까지' && <path className="lesson-wheel-arrow" d="M-24-6A25 25 0 0 1 12-22" markerEnd="url(#lesson-arrow)" />}
+              {step.steering === '좌측 끝까지' && <path className="lesson-wheel-arrow" d="M24-6A25 25 0 0 0-12-22" markerEnd="url(#lesson-arrow)" />}
             </g>
           </svg>
           <div className="lesson-driving-state">

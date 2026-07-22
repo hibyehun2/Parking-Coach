@@ -116,12 +116,14 @@ export function GearSelector({
       {!parkingCompleted ? (
         <button
           type="button"
-          className="parking-control"
+          className={`parking-control${parkingReady ? ' parking-ready' : ''}`}
           disabled={!parkingReady}
           aria-label={parkingReady ? '주차 완료 확정' : '차량을 주차칸 안에 넣고 브레이크를 작동해야 파킹할 수 있습니다'}
           onClick={onPark}
         >
-          파킹
+          <span aria-hidden="true">P</span>
+          <strong>{parkingReady ? '파킹 완료' : '파킹'}</strong>
+          {!parkingReady && <small>주차 후 브레이크</small>}
         </button>
       ) : (
         <button type="button" className="result-control" onClick={onShowResult}>결과 확인</button>
