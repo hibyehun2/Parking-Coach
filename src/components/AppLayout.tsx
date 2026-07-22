@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { AppInstallPrompt } from './AppInstallPrompt'
 
 const navigation = [
   { to: '/', label: '홈', end: true },
@@ -9,6 +10,7 @@ const navigation = [
 export function AppLayout() {
   return (
     <div className="app-shell">
+      <AppInstallPrompt />
       <header className="site-header">
         <NavLink className="brand" to="/" aria-label="Parking Coach 홈">
           <span className="brand-mark" aria-hidden="true">P</span>

@@ -37,7 +37,7 @@ export function ParkingLotCanvas({ vehicle, danger, collisions, children }: Park
       const compactLandscape = height <= 520
       renderParkingLot(context, width, height, vehicleRef.current, {
         ...renderOptionsRef.current,
-        topInsetRatio: compactLandscape ? 0.24 : 0.2,
+        topInsetRatio: compactLandscape ? 0.29 : 0.2,
         bottomInsetRatio: 0.02,
       })
     }

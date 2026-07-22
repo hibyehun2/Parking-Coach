@@ -99,17 +99,23 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .start-panel > div { display: flex; flex-direction: column; gap: 6px; }
 .start-panel > div span { color: #a8c6bb; font-size: .82rem; font-weight: 750; }
 .start-panel strong { font-size: 1.18rem; }
+.app-install-banner { position: fixed; z-index: 45; right: 16px; bottom: 16px; width: min(420px, calc(100% - 32px)); padding: 14px 48px 14px 16px; border: 1px solid #a9d7c5; border-radius: 16px; display: flex; align-items: center; gap: 12px; color: #173127; background: #f7fffb; box-shadow: 0 16px 44px rgba(13,50,38,.2); }
+.app-install-banner div { min-width: 0; flex: 1; display: grid; gap: 3px; }
+.app-install-banner span { color: var(--muted); font-size: .76rem; }
+.app-install-banner > button:not(.install-dismiss) { min-height: 40px; padding: 0 13px; border: 0; border-radius: 9px; color: white; background: var(--brand); font-weight: 800; white-space: nowrap; }
+.app-install-banner .install-dismiss { position: absolute; top: 6px; right: 8px; width: 32px; height: 32px; border: 0; color: #64736d; background: transparent; font-size: 1.3rem; }
 
 .simulator-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .parking-canvas-frame { position: relative; width: 100%; height: clamp(540px, 64vw, 800px); border: 1px solid #cbd7d1; border-radius: 22px; overflow: hidden; background: #303936; box-shadow: var(--shadow); }
 .parking-canvas { width: 100%; height: 100%; display: block; }
 .corner-assistance { position: absolute; z-index: 4; top: 10px; right: 10px; left: 10px; display: flex; justify-content: space-between; pointer-events: none; }
-.corner-view { position: relative; width: min(220px, 25%); padding: 4px; overflow: hidden; background: #29332f; filter: drop-shadow(0 5px 8px rgba(0,0,0,.35)); }
-.corner-view-left { padding-right: 15px; clip-path: polygon(3% 22%, 6% 14%, 13% 9%, 93% 2%, 98% 7%, 100% 14%, 100% 86%, 98% 93%, 93% 98%, 13% 91%, 6% 86%, 3% 78%); }
-.corner-view-right { padding-left: 15px; clip-path: polygon(0 14%, 2% 7%, 7% 2%, 87% 9%, 94% 14%, 97% 22%, 97% 78%, 94% 86%, 87% 91%, 7% 98%, 2% 93%, 0 86%); }
-.corner-view::after { content: ""; position: absolute; z-index: 2; inset: 3px; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(255,255,255,.6); border-radius: 18px; }
+.corner-view { position: relative; width: min(238px, 27%); padding: 7px; overflow: hidden; background: linear-gradient(145deg, #4a5350, #111715 55%, #050807); filter: drop-shadow(0 6px 9px rgba(0,0,0,.45)); }
+.corner-view-left { padding-right: 17px; clip-path: polygon(3% 22%, 6% 14%, 13% 9%, 93% 2%, 98% 7%, 100% 14%, 100% 86%, 98% 93%, 93% 98%, 13% 91%, 6% 86%, 3% 78%); }
+.corner-view-right { padding-left: 17px; clip-path: polygon(0 14%, 2% 7%, 7% 2%, 87% 9%, 94% 14%, 97% 22%, 97% 78%, 94% 86%, 87% 91%, 7% 98%, 2% 93%, 0 86%); }
+.mirror-glass { position: relative; overflow: hidden; border: 2px solid #77827e; border-radius: 18px; background: #29332f; box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
+.corner-view::after { content: ""; position: absolute; z-index: 2; inset: 2px; pointer-events: none; border-top: 1px solid rgba(255,255,255,.42); border-radius: 22px; }
 .corner-view span { position: absolute; z-index: 1; top: 9px; left: 12px; padding: 0; color: white; background: transparent; text-shadow: 0 1px 3px #000, 0 0 5px #000; font-size: .62rem; font-weight: 850; }
-.corner-view canvas { width: 100%; height: 135px; border-radius: 12px; display: block; }
+.corner-view canvas { width: 100%; height: 158px; display: block; }
 .corner-view small { position: absolute; z-index: 1; right: 7px; bottom: 7px; padding: 2px 4px; border-radius: 4px; color: rgba(255,255,255,.9); background: rgba(8,17,14,.72); font-size: .52rem; font-weight: 750; }
 .corner-view-right span { right: 12px; left: auto; }
 .corner-view-left small { right: 18px; }
@@ -265,7 +271,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .center-steering-button { grid-column: 1 / -1; padding: 5px 10px; border: 1px solid #43534d; border-radius: 7px; color: #b8c9c2; background: transparent; font-size: .73rem; cursor: pointer; }
 
 .instrument-panel, .gear-module { min-height: 220px; padding-left: 0; border-left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 11px; }
-.gear-module { min-height: 0; justify-self: end; }
+.gear-module { min-height: 0; grid-column: 3; justify-self: end; }
 .instrument-panel .gear-display { width: 72px; height: 72px; border: 2px solid #4f675e; border-radius: 50%; display: grid; place-items: center; color: #69d8b1; background: #0b110f; box-shadow: inset 0 0 18px rgba(105,216,177,.12); font-size: 2.2rem; font-weight: 900; }
 .instrument-panel > strong { font-size: 1.35rem; font-variant-numeric: tabular-nums; }
 .instrument-panel > strong small { color: #96aaa2; font-size: .65rem; }
@@ -277,6 +283,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .instrument-panel .result-control { min-height: 34px; padding: 0 10px; border: 1px solid #4d9d80; border-radius: 8px; color: #dff8ef; background: #17684f; font-size: .72rem; font-weight: 800; cursor: pointer; }
 .instrument-panel.reset-panel { position: absolute; left: 50%; bottom: 0; width: auto; height: auto; min-height: 0; padding: 0; border: 0; transform: translateX(-50%); }
 .reset-panel .reset-control { align-self: center; min-height: 42px; padding: 0 14px; background: rgba(12,19,17,.62); }
+.top-reset-control { position: absolute; z-index: 8; top: 12px; left: 50%; min-height: 38px; padding: 0 13px; border: 1px solid rgba(255,255,255,.38); border-radius: 9px; color: white; background: rgba(12,19,17,.62); font-size: .72rem; font-weight: 800; transform: translateX(-50%); }
 
 .gear-control-cluster { display: flex; align-items: stretch; gap: 9px; }
 .integrated-brake { width: 72px; border: 1px solid #71423e; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #ffc7c1; background: rgba(130,49,42,.22); cursor: pointer; touch-action: none; }
@@ -393,17 +400,20 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .lesson-footer button { min-height: 34px; }
   html.simulator-active, body.simulator-active { width: 100%; height: 100%; overflow: hidden; overscroll-behavior: none; }
   .site-header, .site-footer { display: none; }
-  .main-content { width: calc(100% - 16px); }
+  .main-content { width: 100%; }
   .page { padding: 5px 0; }
-  .simulator-shell { position: fixed; z-index: 10; inset: 0; width: 100%; height: 100vh; height: 100dvh; padding: max(5px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(5px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); overflow: hidden; background: #f5f8f6; }
+  .simulator-shell { position: fixed; z-index: 10; inset: 0; width: 100%; height: 100vh; height: 100dvh; padding: 0; overflow: hidden; background: #f5f8f6; }
   .simulator-heading, .simulator-shell > .page-description { display: none; }
   .vehicle-simulator { position: relative; width: 100%; height: 100%; overflow: hidden; touch-action: none; }
   .immersive-control { position: absolute; z-index: 6; top: max(10px, env(safe-area-inset-top)); right: 50%; min-height: 38px; padding: 0 12px; border: 1px solid rgba(255,255,255,.35); border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; color: white; background: rgba(10,18,15,.82); backdrop-filter: blur(6px); font-size: .75rem; font-weight: 800; cursor: pointer; touch-action: manipulation; transform: translateX(50%); }
   .mobile-install-control { max-width: 245px; text-align: center; }
-  .parking-canvas-frame { height: 100%; min-height: 0; border-radius: 12px; }
+  .parking-canvas-frame { height: 100%; min-height: 0; border: 0; border-radius: 0; }
   .corner-assistance { top: 5px; right: 5px; left: 5px; }
-  .corner-view { width: min(190px, 27%); padding: 2px; border-radius: 7px; }
-  .corner-view canvas { height: clamp(74px, 19vh, 94px); }
+  .corner-view { width: min(205px, 29%); padding: 5px; }
+  .corner-view-left { padding-right: 13px; }
+  .corner-view-right { padding-left: 13px; }
+  .mirror-glass { border-radius: 13px; }
+  .corner-view canvas { height: clamp(92px, 23vh, 112px); }
   .corner-view span { top: 7px; left: 9px; font-size: .52rem; }
   .corner-view-right span { right: 9px; left: auto; }
   .driver-assistance { inset: 5px 6px auto; }
@@ -415,7 +425,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .driver-view-backdrop { display: none; }
   .driver-view-expanded { width: min(520px, 90%); height: 94%; }
   .automatic-rear-view { top: clamp(76px, 21vh, 96px); width: 68%; height: calc(100dvh - clamp(76px, 21vh, 96px) - clamp(145px, 38vh, 185px) - 18px); min-height: 115px; border-radius: 10px; }
-  .learning-hint { top: 5px; width: min(360px, 43%); padding: 6px 8px; border-radius: 8px; }
+  .learning-hint { top: 54px; width: min(360px, 40%); padding: 6px 8px; border-radius: 8px; }
   .learning-hint strong { font-size: .72rem; }
   .learning-hint p { font-size: .61rem; line-height: 1.25; }
   .rear-mini-map { width: 30%; height: 34%; }
@@ -448,6 +458,8 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .gear-d { top: 55px; }
   .parking-control, .gear-module .result-control { min-width: 104px; min-height: 40px; font-size: .7rem; }
   .driving-help, .keyboard-help { display: none; }
+  .top-reset-control { top: max(7px, env(safe-area-inset-top)); }
+  .immersive-control { right: 30%; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -51,8 +51,10 @@ export function CornerAssistance({ vehicle }: { vehicle: VehicleState }) {
     <div className="corner-assistance" aria-label="좌우 후방 평면 보조 화면">
       {(['left', 'right'] as const).map((sideName) => (
         <div className={`corner-view corner-view-${sideName}`} key={sideName}>
-          <span>{sideName === 'left' ? '좌측 후방 평면뷰' : '우측 후방 평면뷰'}</span>
-          <RearSideCanvas vehicle={vehicle} sideName={sideName} />
+          <div className="mirror-glass">
+            <span>{sideName === 'left' ? '좌측 후방 평면뷰' : '우측 후방 평면뷰'}</span>
+            <RearSideCanvas vehicle={vehicle} sideName={sideName} />
+          </div>
         </div>
       ))}
     </div>

@@ -7,6 +7,7 @@ import type { PracticeMode, ScenarioId } from '../types/practice'
 
 export function HomePage() {
   const navigate = useNavigate()
+  const [step, setStep] = useState<'intro' | 'scenario' | 'mode'>('intro')
   const [selectedScenario, setSelectedScenario] = useState<ScenarioId>('both-sides')
   const [selectedMode, setSelectedMode] = useState<PracticeMode>('learning')
 
@@ -28,8 +29,8 @@ export function HomePage() {
             차량 뒤쪽의 움직임부터 미러를 보는 시점까지, 실제 주차장에서
             바로 떠올릴 수 있도록 차근차근 연습해요.
           </p>
-          <button className="primary-button" type="button" onClick={startPractice}>
-            선택한 상황으로 연습하기
+          <button className="primary-button" type="button" onClick={() => setStep('scenario')}>
+            연습하기
             <span aria-hidden="true">→</span>
           </button>
         </div>
@@ -47,7 +48,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="home-section" aria-labelledby="scenario-title">
+      {step !== 'intro' && <section className="home-section" aria-labelledby="scenario-title">
         <div className="section-heading">
           <div>
             <p className="eyebrow">상황 선택</p>
@@ -61,13 +62,16 @@ export function HomePage() {
               key={scenario.id}
               scenario={scenario}
               selected={selectedScenario === scenario.id}
-              onSelect={setSelectedScenario}
+              onSelect={(scenarioId) => {
+                setSelectedScenario(scenarioId)
+                setStep('mode')
+              }}
             />
           ))}
         </div>
-      </section>
+      </section>}
 
-      <section className="home-section mode-section" aria-labelledby="mode-title">
+      {step === 'mode' && <section className="home-section mode-section" aria-labelledby="mode-title">
         <div className="section-heading">
           <div>
             <p className="eyebrow">연습 방식</p>
@@ -75,9 +79,9 @@ export function HomePage() {
           </div>
         </div>
         <ModeSelector value={selectedMode} onChange={setSelectedMode} />
-      </section>
+      </section>}
 
-      <section className="start-panel" aria-label="선택한 연습 시작">
+      {step === 'mode' && <section className="start-panel" aria-label="선택한 연습 시작">
         <div>
           <span>선택 완료</span>
           <strong>
@@ -89,7 +93,7 @@ export function HomePage() {
           연습 시작
           <span aria-hidden="true">→</span>
         </button>
-      </section>
+      </section>}
     </div>
   )
 }

@@ -201,8 +201,12 @@ export function renderParkingLot(
   } = {},
 ) {
   context.clearRect(0, 0, viewportWidth, viewportHeight)
+  context.fillStyle = '#59625e'
+  context.fillRect(0, 0, viewportWidth, viewportHeight)
 
-  const padding = Math.max(12, Math.min(viewportWidth, viewportHeight) * 0.035)
+  const padding = options.focus
+    ? Math.max(8, Math.min(viewportWidth, viewportHeight) * 0.025)
+    : 0
   const topInset = viewportHeight * (options.topInsetRatio ?? 0)
   const usableHeight = viewportHeight * (
     1 - (options.topInsetRatio ?? 0) - (options.bottomInsetRatio ?? 0)
