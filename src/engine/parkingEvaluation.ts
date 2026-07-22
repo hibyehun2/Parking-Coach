@@ -2,11 +2,11 @@ import { VEHICLE_DIMENSIONS, type Collision, type Point } from './collisionDetec
 import type { VehicleState } from './vehiclePhysics'
 
 export const TARGET_PARKING_BAY = {
-  left: 7.82,
-  right: 10.18,
-  top: 5.72,
-  bottom: 11.2,
-  center: { x: 9, y: 8.46 },
+  left: 9.82,
+  right: 12.18,
+  top: 6.72,
+  bottom: 13.2,
+  center: { x: 11, y: 9.46 },
   heading: Math.PI / 2,
 } as const
 

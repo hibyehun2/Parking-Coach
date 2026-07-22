@@ -30,8 +30,8 @@ export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
 }
 
 export const INITIAL_VEHICLE_STATE: VehicleState = {
-  x: 9,
-  y: 3.1,
+  x: 11,
+  y: 3.4,
   heading: 0,
   steeringAngle: 0,
   speed: 0,

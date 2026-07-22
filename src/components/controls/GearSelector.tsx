@@ -41,7 +41,6 @@ export function GearSelector({
 
   return (
     <div className="gear-module">
-      <span className="dashboard-label">브레이크 · 기어</span>
       <div className="gear-control-cluster" role="group" aria-label="브레이크와 기어 선택">
         <button
           type="button"

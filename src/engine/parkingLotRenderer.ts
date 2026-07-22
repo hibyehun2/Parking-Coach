@@ -1,6 +1,6 @@
 export const PARKING_WORLD = {
-  width: 18,
-  height: 12,
+  width: 22,
+  height: 14,
 } as const
 
 import type { VehicleState } from './vehiclePhysics'
@@ -111,9 +111,9 @@ function drawParkingLines(context: CanvasRenderingContext2D) {
   context.shadowColor = 'rgba(0, 0, 0, 0.28)'
   context.shadowBlur = 0.05
 
-  const bayTop = 5.5
-  const bayBottom = 11.45
-  for (const x of [4.95, 7.65, 10.35, 13.05]) {
+  const bayTop = 6.5
+  const bayBottom = 13.45
+  for (const x of [6.95, 9.65, 12.35, 15.05]) {
     context.beginPath()
     context.moveTo(x, bayTop)
     context.lineTo(x, bayBottom)
@@ -162,7 +162,7 @@ function drawStructure(context: CanvasRenderingContext2D) {
   context.fillStyle = '#4b3c21'
   context.font = '800 0.28px sans-serif'
   context.textAlign = 'center'
-  context.fillText('기둥', 15.025, 6.47)
+  context.fillText('기둥', pillar.x + pillar.width / 2, pillar.y + pillar.height * 0.59)
 }
 
 function drawReverseGuide(context: CanvasRenderingContext2D, vehicle: VehicleState) {

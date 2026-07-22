@@ -20,19 +20,19 @@ export type Collision = {
 export const VEHICLE_DIMENSIONS = { length: 4.6, width: 1.8 } as const
 
 export const PARKED_VEHICLES = [
-  { id: 'parked-left', kind: 'vehicle' as const, x: 6.3, y: 8.75, heading: Math.PI / 2 },
-  { id: 'parked-right', kind: 'vehicle' as const, x: 11.7, y: 8.75, heading: Math.PI / 2 },
+  { id: 'parked-left', kind: 'vehicle' as const, x: 8.3, y: 9.75, heading: Math.PI / 2 },
+  { id: 'parked-right', kind: 'vehicle' as const, x: 13.7, y: 9.75, heading: Math.PI / 2 },
 ] as const
 
 export const PILLARS = [
-  { id: 'pillar-right', kind: 'pillar' as const, x: 14.5, y: 5.85, width: 1.05, height: 1.05 },
+  { id: 'pillar-right', kind: 'pillar' as const, x: 17.1, y: 6.85, width: 1.05, height: 1.05 },
 ] as const
 
 export const WALLS = [
-  { id: 'wall-top', kind: 'wall' as const, x: 0.55, y: 0.5, width: 16.9, height: 0.35 },
-  { id: 'wall-left', kind: 'wall' as const, x: 0.55, y: 0.5, width: 0.35, height: 10.95 },
-  { id: 'wall-right', kind: 'wall' as const, x: 17.1, y: 0.5, width: 0.35, height: 10.95 },
-  { id: 'wall-bottom', kind: 'wall' as const, x: 0.55, y: 11.45, width: 16.9, height: 0.35 },
+  { id: 'wall-top', kind: 'wall' as const, x: 0.55, y: 0.5, width: 20.9, height: 0.35 },
+  { id: 'wall-left', kind: 'wall' as const, x: 0.55, y: 0.5, width: 0.35, height: 12.95 },
+  { id: 'wall-right', kind: 'wall' as const, x: 21.1, y: 0.5, width: 0.35, height: 12.95 },
+  { id: 'wall-bottom', kind: 'wall' as const, x: 0.55, y: 13.45, width: 20.9, height: 0.35 },
 ] as const
 
 function axes(box: OrientedBox): [Point, Point] {

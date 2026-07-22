@@ -5,7 +5,7 @@ import type { VehicleState } from '../../engine/vehiclePhysics'
 type RearSide = 'left' | 'right'
 
 function rearSideFocus(vehicle: VehicleState, sideName: RearSide) {
-  const sideSign = sideName === 'left' ? 1 : -1
+  const sideSign = sideName === 'left' ? -1 : 1
   const cosine = Math.cos(vehicle.heading)
   const sine = Math.sin(vehicle.heading)
   return {

@@ -3,6 +3,8 @@ import test from 'node:test'
 import {
   boxesIntersect,
   detectCollision,
+  PARKED_VEHICLES,
+  PILLARS,
   resolveVehicleCollision,
   type OrientedBox,
 } from '../src/engine/collisionDetection.ts'
@@ -21,17 +23,19 @@ test('회전한 OBB가 떨어져 있으면 충돌하지 않는다', () => {
 })
 
 test('장애 차량, 기둥, 벽 충돌을 구분한다', () => {
-  const parked = detectCollision({ ...INITIAL_VEHICLE_STATE, x: 6.3, y: 8.75, heading: Math.PI / 2 })
-  const pillar = detectCollision({ ...INITIAL_VEHICLE_STATE, x: 15.025, y: 6.375, heading: 0 })
-  const wall = detectCollision({ ...INITIAL_VEHICLE_STATE, x: 9, y: 1.2, heading: Math.PI / 2 })
+  const parkedVehicle = PARKED_VEHICLES[0]
+  const parkingPillar = PILLARS[0]
+  const parked = detectCollision({ ...INITIAL_VEHICLE_STATE, x: parkedVehicle.x, y: parkedVehicle.y, heading: parkedVehicle.heading })
+  const pillar = detectCollision({ ...INITIAL_VEHICLE_STATE, x: parkingPillar.x + parkingPillar.width / 2, y: parkingPillar.y + parkingPillar.height / 2, heading: 0 })
+  const wall = detectCollision({ ...INITIAL_VEHICLE_STATE, x: INITIAL_VEHICLE_STATE.x, y: 1.2, heading: Math.PI / 2 })
   assert.equal(parked?.kind, 'vehicle')
   assert.equal(pillar?.kind, 'pillar')
   assert.equal(wall?.kind, 'wall')
 })
 
 test('큰 이동 간격에서도 벽을 통과하지 않고 마지막 안전 위치에 정지한다', () => {
-  const previous: VehicleState = { ...INITIAL_VEHICLE_STATE, x: 9, y: 3.3, heading: Math.PI / 2 }
-  const next: VehicleState = { ...previous, y: 13, speed: 0.6, braking: false }
+  const previous: VehicleState = { ...INITIAL_VEHICLE_STATE, y: 3.3, heading: Math.PI / 2 }
+  const next: VehicleState = { ...previous, y: 16, speed: 0.6, braking: false }
   const result = resolveVehicleCollision(previous, next)
   assert.equal(result.collision?.kind, 'wall')
   assert.ok(result.vehicle.y < next.y)

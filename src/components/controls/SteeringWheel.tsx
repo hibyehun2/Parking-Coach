@@ -156,10 +156,6 @@ export function SteeringWheel({ steeringAngle, onChange, onCenter, disabled = fa
 
   return (
     <div className="steering-module">
-      <div className="steering-readout" aria-live="polite">
-        <span>핸들</span>
-        <strong className={lockDirection ? 'at-lock' : ''}>{steeringStatus}</strong>
-      </div>
       <div
         className={`steering-wheel-touch-area${lockDirection ? ' at-lock' : ''}`}
         role="slider"
