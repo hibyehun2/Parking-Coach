@@ -129,6 +129,19 @@ export function countMistakes(sessions: PracticeSession[]) {
   return counts
 }
 
+export function todayPracticeMessage(sessions: PracticeSession[]) {
+  if (!sessions.length) return '천천히 움직이며 기본 주차 순서를 익혀보세요.'
+  const counts = countMistakes(sessions)
+  const priority: MistakeType[] = ['collision', 'angle', 'off-center']
+  const mostFrequent = priority.reduce((selected, mistake) => (
+    counts[mistake] > counts[selected] ? mistake : selected
+  ), priority[0])
+  if (counts[mostFrequent] === 0) return '안정적인 기본기로 기둥 옆 주차에 도전해보세요.'
+  if (mostFrequent === 'collision') return '좌우 미러를 번갈아 보며 장애물과 간격을 확인하세요.'
+  if (mostFrequent === 'angle') return '차체가 평행해지는 순간 핸들을 중앙으로 돌려보세요.'
+  return '양쪽 주차선 간격을 비교하며 중앙을 맞춰보세요.'
+}
+
 function sessionErrorScore(session: PracticeSession) {
   return session.centerError * 100 + session.angleErrorDegrees * 5 + session.collisionCount * 40
 }

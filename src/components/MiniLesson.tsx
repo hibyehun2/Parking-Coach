@@ -63,10 +63,14 @@ export function MiniLessonView({ lesson, onFinish }: MiniLessonProps) {
               <path d="M203 147H227M203 199H227" />
             </g>
             <g className="lesson-pillar"><rect x="246" y="104" width="24" height="24" rx="2" /><path d="M249 125L267 107M256 128L270 114" /></g>
-            <path className="lesson-motion-path lesson-path-approach" d="M160 54H224" markerEnd="url(#lesson-arrow)" />
-            <path className="lesson-motion-path lesson-path-turn" d="M224 54C196 54 166 78 160 126" markerEnd="url(#lesson-arrow)" />
+            <path className="lesson-motion-path lesson-path-approach" d="M160 54H205C222 54 232 42 236 28" markerEnd="url(#lesson-arrow)" />
+            <path className="lesson-motion-path lesson-path-turn" d="M236 28C232 70 190 74 160 126" markerEnd="url(#lesson-arrow)" />
             <path className="lesson-motion-path lesson-path-straight" d="M160 126V204" markerEnd="url(#lesson-arrow)" />
             <line className="lesson-reference" x1="190" y1="36" x2="190" y2="94" />
+            <g className="lesson-stop lesson-stop-entry" transform="translate(236 28)"><circle r="13" /><text y="4">정지</text></g>
+            <g className="lesson-stop lesson-stop-align" transform="translate(160 126)"><circle r="13" /><text y="4">정지</text></g>
+            <g className="lesson-mirror-check lesson-mirror-left" transform="translate(48 104)"><path d="M-16 0Q0-13 16 0Q0 13-16 0Z" /><circle r="4" /><text y="25">좌측</text></g>
+            <g className="lesson-mirror-check lesson-mirror-right" transform="translate(272 104)"><path d="M-16 0Q0-13 16 0Q0 13-16 0Z" /><circle r="4" /><text y="25">우측</text></g>
             <circle className="lesson-danger lesson-danger-left" cx="102" cy="128" r="15" />
             <circle className="lesson-danger lesson-danger-right" cx="216" cy="128" r="15" />
             <circle className="lesson-danger lesson-danger-pillar" cx="258" cy="116" r="17" />
@@ -74,8 +78,8 @@ export function MiniLessonView({ lesson, onFinish }: MiniLessonProps) {
               <rect x="-34" y="-15" width="68" height="30" rx="7" />
               <path d="M-18 -11V11M18 -11V11" />
               <circle cx="-25" cy="-10" r="2" /><circle cx="-25" cy="10" r="2" />
-              {stepIndex === 0 && <animateMotion dur="2.8s" path="M160 54 H224" repeatCount="indefinite" />}
-              {stepIndex === 1 && <animateMotion dur="3.6s" path="M224 54 C196 54 166 78 160 126" rotate="auto-reverse" repeatCount="indefinite" />}
+              {stepIndex === 0 && <animateMotion dur="3.2s" path="M160 54 H205 C222 54 232 42 236 28" rotate="auto" repeatCount="indefinite" />}
+              {stepIndex === 1 && <animateMotion dur="3.6s" path="M236 28 C232 70 190 74 160 126" rotate="auto-reverse" repeatCount="indefinite" />}
               {stepIndex === 2 && <animateMotion dur="3s" path="M160 126 V204" rotate="auto-reverse" repeatCount="indefinite" />}
             </g>
             <g className="lesson-steering-symbol" transform="translate(43 190)">

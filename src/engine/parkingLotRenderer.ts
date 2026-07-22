@@ -24,6 +24,7 @@ type VehicleStyle = {
   roof: string
   outline: string
   label?: string
+  highlight?: boolean
 }
 
 function roundedRect(
@@ -49,6 +50,10 @@ function drawVehicle(
   context.save()
   context.translate(x, y)
   context.rotate(heading)
+  if (style.highlight) {
+    context.shadowColor = 'rgba(255, 224, 120, .95)'
+    context.shadowBlur = 0.22
+  }
 
   context.fillStyle = 'rgba(0, 0, 0, 0.3)'
   roundedRect(context, -length / 2 + 0.1, -width / 2 + 0.12, length, width, 0.28)
@@ -219,18 +224,18 @@ function drawRooftopAsphalt(context: CanvasRenderingContext2D) {
 
 export const REVERSE_GUIDE_LEVELS = [
   { distance: 0.5, halfWidth: 1.3, color: '#ff453a' },
-  { distance: 1.5, halfWidth: 1.42, color: '#ffd60a' },
-  { distance: 3, halfWidth: 1.58, color: '#ffd60a' },
+  { distance: 1.5, halfWidth: 1.04, color: '#ffd60a' },
+  { distance: 3, halfWidth: 0.72, color: '#ffd60a' },
 ] as const
 
 type ReverseGuideVehicle = Pick<VehicleState, 'x' | 'y' | 'heading' | 'steeringAngle'>
 
 function reverseGuidePose(vehicle: ReverseGuideVehicle, distanceBehindBumper: number) {
-  const targetDistance = VEHICLE_DIMENSIONS.length / 2 + distanceBehindBumper
+  const targetDistance = distanceBehindBumper
   const stepSize = 0.05
   let travelled = 0
-  let x = vehicle.x
-  let y = vehicle.y
+  let x = vehicle.x - Math.cos(vehicle.heading) * VEHICLE_DIMENSIONS.length / 2
+  let y = vehicle.y - Math.sin(vehicle.heading) * VEHICLE_DIMENSIONS.length / 2
   let heading = vehicle.heading
 
   while (travelled < targetDistance) {
@@ -248,7 +253,7 @@ function reverseGuidePose(vehicle: ReverseGuideVehicle, distanceBehindBumper: nu
   return { x, y, heading }
 }
 
-function predictedReverseGuidePoint(
+export function predictedReverseGuidePoint(
   vehicle: ReverseGuideVehicle,
   distanceBehindBumper: number,
   sideOffset: number,
@@ -260,22 +265,8 @@ function predictedReverseGuidePoint(
   }
 }
 
-export function reverseGuidePoint(
-  vehicle: ReverseGuideVehicle,
-  distanceBehindBumper: number,
-  sideOffset: number,
-) {
-  const distanceFromCenter = VEHICLE_DIMENSIONS.length / 2 + distanceBehindBumper
-  return {
-    x: vehicle.x - Math.cos(vehicle.heading) * distanceFromCenter
-      - Math.sin(vehicle.heading) * sideOffset,
-    y: vehicle.y - Math.sin(vehicle.heading) * distanceFromCenter
-      + Math.cos(vehicle.heading) * sideOffset,
-  }
-}
-
 function reverseGuideHalfWidth(distance: number) {
-  const nearWidth = 1.24
+  const nearWidth = 1.43
   const farLevel = REVERSE_GUIDE_LEVELS.at(-1)!
   return nearWidth + (farLevel.halfWidth - nearWidth) * distance / farLevel.distance
 }
@@ -283,8 +274,8 @@ function reverseGuideHalfWidth(distance: number) {
 export function reverseTrapezoidGeometry(vehicle: ReverseGuideVehicle) {
   return REVERSE_GUIDE_LEVELS.map((level) => ({
     ...level,
-    left: reverseGuidePoint(vehicle, level.distance, -level.halfWidth),
-    right: reverseGuidePoint(vehicle, level.distance, level.halfWidth),
+    left: predictedReverseGuidePoint(vehicle, level.distance, -level.halfWidth),
+    right: predictedReverseGuidePoint(vehicle, level.distance, level.halfWidth),
   }))
 }
 
@@ -383,6 +374,7 @@ export function renderParkingLot(
     focus?: { x: number; y: number; span: number; heading?: number }
     topInsetRatio?: number
     bottomInsetRatio?: number
+    highlightParkedSide?: 'left' | 'right'
   } = {},
 ) {
   context.clearRect(0, 0, viewportWidth, viewportHeight)
@@ -424,11 +416,13 @@ export function renderParkingLot(
     body: '#171c20',
     roof: '#303940',
     outline: '#737c81',
+    highlight: options.highlightParkedSide === 'left',
   })
   drawVehicle(context, rightVehicle.x, rightVehicle.y, rightVehicle.heading, {
     body: '#e7e5df',
     roof: '#aeb8bb',
     outline: '#ffffff',
+    highlight: options.highlightParkedSide === 'right',
   })
   drawVehicle(context, vehicle.x, vehicle.y, vehicle.heading, {
     body: options.danger ? '#db8b24' : '#128356',

@@ -1,8 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 import heroImage from '../assets/parking-coach-hero-reverse-low-angle-v2.png'
+import { loadPracticeHistory, todayPracticeMessage } from '../engine/practiceHistory'
 
 export function HomePage() {
   const navigate = useNavigate()
+  const practiceMessage = todayPracticeMessage(loadPracticeHistory().sessions)
   const beginPractice = () => {
     window.dispatchEvent(new Event('parking-coach:dismiss-install-prompt'))
     navigate('/practice')
@@ -20,7 +22,7 @@ export function HomePage() {
           </button>
           <div className="home-hero-visual">
             <img src={heroImage} alt="후진등을 켠 초록색 차량이 두 차량 사이 주차칸으로 후진하는 모습" />
-            <div className="preview-caption"><span>오늘의 연습</span><strong>천천히 움직이며 미러 속 간격을 확인하세요.</strong></div>
+            <div className="preview-caption"><span>오늘의 연습</span><strong>{practiceMessage}</strong></div>
           </div>
         </div>
       </section>

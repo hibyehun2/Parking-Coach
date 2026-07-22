@@ -10,6 +10,7 @@ import {
   loadPracticeHistory,
   recommendPractice,
   recordPracticeSession,
+  todayPracticeMessage,
 } from '../src/engine/practiceHistory.ts'
 
 class MemoryStorage implements Storage {
@@ -103,4 +104,18 @@ test('최근 오차가 줄면 개선 중으로 분석하고 가장 잦은 실수
 
   assert.equal(calculatePracticeTrend(sessions), 'improving')
   assert.equal(recommendPractice(sessions).scenarioId, 'both-sides')
+})
+
+test('최근 실수에 따라 오늘의 연습 문구를 선택하고 동률이면 안전 항목을 우선한다', () => {
+  const storage = new MemoryStorage()
+  assert.match(todayPracticeMessage([]), /기본 주차 순서/)
+
+  recordPracticeSession(result({ centerError: 0.6 }), 'both-sides', 'learning', storage)
+  assert.match(todayPracticeMessage(loadPracticeHistory(storage).sessions), /중앙/)
+
+  recordPracticeSession(result({ angleErrorDegrees: 9 }), 'both-sides', 'learning', storage)
+  assert.match(todayPracticeMessage(loadPracticeHistory(storage).sessions), /평행/)
+
+  recordPracticeSession(result({ collisionCount: 1 }), 'both-sides', 'learning', storage)
+  assert.match(todayPracticeMessage(loadPracticeHistory(storage).sessions), /장애물/)
 })
