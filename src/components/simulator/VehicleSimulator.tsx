@@ -38,6 +38,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
   }])
   const recordedCollisionCountRef = useRef(0)
   const safeSnapshotsRef = useRef<{ recordedAt: number; vehicle: VehicleState }[]>([])
+  const sessionTrajectoryRef = useRef<{ recordedAt: number; vehicle: VehicleState }[]>([])
   const wheelStopContactRef = useRef(false)
   const wheelStopTimerRef = useRef<number | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -70,6 +71,11 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
     if (previous && now - previous.recordedAt < 250) return
     safeSnapshotsRef.current = [...safeSnapshotsRef.current, { recordedAt: now, vehicle: cloneVehicleState(vehicle) }]
       .filter((snapshot) => now - snapshot.recordedAt <= 2500)
+    const lastTrajectory = sessionTrajectoryRef.current.at(-1)
+    if (!lastTrajectory || now - lastTrajectory.recordedAt >= 200) {
+      sessionTrajectoryRef.current = [...sessionTrajectoryRef.current, { recordedAt: now, vehicle: cloneVehicleState(vehicle) }]
+        .slice(-1500)
+    }
   }, [runtime, vehicle])
 
   useEffect(() => {
@@ -103,6 +109,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
       vehicle: cloneVehicleState(retrySnapshot?.vehicle ?? vehicle),
       collision,
       impactVehicle: cloneVehicleState(vehicle),
+      clip: [...safeSnapshotsRef.current.map(({ vehicle: snapshot }) => snapshot), cloneVehicleState(vehicle)],
       phase: vehicle.gear === 'R'
         ? (Math.abs(vehicle.steeringAngle) >= .12 ? 'turning-reverse' : 'straight-reverse')
         : 'approach',
@@ -160,6 +167,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
     sessionStartedAtRef.current = Date.now()
     recordedCollisionCountRef.current = 0
     safeSnapshotsRef.current = []
+    sessionTrajectoryRef.current = []
     replayRef.current = [{
       id: 'start',
       elapsedSeconds: 0,
@@ -180,6 +188,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
       phase: 'finish',
       label: result.success ? '주차 완료' : '미완료 상태로 연습 종료',
       vehicle: cloneVehicleState(vehicle),
+      clip: sessionTrajectoryRef.current.slice(-18).map(({ vehicle: snapshot }) => snapshot),
     })
     recordPracticeSession(result, scenarioId, mode, undefined, new Date(), runtime)
   }
@@ -216,6 +225,15 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
 
   return (
     <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
+      <div className="simulator-toolbar" aria-label="연습 도구">
+        <button type="button" className="lesson-replay-control" onClick={onShowLesson}>단계별 안내</button>
+        <div>
+          <button type="button" className="reset-control top-reset-control" onClick={resetSimulation}>↺ 처음 위치</button>
+          {!parkedResult && (
+            <button type="button" className="finish-practice-control" onClick={finishIncompletePractice}>연습 종료</button>
+          )}
+        </div>
+      </div>
       <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions} wheelStopActive={wheelStopActive} runtime={runtime}>
         <CornerAssistance vehicle={vehicle} runtime={runtime} />
         {learningMode && <LearningHintPanel vehicle={vehicle} scenarioId={scenarioId} runtime={runtime} />}
@@ -240,11 +258,6 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
           />
         </div>
       </ParkingLotCanvas>
-      <button type="button" className="lesson-replay-control" onClick={onShowLesson}>단계별 안내</button>
-      <button type="button" className="reset-control top-reset-control" onClick={resetSimulation}>처음 위치</button>
-      {!parkedResult && (
-        <button type="button" className="finish-practice-control" onClick={finishIncompletePractice}>연습 종료</button>
-      )}
       {canUseFullscreen && !isFullscreen && (
         <button
           type="button"

@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { CollisionQuiz } from '../components/CollisionQuiz'
+import { ReplayMomentCard } from '../components/ReplayMomentCard'
 import type { ParkingResult } from '../engine/parkingEvaluation'
 import { clearPracticeHistory, loadPracticeHistory, recommendPractice } from '../engine/practiceHistory'
 import { getScenario } from '../data/scenarios'
-import { firstMistakeEvent, type ReplayEvent } from '../engine/sessionReplay'
+import type { ReplayEvent } from '../engine/sessionReplay'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../types/practice'
 
 function formatCompletedAt(value: string) {
@@ -24,11 +25,11 @@ export function ResultPage() {
   const result = state?.result
   const replay = state?.replay ?? []
   const collisionEvent = replay.find((event) => event.type === 'collision')
-  const retryEvent = result ? firstMistakeEvent(replay, result) : null
   const [history, setHistory] = useState(loadPracticeHistory)
   const recommendation = recommendPractice(history.sessions)
   const recommendedScenario = getScenario(recommendation.scenarioId)
   const retryPath = `/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=${state?.mode ?? 'learning'}`
+  const replayMoments = replay.filter((event) => event.type === 'collision' || event.type === 'finish').slice(-3)
 
   const retryAtEvent = (event: ReplayEvent) => navigate(retryPath, {
     state: { retryVehicle: { ...event.vehicle, braking: true, speed: 0 }, runtime: state?.runtime },
@@ -50,19 +51,19 @@ export function ResultPage() {
       </div>}
 
       {result && <div className="result-actions">
-        <Link className="primary-button" to={retryPath}>다시 연습하기</Link>
-        <Link className="secondary-button" to={`${retryPath}&lesson=1`}>처음부터 재시작</Link>
-        {retryEvent && <button type="button" className="secondary-button mistake-retry" onClick={() => retryAtEvent(retryEvent)}>충돌 전부터 재시도</button>}
+        <Link className="primary-button" to={retryPath}>같은 상황 다시 연습</Link>
+        <Link className="secondary-button" to={`${retryPath}&lesson=1`}>단계 안내부터 다시</Link>
         <Link className="secondary-button" to="/practice">상황 선택</Link>
       </div>}
 
-      {collisionEvent && <CollisionQuiz event={collisionEvent} runtime={state?.runtime} />}
       {result && !collisionEvent && <section className="no-collision-feedback"><strong>충돌 없이 완료했습니다.</strong><p>다음에는 무작위 출발이나 아직 성공하지 않은 상황에 도전해보세요.</p></section>}
 
-      {replay.length > 0 && <section className="replay-timeline" aria-labelledby="replay-title">
-        <header><div><span>세션 리플레이</span><h2 id="replay-title">주요 순간</h2></div></header>
-        <ol>{replay.map((event) => <li key={event.id} className={`replay-${event.type}`}><time>{event.elapsedSeconds.toFixed(1)}초</time><i /><div><strong>{event.label}</strong><span>{event.type === 'collision' ? '수정 동작이 필요한 지점' : `기어 ${event.vehicle.gear}`}</span></div>{event.type === 'collision' && <button type="button" onClick={() => retryAtEvent(event)}>여기서 재시도</button>}</li>)}</ol>
+      {replayMoments.length > 0 && <section className="replay-timeline" aria-labelledby="replay-title">
+        <header><div><span>실제 주행 탑뷰</span><h2 id="replay-title">이번 연습의 주요 순간</h2></div><small>충돌과 최종 자세를 우선 표시합니다</small></header>
+        <div className="replay-moment-list">{replayMoments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={state?.runtime} onRetry={event.type === 'collision' ? () => retryAtEvent(event) : undefined} />)}</div>
       </section>}
+
+      {collisionEvent && <CollisionQuiz event={collisionEvent} runtime={state?.runtime} />}
 
       <section className="practice-history" aria-labelledby="history-title">
         <header className="history-heading"><div><h2 id="history-title">나의 연습 기록</h2></div>{history.sessions.length > 0 && <button type="button" className="history-reset" onClick={() => { if (window.confirm('저장된 연습 기록을 모두 초기화할까요?')) setHistory(clearPracticeHistory()) }}>기록 초기화</button>}</header>

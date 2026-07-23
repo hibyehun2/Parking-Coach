@@ -12,6 +12,7 @@ export type ReplayEvent = {
   vehicle: VehicleState
   collision?: Collision
   impactVehicle?: VehicleState
+  clip?: VehicleState[]
   phase?: 'approach' | 'turning-reverse' | 'straight-reverse' | 'finish'
 }
 

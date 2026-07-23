@@ -86,11 +86,11 @@ export function MiniLessonView({ lesson, runtime, onFinish }: MiniLessonProps) {
             <path className="lesson-motion-path lesson-path-straight" d={LESSON_TRAJECTORIES.straightReverse} markerEnd="url(#lesson-arrow)" />
             <path className="lesson-motion-path lesson-path-correction-forward" d={LESSON_TRAJECTORIES.correctionForward} markerEnd="url(#lesson-arrow)" />
             <path className="lesson-motion-path lesson-path-correction-reverse" d={LESSON_TRAJECTORIES.correctionReverse} markerEnd="url(#lesson-arrow)" />
-            <line className="lesson-reference lesson-reference-entry" x1="184" y1="30" x2="184" y2="120" />
+            <line className="lesson-reference lesson-reference-entry" x1="137" y1="30" x2="137" y2="120" />
             <line className="lesson-reference lesson-reference-middle" x1="130" y1="134" x2="190" y2="134" />
-            <g className="lesson-stop lesson-stop-entry" transform="translate(184 76)"><circle r="13" /><text y="4">정지</text></g>
-            <g className="lesson-stop lesson-stop-angle" transform="translate(250 45)"><circle r="13" /><text y="4">정지</text></g>
-            <g className="lesson-stop lesson-stop-align" transform="translate(160 152)"><circle r="13" /><text y="4">정지</text></g>
+            <g className="lesson-stop lesson-stop-entry" transform="translate(137 90)"><circle r="13" /><text y="4">정지</text></g>
+            <g className="lesson-stop lesson-stop-angle" transform="translate(178.01 73.01)"><circle r="13" /><text y="4">정지</text></g>
+            <g className="lesson-stop lesson-stop-align" transform="translate(161.02 114.02)"><circle r="13" /><text y="4">정지</text></g>
             <g className="lesson-mirror-check lesson-mirror-left" transform="translate(48 130)"><path d="M-16 0Q0-13 16 0Q0 13-16 0Z" /><circle r="4" /><text y="25">{mirrored ? '우측' : '좌측'}</text></g>
             <g className="lesson-mirror-check lesson-mirror-right" transform="translate(272 130)"><path d="M-16 0Q0-13 16 0Q0 13-16 0Z" /><circle r="4" /><text y="25">{mirrored ? '좌측' : '우측'}</text></g>
             <circle className="lesson-danger lesson-danger-left" cx="102" cy="150" r="15" />
@@ -101,7 +101,7 @@ export function MiniLessonView({ lesson, runtime, onFinish }: MiniLessonProps) {
               <path className="lesson-guide-red" d="M145 194H175" />
               <path className="lesson-guide-yellow" d="M145 220H175M145 246H175" />
             </g>
-            <g className="lesson-user-car" transform={isCorrectionLesson && [0, 1].includes(stepIndex) ? 'translate(160 164) rotate(-90)' : isCorrectionLesson && stepIndex === 3 ? 'translate(160 120) rotate(-90)' : !isCorrectionLesson && stepIndex === 2 ? 'translate(250 45) rotate(-58)' : undefined}>
+            <g className="lesson-user-car" transform={isCorrectionLesson && [0, 1].includes(stepIndex) ? 'translate(160 164) rotate(-90)' : isCorrectionLesson && stepIndex === 3 ? 'translate(160 120) rotate(-90)' : !isCorrectionLesson && stepIndex === 2 ? 'translate(178.01 73.01) rotate(-45)' : undefined}>
               <rect x="-34" y="-15" width="68" height="30" rx="7" />
               <path d="M-18 -11V11M18 -11V11" />
               <circle cx="-25" cy="-10" r="2" /><circle cx="-25" cy="10" r="2" />

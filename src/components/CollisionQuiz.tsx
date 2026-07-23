@@ -31,21 +31,24 @@ const STEPS = [
 
 type PreviewPath = {
   points: { x: number; y: number }[]
+  states: VehicleState[]
   end: VehicleState
 }
 
 function simulate(start: VehicleState, seconds: number, runtime?: ScenarioRuntime): PreviewPath {
   let vehicle = { ...start, speed: 0, braking: false }
   const points = [{ x: vehicle.x, y: vehicle.y }]
+  const states = [{ ...vehicle }]
   const steps = Math.ceil(seconds / .1)
   for (let index = 0; index < steps; index += 1) {
     const next = updateVehicle(vehicle, { steeringDirection: 0, braking: false }, .1)
     const resolved = resolveVehicleCollision(vehicle, next, runtime)
     vehicle = resolved.vehicle
     points.push({ x: vehicle.x, y: vehicle.y })
+    states.push({ ...vehicle })
     if (resolved.collision) break
   }
-  return { points, end: { ...vehicle, speed: 0, braking: true } }
+  return { points, states, end: { ...vehicle, speed: 0, braking: true } }
 }
 
 function QuizParkingCanvas({
@@ -62,6 +65,8 @@ function QuizParkingCanvas({
   correct: boolean
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [playbackFrame, setPlaybackFrame] = useState(0)
+  const [playbackKey, setPlaybackKey] = useState(0)
   const scene = useMemo(() => {
     const impact = {
       ...(event.impactVehicle ?? event.vehicle),
@@ -92,6 +97,7 @@ function QuizParkingCanvas({
     if (step === 0) {
       return {
         vehicle: impact,
+        animationStates: selected === 0 ? currentReverse.states : [impact],
         paths: [{ points: currentReverse.points, color: '#ff5d52', dashed: true }],
         ghosts: selected !== null && !correct ? [{ vehicle: currentReverse.end, color: '#ff5d52' }] : [],
       }
@@ -99,6 +105,7 @@ function QuizParkingCanvas({
     if (step === 1) {
       return {
         vehicle: impact,
+        animationStates: selected === 0 ? correction.states : selected === 1 ? currentReverse.states : selected === 2 ? oppositeReverse.states : [impact],
         paths: [
           { points: correction.points, color: '#31d38b' },
           { points: currentReverse.points, color: '#ff5d52', dashed: true },
@@ -113,10 +120,25 @@ function QuizParkingCanvas({
     }
     return {
       vehicle: correction.end,
+      animationStates: selected === 1 ? reentry.states : [correction.end],
       paths: [{ points: reentry.points, color: '#31d38b' }],
       ghosts: [{ vehicle: impact, color: '#9ba7a2' }, { vehicle: reentry.end, color: '#31d38b' }],
     }
   }, [correct, event, runtime, selected, step])
+
+  useEffect(() => {
+    if (selected === null || scene.animationStates.length < 2) return
+    const timer = window.setInterval(() => {
+      setPlaybackFrame((current) => {
+        if (current >= scene.animationStates.length - 1) {
+          window.clearInterval(timer)
+          return current
+        }
+        return current + 1
+      })
+    }, 45)
+    return () => window.clearInterval(timer)
+  }, [playbackKey, scene.animationStates, selected])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -131,8 +153,23 @@ function QuizParkingCanvas({
       const context = canvas.getContext('2d')
       if (!context) return
       context.setTransform(ratio, 0, 0, ratio, 0, 0)
-      renderParkingLot(context, width, height, scene.vehicle, {
+      const displayedVehicle = scene.animationStates[Math.min(playbackFrame, scene.animationStates.length - 1)] ?? scene.vehicle
+      const allPoints = scene.paths.flatMap((path) => path.points)
+      const xs = [displayedVehicle.x, ...allPoints.map((point) => point.x)]
+      const ys = [displayedVehicle.y, ...allPoints.map((point) => point.y)]
+      const minimumX = Math.min(...xs)
+      const maximumX = Math.max(...xs)
+      const minimumY = Math.min(...ys)
+      const maximumY = Math.max(...ys)
+      const span = Math.min(18, Math.max(10, maximumX - minimumX + 5, (maximumY - minimumY) / .75 + 5))
+      renderParkingLot(context, width, height, displayedVehicle, {
         runtime,
+        focus: {
+          x: (minimumX + maximumX) / 2,
+          y: (minimumY + maximumY) / 2,
+          span,
+          heading: -Math.PI / 2,
+        },
         candidatePaths: scene.paths,
         ghostVehicles: scene.ghosts,
         highlightContactZone: step < 2 ? event.collision?.contactZone : undefined,
@@ -142,14 +179,19 @@ function QuizParkingCanvas({
     observer.observe(canvas)
     draw()
     return () => observer.disconnect()
-  }, [event.collision?.contactZone, runtime, scene, step])
+  }, [event.collision?.contactZone, playbackFrame, runtime, scene, step])
 
   return (
-    <canvas
-      ref={canvasRef}
-      role="img"
-      aria-label={`${STEPS[step].label}: 실제 연습 주차장 배치와 차량 진로를 표시한 탑뷰`}
-    />
+    <>
+      <canvas
+        ref={canvasRef}
+        role="img"
+        aria-label={`${STEPS[step].label}: 실제 연습 주차장 배치와 차량 진로를 표시한 탑뷰`}
+      />
+      {selected !== null && scene.animationStates.length > 1 && (
+        <button type="button" className="quiz-replay-result" onClick={() => { setPlaybackFrame(0); setPlaybackKey((value) => value + 1) }}>선택 결과 다시 보기</button>
+      )}
+    </>
   )
 }
 
@@ -169,7 +211,7 @@ export function CollisionQuiz({ event, runtime }: { event: ReplayEvent; runtime?
       <header><span>수정 주차 그림 퀴즈</span><h2 id="collision-quiz-title">실제 주차 장면에서 안전한 진로를 찾아보세요</h2></header>
       <div className="quiz-layout">
         <div className="quiz-figure">
-          <QuizParkingCanvas event={event} runtime={runtime} step={step} selected={selected} correct={correct} />
+          <QuizParkingCanvas key={`${step}-${selected}`} event={event} runtime={runtime} step={step} selected={selected} correct={correct} />
           <div className="quiz-legend">
             <span><i className="danger" />충돌 위험 진로</span>
             <span><i className="safe" />안전한 수정 진로</span>

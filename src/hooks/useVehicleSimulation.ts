@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createSimulationLoop } from '../engine/simulationLoop'
 import { resolveVehicleCollision, type Collision } from '../engine/collisionDetection'
 import type { ScenarioRuntime } from '../types/practice'
+import { resolveWheelStop } from '../engine/wheelStop'
 import {
   INITIAL_VEHICLE_STATE,
   updateVehicle,
@@ -33,11 +34,17 @@ export function useVehicleSimulation(initialVehicle: VehicleState = INITIAL_VEHI
         const previous = stateRef.current
         const next = updateVehicle(previous, inputRef.current, deltaTime)
         const resolved = resolveVehicleCollision(previous, next, runtime)
-        stateRef.current = resolved.vehicle
+        const wheelStop = resolved.collision
+          ? { vehicle: resolved.vehicle, contacted: false }
+          : resolveWheelStop(previous, resolved.vehicle)
+        stateRef.current = wheelStop.vehicle
         if (resolved.collision) {
           inputRef.current = { ...inputRef.current, braking: true }
           setBrakingState(true)
           setCollisions((current) => [...current, resolved.collision!])
+        } else if (wheelStop.contacted) {
+          inputRef.current = { ...inputRef.current, braking: true }
+          setBrakingState(true)
         }
       },
       render() {

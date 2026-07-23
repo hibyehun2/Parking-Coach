@@ -18,6 +18,9 @@ import {
 } from './collisionDetection.ts'
 import { TARGET_PARKING_BAY } from './parkingEvaluation.ts'
 import type { ScenarioRuntime, ScenarioWall } from '../types/practice.ts'
+import { WHEEL_STOP } from './wheelStop.ts'
+
+export { WHEEL_STOP, isRearWheelAtStop } from './wheelStop.ts'
 
 type VehicleStyle = {
   body: string
@@ -224,19 +227,24 @@ function drawParkingLines(context: CanvasRenderingContext2D) {
   context.fillStyle = '#a5f2d8'
   context.font = '700 0.34px sans-serif'
   context.textAlign = 'center'
-  context.fillText('연습 주차칸', TARGET_PARKING_BAY.center.x, bayBottom - 0.28)
+  context.fillText('연습 주차칸', TARGET_PARKING_BAY.center.x, bayTop - 0.28)
 
   context.save()
-  context.translate(TARGET_PARKING_BAY.center.x, bayBottom - 1.25)
+  context.translate(TARGET_PARKING_BAY.center.x, bayTop + 1.05)
   context.strokeStyle = 'rgba(88, 232, 191, .7)'
-  context.lineWidth = 0.18
-  for (const offset of [0, -0.48]) {
-    context.beginPath()
-    context.moveTo(-0.62, offset - 0.2)
-    context.lineTo(0, offset + 0.16)
-    context.lineTo(0.62, offset - 0.2)
-    context.stroke()
-  }
+  context.fillStyle = 'rgba(88, 232, 191, .18)'
+  context.lineWidth = 0.16
+  context.beginPath()
+  context.moveTo(0, .62)
+  context.lineTo(-.48, -.08)
+  context.lineTo(-.17, -.08)
+  context.lineTo(-.17, -.62)
+  context.lineTo(.17, -.62)
+  context.lineTo(.17, -.08)
+  context.lineTo(.48, -.08)
+  context.closePath()
+  context.fill()
+  context.stroke()
   context.restore()
 }
 
@@ -270,22 +278,6 @@ function drawStructure(context: CanvasRenderingContext2D, walls: readonly Scenar
   context.bezierCurveTo(21.85, 12.98, 21.68, 12.84, 21.58, 12.63)
   context.stroke()
   context.restore()
-}
-
-export const WHEEL_STOP = {
-  segments: [
-    { left: 14.02, right: 14.62 },
-    { left: 15.38, right: 15.98 },
-  ],
-  y: 10.81,
-} as const
-
-export function isRearWheelAtStop(vehicle: ReverseGuideVehicle) {
-  const rearAxleX = vehicle.x - Math.cos(vehicle.heading) * DEFAULT_VEHICLE_CONFIG.wheelbase / 2
-  const rearAxleY = vehicle.y - Math.sin(vehicle.heading) * DEFAULT_VEHICLE_CONFIG.wheelbase / 2
-  return rearAxleX >= WHEEL_STOP.segments[0].left - 0.2
-    && rearAxleX <= WHEEL_STOP.segments[1].right + 0.2
-    && Math.abs(rearAxleY - WHEEL_STOP.y) <= 0.16
 }
 
 function drawWheelStop(context: CanvasRenderingContext2D, active: boolean) {

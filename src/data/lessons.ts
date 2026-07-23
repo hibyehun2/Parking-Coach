@@ -17,12 +17,20 @@ export type MiniLesson = {
 }
 
 export const LESSON_TRAJECTORIES = {
-  approach: 'M104 76 H184',
-  angle: 'M184 76 C214 76 238 64 250 45',
-  reverseTurn: 'M250 45 C220 93 160 98 160 152',
-  straightReverse: 'M160 152 V218',
+  approach: 'M70 90 H137',
+  angle: 'M137 90 C152.38 90 167.13 83.89 178.01 73.01',
+  reverseTurn: 'M178.01 73.01 C167.13 83.89 161.02 98.64 161.02 114.02',
+  straightReverse: 'M161.02 114.02 V218',
   correctionForward: 'M160 164 V120',
   correctionReverse: 'M160 120 C160 155 138 180 160 200 C160 208 160 214 160 218',
+} as const
+
+export const LESSON_TRAJECTORY_GEOMETRY = {
+  pixelsPerMeter: 68 / 4.6,
+  turnRadiusPixels: 58,
+  entryStop: { x: 137, y: 90, headingDegrees: 0 },
+  angleStop: { x: 178.01, y: 73.01, headingDegrees: -45 },
+  alignedStop: { x: 161.02, y: 114.02, headingDegrees: -90 },
 } as const
 
 export const lessons: Record<ScenarioId, MiniLesson> = {
