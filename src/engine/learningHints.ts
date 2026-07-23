@@ -98,8 +98,8 @@ export function getLearningHint(vehicle: VehicleState, scenarioId: ScenarioId, r
   const angle = entryAngle(vehicle, runtime)
   const inApproachLane = vehicle.y >= 2.2 && vehicle.y <= TARGET_PARKING_BAY.top + 0.4
   const steeringAwayFromSpace = vehicle.steeringAngle * parkingSteeringDirection <= -0.18
-  const reachedTurningZone = progress >= 5.5
-  const passedTurningZone = progress > 12 || vehicle.y > TARGET_PARKING_BAY.top + 0.4
+  const reachedTurningZone = progress >= 9.7
+  const passedTurningZone = progress > 11.2 || vehicle.y > TARGET_PARKING_BAY.top + 0.4
 
   if (passedTurningZone || angle > Math.PI * .42) {
     return {

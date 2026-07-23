@@ -229,23 +229,31 @@ function drawParkingLines(context: CanvasRenderingContext2D) {
   context.textAlign = 'center'
   context.fillText('연습 주차칸', TARGET_PARKING_BAY.center.x, bayTop - 0.28)
 
-  context.save()
-  context.translate(TARGET_PARKING_BAY.center.x, bayTop + 1.05)
-  context.strokeStyle = 'rgba(88, 232, 191, .7)'
-  context.fillStyle = 'rgba(88, 232, 191, .18)'
-  context.lineWidth = 0.16
-  context.beginPath()
-  context.moveTo(0, .62)
-  context.lineTo(-.48, -.08)
-  context.lineTo(-.17, -.08)
-  context.lineTo(-.17, -.62)
-  context.lineTo(.17, -.62)
-  context.lineTo(.17, -.08)
-  context.lineTo(.48, -.08)
-  context.closePath()
-  context.fill()
-  context.stroke()
-  context.restore()
+    context.save()
+    context.translate(TARGET_PARKING_BAY.center.x, bayTop + 1.05)
+    context.lineCap = 'round'
+    context.lineJoin = 'round'
+    context.shadowColor = 'rgba(88, 255, 204, .72)'
+    context.shadowBlur = 0.24
+
+    for (const offset of [-0.28, 0.38]) {
+      context.beginPath()
+      context.moveTo(-0.68, offset - 0.2)
+      context.lineTo(0, offset + 0.22)
+      context.lineTo(0.68, offset - 0.2)
+      context.strokeStyle = 'rgba(72, 226, 183, .32)'
+      context.lineWidth = 0.42
+      context.stroke()
+
+      context.beginPath()
+      context.moveTo(-0.68, offset - 0.2)
+      context.lineTo(0, offset + 0.22)
+      context.lineTo(0.68, offset - 0.2)
+      context.strokeStyle = 'rgba(151, 250, 220, .92)'
+      context.lineWidth = 0.24
+      context.stroke()
+    }
+    context.restore()
 }
 
 function drawStructure(context: CanvasRenderingContext2D, walls: readonly ScenarioWall[] = WALLS) {

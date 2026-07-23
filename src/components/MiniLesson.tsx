@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { LESSON_TRAJECTORIES, lessonDuration, type MiniLesson } from '../data/lessons'
 import type { ScenarioRuntime } from '../types/practice'
+import { LessonParkingCanvas } from './LessonParkingCanvas'
 
 type MiniLessonProps = {
   lesson: MiniLesson
@@ -61,7 +62,9 @@ export function MiniLessonView({ lesson, runtime, onFinish }: MiniLessonProps) {
         </header>
 
         <div className={`lesson-animation lesson-scene-${lesson.scenarioId} lesson-obstacle-${sceneObstacleSide} lesson-stage-${stepIndex}`} aria-hidden="true">
-          <svg key={`${lesson.scenarioId}-${runtime.variant}-${runtime.startSide}-${stepIndex}`} className={mirrored ? 'lesson-mirrored' : undefined} viewBox="0 0 320 260">
+          {!isCorrectionLesson
+            ? <LessonParkingCanvas key={`${runtime.seed}-${stepIndex}`} runtime={runtime} stepIndex={stepIndex} />
+            : <svg key={`${lesson.scenarioId}-${runtime.variant}-${runtime.startSide}-${stepIndex}`} className={mirrored ? 'lesson-mirrored' : undefined} viewBox="0 0 320 260">
             <defs>
               <marker id="lesson-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" />
@@ -119,7 +122,7 @@ export function MiniLessonView({ lesson, runtime, onFinish }: MiniLessonProps) {
               {displayedSteering === '우측 끝까지' && <path className="lesson-wheel-arrow" d="M-24-6A25 25 0 0 1 12-22" markerEnd="url(#lesson-arrow)" />}
               {displayedSteering === '좌측 끝까지' && <path className="lesson-wheel-arrow" d="M24-6A25 25 0 0 0-12-22" markerEnd="url(#lesson-arrow)" />}
             </g>
-          </svg>
+            </svg>}
           <div className="lesson-driving-state">
             <span>기어 <b>{step.gear}</b></span>
             <span>핸들 <b>{displayedSteering}</b></span>

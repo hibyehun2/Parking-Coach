@@ -1,33 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { buildCollisionQuiz, type QuizAction } from '../engine/collisionQuiz'
 import { resolveVehicleCollision } from '../engine/collisionDetection'
 import { renderParkingLot } from '../engine/parkingLotRenderer'
 import type { ReplayEvent } from '../engine/sessionReplay'
 import { updateVehicle, type VehicleState } from '../engine/vehiclePhysics'
 import type { ScenarioRuntime } from '../types/practice'
-
-const STEPS = [
-  {
-    label: '위험 발견',
-    question: '빨간 원으로 표시된 모서리가 가까워질 때 가장 먼저 할 행동은?',
-    choices: ['그대로 아주 천천히 후진', '브레이크로 완전히 정지', '핸들을 더 많이 돌리기'],
-    answer: 1,
-    feedback: '먼저 완전히 멈춰야 가까운 모서리와 반대쪽 간격을 안전하게 판단할 수 있어요.',
-  },
-  {
-    label: '수정 진로 선택',
-    question: '어느 진로가 가까워진 모서리의 간격을 안전하게 다시 만들까요?',
-    choices: ['녹색: 핸들 중앙 후 짧게 전진', '빨간색: 현재 조향으로 계속 후진', '주황색: 후진하며 반대 조향'],
-    answer: 0,
-    feedback: '녹색 진로처럼 정지 후 핸들을 중앙으로 풀고 짧게 전진하면 가까워진 모서리의 간격을 확보할 수 있어요.',
-  },
-  {
-    label: '재진입 확인',
-    question: '짧게 전진한 뒤 녹색 후진 진로로 들어가기 전에 무엇을 확인해야 할까요?',
-    choices: ['후방 화면 한쪽만 확인', '양쪽 간격과 수정된 차체 각도 확인', '무조건 최대 조향인지 확인'],
-    answer: 1,
-    feedback: '양쪽 간격이 확보됐는지 확인한 뒤 주차 공간 방향으로 조향해 천천히 후진하세요.',
-  },
-] as const
 
 type PreviewPath = {
   points: { x: number; y: number }[]
@@ -57,12 +34,14 @@ function QuizParkingCanvas({
   step,
   selected,
   correct,
+  steps,
 }: {
   event: ReplayEvent
   runtime?: ScenarioRuntime
   step: number
   selected: number | null
   correct: boolean
+  steps: ReturnType<typeof buildCollisionQuiz>
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [playbackFrame, setPlaybackFrame] = useState(0)
@@ -73,58 +52,70 @@ function QuizParkingCanvas({
       speed: 0,
       braking: true,
     }
-    const currentReverse = simulate({ ...impact, gear: 'R', braking: false }, 2.6, runtime)
-    const oppositeReverse = simulate({
+    const currentMotion = simulate({ ...impact, braking: false }, 2.6, runtime)
+    const oppositeMotion = simulate({
       ...impact,
-      gear: 'R',
       steeringAngle: -impact.steeringAngle || (runtime?.startSide === 'right' ? .42 : -.42),
       braking: false,
     }, 2.6, runtime)
-    const correction = simulate({
+    const moreSteeringMotion = simulate({
       ...impact,
-      gear: 'D',
+      steeringAngle: Math.sign(impact.steeringAngle || (runtime?.startSide === 'right' ? -1 : 1)) * .58,
+      braking: false,
+    }, 2.6, runtime)
+    const recoveryGear = impact.gear === 'D' ? 'R' : 'D'
+    const recovery = simulate({
+      ...impact,
+      gear: recoveryGear,
       steeringAngle: 0,
       braking: false,
     }, 3.2, runtime)
     const parkingSteering = runtime?.startSide === 'right' ? -.52 : .52
     const reentry = simulate({
-      ...correction.end,
+      ...recovery.end,
       gear: 'R',
       steeringAngle: parkingSteering,
       braking: false,
     }, 4.2, runtime)
+    const selectedAction: QuizAction | null = selected === null ? null : steps[step].choices[selected].id
 
     if (step === 0) {
       return {
         vehicle: impact,
-        animationStates: selected === 0 ? currentReverse.states : [impact],
-        paths: [{ points: currentReverse.points, color: '#ff5d52', dashed: true }],
-        ghosts: selected !== null && !correct ? [{ vehicle: currentReverse.end, color: '#ff5d52' }] : [],
+        animationStates: selectedAction === 'continue' || selectedAction === 'steer-more' ? (selectedAction === 'continue' ? currentMotion.states : moreSteeringMotion.states) : [impact],
+        paths: [{ points: currentMotion.points, color: '#ff5d52', dashed: true }],
+        ghosts: selected !== null && !correct ? [{ vehicle: selectedAction === 'continue' ? currentMotion.end : moreSteeringMotion.end, color: '#ff5d52' }] : [],
       }
     }
     if (step === 1) {
       return {
         vehicle: impact,
-        animationStates: selected === 0 ? correction.states : selected === 1 ? currentReverse.states : selected === 2 ? oppositeReverse.states : [impact],
+        animationStates: selectedAction === 'forward-straight' || selectedAction === 'reverse-straight'
+          ? recovery.states
+          : selectedAction === 'continue'
+            ? currentMotion.states
+            : selectedAction === 'opposite-steering'
+              ? oppositeMotion.states
+              : [impact],
         paths: [
-          { points: correction.points, color: '#31d38b' },
-          { points: currentReverse.points, color: '#ff5d52', dashed: true },
-          { points: oppositeReverse.points, color: '#ffb340', dashed: true },
+          { points: recovery.points, color: '#31d38b' },
+          { points: currentMotion.points, color: '#ff5d52', dashed: true },
+          { points: oppositeMotion.points, color: '#ffb340', dashed: true },
         ],
         ghosts: [
-          { vehicle: correction.end, color: '#31d38b' },
-          ...(selected === 1 ? [{ vehicle: currentReverse.end, color: '#ff5d52' }] : []),
-          ...(selected === 2 ? [{ vehicle: oppositeReverse.end, color: '#ffb340' }] : []),
+          { vehicle: recovery.end, color: '#31d38b' },
+          ...(selectedAction === 'continue' ? [{ vehicle: currentMotion.end, color: '#ff5d52' }] : []),
+          ...(selectedAction === 'opposite-steering' ? [{ vehicle: oppositeMotion.end, color: '#ffb340' }] : []),
         ],
       }
     }
     return {
-      vehicle: correction.end,
-      animationStates: selected === 1 ? reentry.states : [correction.end],
+      vehicle: recovery.end,
+      animationStates: selectedAction === 'check-clearance' ? reentry.states : [recovery.end],
       paths: [{ points: reentry.points, color: '#31d38b' }],
-      ghosts: [{ vehicle: impact, color: '#9ba7a2' }, { vehicle: reentry.end, color: '#31d38b' }],
+      ghosts: [{ vehicle: impact, color: '#9ba7a2' }, ...(selectedAction === 'check-clearance' ? [{ vehicle: reentry.end, color: '#31d38b' }] : [])],
     }
-  }, [correct, event, runtime, selected, step])
+  }, [correct, event, runtime, selected, step, steps])
 
   useEffect(() => {
     if (selected === null || scene.animationStates.length < 2) return
@@ -186,7 +177,7 @@ function QuizParkingCanvas({
       <canvas
         ref={canvasRef}
         role="img"
-        aria-label={`${STEPS[step].label}: 실제 연습 주차장 배치와 차량 진로를 표시한 탑뷰`}
+        aria-label={`${steps[step].label}: 실제 연습 주차장 배치와 차량 진로를 표시한 탑뷰`}
       />
       {selected !== null && scene.animationStates.length > 1 && (
         <button type="button" className="quiz-replay-result" onClick={() => { setPlaybackFrame(0); setPlaybackKey((value) => value + 1) }}>선택 결과 다시 보기</button>
@@ -198,8 +189,9 @@ function QuizParkingCanvas({
 export function CollisionQuiz({ event, runtime }: { event: ReplayEvent; runtime?: ScenarioRuntime }) {
   const [step, setStep] = useState(0)
   const [selected, setSelected] = useState<number | null>(null)
-  const item = STEPS[step]
-  const correct = selected === item.answer
+  const steps = useMemo(() => buildCollisionQuiz(event), [event])
+  const item = steps[step]
+  const correct = selected !== null && item.choices[selected].id === item.answer
 
   const next = () => {
     setStep((current) => current + 1)
@@ -211,25 +203,25 @@ export function CollisionQuiz({ event, runtime }: { event: ReplayEvent; runtime?
       <header><span>수정 주차 그림 퀴즈</span><h2 id="collision-quiz-title">실제 주차 장면에서 안전한 진로를 찾아보세요</h2></header>
       <div className="quiz-layout">
         <div className="quiz-figure">
-          <QuizParkingCanvas key={`${step}-${selected}`} event={event} runtime={runtime} step={step} selected={selected} correct={correct} />
+          <QuizParkingCanvas key={`${step}-${selected}`} event={event} runtime={runtime} step={step} selected={selected} correct={correct} steps={steps} />
           <div className="quiz-legend">
             <span><i className="danger" />충돌 위험 진로</span>
             <span><i className="safe" />안전한 수정 진로</span>
             <span><i className="caution" />불안정한 수정 진로</span>
-            <b>{step === 0 ? 'R · 충돌 직전' : step === 1 ? '완전 정지 · 진로 비교' : '짧은 전진 완료 · 재진입 확인'}</b>
+            <b>{step === 0 ? `${event.vehicle.gear} · 충돌 직전` : step === 1 ? '완전 정지 · 복구 진로 비교' : '안전거리 확보 · 재출발 확인'}</b>
           </div>
         </div>
         <div className="quiz-copy">
-          <small>{step + 1} / {STEPS.length} · {item.label}</small>
+          <small>{step + 1} / {steps.length} · {item.label}</small>
           <strong>{item.question}</strong>
           <div className="quiz-choices">
             {item.choices.map((choice, index) => (
-              <button key={choice} type="button" className={selected === index ? (correct ? 'correct' : 'wrong') : ''} onClick={() => setSelected(index)}>{choice}</button>
+              <button key={choice.id} type="button" className={selected === index ? (correct ? 'correct' : 'wrong') : ''} onClick={() => setSelected(index)}>{choice.label}</button>
             ))}
           </div>
           {selected !== null && <p className={correct ? 'quiz-correct-copy' : 'quiz-wrong-copy'}>{correct ? '정답이에요. ' : '그 진로를 그림에서 다시 확인해보세요. '}{item.feedback}</p>}
-          {correct && step < STEPS.length - 1 && <button type="button" className="quiz-next" onClick={next}>다음 장면</button>}
-          {correct && step === STEPS.length - 1 && <strong className="quiz-complete">정지 → 진로 비교 → 짧은 전진 → 양쪽 재확인 순서를 익혔어요.</strong>}
+          {correct && step < steps.length - 1 && <button type="button" className="quiz-next" onClick={next}>다음 장면</button>}
+          {correct && step === steps.length - 1 && <strong className="quiz-complete">정지 → 방금 이동한 경로로 간격 회복 → 진행 방향과 양쪽 재확인 순서를 익혔어요.</strong>}
         </div>
       </div>
     </section>
