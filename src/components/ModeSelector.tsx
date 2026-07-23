@@ -16,7 +16,7 @@ const modes: Array<{
     id: 'practice',
     title: '수정 판단 훈련',
     description: '다양한 충돌 직전 상황에서 안전하게 멈추고 위치를 고치는 방법을 익혀요.',
-    features: ['연속 수정 드릴', '선택 결과가 다음 단계로', '좌우 변형'],
+    features: ['단계별 수정 주차 연습', '선택 결과가 다음 단계로', '좌우 상황 연습'],
     recommended: true,
   },
   {

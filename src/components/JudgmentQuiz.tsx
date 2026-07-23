@@ -96,7 +96,7 @@ export function JudgmentGuide({
             {answer.steps && <ol>{answer.steps.map((step) => <li key={step}>{step}</li>)}</ol>}
             <p>{answer.feedback}</p>
           </div>
-          <button type="button" className="quiz-next" onClick={onStart}>6가지 판단 문제 시작</button>
+          <button type="button" className="quiz-next" onClick={onStart}>수정 주차 연습 시작</button>
         </div>
       </div>
     </section>

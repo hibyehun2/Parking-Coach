@@ -68,7 +68,7 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
         <progress value={showGuide ? 0 : currentNumber} max={totalSteps} />
       </div>
       <p className="page-description">{showGuide
-        ? '안전한 수정 예시를 먼저 본 뒤 차량 상태가 이어지는 수정 주차 드릴을 시작합니다.'
+        ? '안전하게 자세를 바로잡는 예시를 먼저 본 뒤 수정 주차 연습을 시작합니다.'
         : `${drill.description} 선택한 안전 동작의 결과가 다음 판단 단계로 이어집니다.`}</p>
       {showGuide
         ? <JudgmentGuide scenario={guide} runtime={runtime} onStart={() => setShowGuide(false)} />

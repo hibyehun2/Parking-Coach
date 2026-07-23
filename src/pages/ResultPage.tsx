@@ -79,38 +79,44 @@ export function ResultPage() {
 
       {activeTab === 'current' && challengeComplete && <section className="challenge-result-summary">
         <strong>첫 선택 기준 {state?.challengeScore ?? 0} / {state?.challengeTotal ?? 6}문제를 정확히 판단했습니다.</strong>
-        <p>위험 지점 발견부터 정지·간격 회복·재확인·재진입·최종 주차까지 차량 상태가 이어지는 수정 드릴을 완료했습니다.</p>
+        <p>위험 지점 발견부터 정지·간격 회복·재확인·다시 후진·최종 주차까지 차량 상태가 이어지는 수정 주차 연습을 완료했습니다.</p>
         <div className="result-actions"><Link className="primary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=practice`}>새 판단 훈련 시작</Link><Link className="secondary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=learning`}>직접 주차에 적용</Link></div>
       </section>}
 
-      {activeTab === 'current' && result && <div className="result-summary-grid collision-only-summary">
-        <article className={`result-card collision-result ${result.collisionCount ? 'needs-work' : 'good'}`}>
-          <span>충돌 기록</span>
-          <strong>{result.collisionCount ? `${result.collisionCount}회 충돌` : '충돌 없음'}</strong>
-          <p>{result.collisionCount ? '실제 충돌 장면의 원인과 다음 수정 행동을 확인하세요.' : '장애물과 안전거리를 유지했습니다.'}</p>
-          {collisionEvent && state?.runtime && <button type="button" className="collision-quiz-jump" onClick={openCollisionQuiz}>충돌 직전 판단해보기 ↓</button>}
-        </article>
-        {!result.success && <article className="result-card needs-work"><span>완료 상태</span><strong>{result.fullyInside ? '브레이크 확인 필요' : '차량 전체 진입 필요'}</strong><p>수치를 기록하지 않고 완료 조건만 확인합니다.</p></article>}
-      </div>}
+      {activeTab === 'current' && result && <section className="current-result-dashboard" aria-label="이번 연습 핵심 결과">
+        <div className="result-overview-column">
+          <div className="result-summary-grid collision-only-summary">
+            <article className={`result-card collision-result ${result.collisionCount ? 'needs-work' : 'good'}`}>
+              <span>핵심 결과</span>
+              <strong>{result.collisionCount ? `${result.collisionCount}회 충돌` : '충돌 없이 완료'}</strong>
+              <p>{result.collisionCount ? '오른쪽에서 충돌 원인과 안전한 다음 행동을 바로 확인하세요.' : '장애물과 안전거리를 유지했습니다.'}</p>
+              {collisionEvent && state?.runtime && <button type="button" className="collision-quiz-jump" onClick={openCollisionQuiz}>충돌 직전 판단 확인 →</button>}
+            </article>
+            {!result.success && <article className="result-card needs-work"><span>완료 상태</span><strong>{result.fullyInside ? '브레이크 확인 필요' : '차량 전체 진입 필요'}</strong><p>차량을 주차선 안에 넣고 완전히 정지해야 완료됩니다.</p></article>}
+          </div>
 
-      {activeTab === 'current' && result && !collisionEvent && <section className="no-collision-feedback"><strong>충돌 없이 완료했습니다.</strong><p>같은 상황을 반복해 안정적인 주차 순서를 익혀보세요.</p></section>}
+          {!collisionEvent && <section className="no-collision-feedback"><strong>다음 연습</strong><p>같은 상황을 반복해 안정적인 주차 순서를 익혀보세요.</p></section>}
 
-      {activeTab === 'current' && collisionEvent && state?.runtime && <ResultCollisionQuiz event={collisionEvent} runtime={state.runtime} onRetry={() => retryAtEvent(collisionEvent)} />}
+          <div className="result-actions result-primary-actions">
+            <Link className="primary-button" to={retryPath}>같은 상황 다시 연습</Link>
+            <Link className="secondary-button" to={`${retryPath}&lesson=1`}>단계 안내부터 다시</Link>
+            <Link className="secondary-button" to="/practice">상황 선택</Link>
+          </div>
+        </div>
 
-      {activeTab === 'current' && collisionEvent && !state?.runtime && collisionFeedback && <section className="collision-debrief" aria-labelledby="collision-debrief-title">
-        <span>이전 형식의 연습 기록</span>
-        <h2 id="collision-debrief-title">실제 배치 정보가 없어 판단 퀴즈를 만들 수 없습니다</h2>
-        <div><strong>발생 원인</strong><p>{collisionFeedback.cause}</p></div>
-        <div><strong>다음 행동</strong><p>{collisionFeedback.action}</p></div>
-        <p>새 학습 연습부터 실제 차량 위치와 장애물 배치를 이용한 충돌 판단 퀴즈가 제공됩니다.</p>
-        <button type="button" className="primary-button" onClick={() => retryAtEvent(collisionEvent)}>충돌 직전부터 다시 연습</button>
+        <div className="result-detail-column">
+          {collisionEvent && state?.runtime && <ResultCollisionQuiz event={collisionEvent} runtime={state.runtime} onRetry={() => retryAtEvent(collisionEvent)} />}
+
+          {collisionEvent && !state?.runtime && collisionFeedback && <section className="collision-debrief" aria-labelledby="collision-debrief-title">
+            <span>이전 형식의 연습 기록</span>
+            <h2 id="collision-debrief-title">실제 배치 정보가 없어 판단 퀴즈를 만들 수 없습니다</h2>
+            <div><strong>발생 원인</strong><p>{collisionFeedback.cause}</p></div>
+            <div><strong>다음 행동</strong><p>{collisionFeedback.action}</p></div>
+            <p>새 학습 연습부터 실제 차량 위치와 장애물 배치를 이용한 충돌 판단 퀴즈가 제공됩니다.</p>
+            <button type="button" className="primary-button" onClick={() => retryAtEvent(collisionEvent)}>충돌 직전부터 다시 연습</button>
+          </section>}
+        </div>
       </section>}
-
-      {activeTab === 'current' && result && <div className="result-actions">
-        <Link className="primary-button" to={retryPath}>같은 상황 다시 연습</Link>
-        <Link className="secondary-button" to={`${retryPath}&lesson=1`}>단계 안내부터 다시</Link>
-        <Link className="secondary-button" to="/practice">상황 선택</Link>
-      </div>}
 
       {activeTab === 'current' && replayMoments.length > 0 && <section className="replay-timeline" aria-labelledby="replay-title">
         <header><div><span>실제 주행 탑뷰</span><h2 id="replay-title">이번 연습의 주요 순간</h2></div><small>충돌과 최종 자세를 우선 표시합니다</small></header>
