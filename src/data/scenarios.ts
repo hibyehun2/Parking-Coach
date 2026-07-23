@@ -6,9 +6,9 @@ export const FIRST_SUCCESS_KEY = 'parking-coach:first-success:v1'
 
 export const scenarios: Scenario[] = [
   { id: 'both-sides', title: '양옆 차량', description: '양쪽 차량 사이의 간격을 번갈아 확인해요.', difficulty: '첫 번째 연습', visual: 'cars-both', available: true },
-  { id: 'one-side', title: '한쪽 차량', description: '차량이 좌우 중 무작위로 배치돼요.', difficulty: '기본', visual: 'car-left', available: true },
-  { id: 'wall-side', title: '벽면 옆', description: '벽면 쪽 회전 여유와 간격을 익혀요.', difficulty: '응용', visual: 'wall-side', available: true },
-  { id: 'tight-entry', title: '좁은 진입 수정', description: '닿기 전에 멈추고 위치를 고치는 방법을 익혀요.', difficulty: '수정 연습', visual: 'tight-entry', available: true },
+  { id: 'one-side', title: '한쪽 차량', description: '차량이 좌우 중 무작위로 배치돼요.', difficulty: '준비 중', visual: 'car-left', available: false },
+  { id: 'wall-side', title: '벽면 옆', description: '벽면 쪽 회전 여유와 간격을 익혀요.', difficulty: '준비 중', visual: 'wall-side', available: false },
+  { id: 'tight-entry', title: '좁은 진입 수정', description: '실전 모드의 움직이는 판단 퀴즈로 먼저 만나요.', difficulty: '준비 중', visual: 'tight-entry', available: false },
 ]
 
 const LEFT_CAR: ScenarioParkedVehicle = { id: 'parked-left', kind: 'vehicle', x: 12.3, y: 9.75, heading: -Math.PI / 2, side: 'left' }
@@ -93,5 +93,5 @@ export function createScenarioRuntime(
 
 export function getScenario(id: string | null) {
   const migrated = id === 'left-side' || id === 'right-side' ? 'one-side' : id === 'pillar-side' ? 'wall-side' : id
-  return scenarios.find((scenario) => scenario.id === migrated) ?? scenarios[0]
+  return scenarios.find((scenario) => scenario.id === migrated && scenario.available) ?? scenarios[0]
 }

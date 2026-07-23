@@ -7,6 +7,7 @@ import {
 } from '../components/MiniLesson'
 import { OrientationNotice } from '../components/OrientationNotice'
 import { VehicleSimulator } from '../components/simulator/VehicleSimulator'
+import { CorrectionPractice } from '../components/CorrectionPractice'
 import { getScenario } from '../data/scenarios'
 import { createScenarioRuntime, loadFirstSuccess } from '../data/scenarios'
 import { getLesson } from '../data/lessons'
@@ -21,7 +22,7 @@ export function SimulatorPage() {
   const scenario = getScenario(searchParams.get('scenario'))
   const isPracticeMode = searchParams.get('mode') === 'practice'
   const forceLesson = searchParams.get('lesson') === '1'
-  const [runtime] = useState(() => retryPayload?.runtime ?? createScenarioRuntime(scenario.id, {
+  const [runtime] = useState(() => retryPayload?.runtime ?? createScenarioRuntime(isPracticeMode ? 'tight-entry' : scenario.id, {
     firstSuccess: loadFirstSuccess()[scenario.id],
   }))
   const [showLesson, setShowLesson] = useState(() => {
@@ -46,19 +47,19 @@ export function SimulatorPage() {
           </div>
           <Link className="secondary-button" to="/">상황 다시 선택</Link>
         </div>
-        <p className="page-description">
+        {!isPracticeMode && <p className="page-description">
           브레이크를 해제하면 선택한 기어 방향으로 천천히 움직입니다. 장애물과 충돌하면 차량이 즉시 정지합니다.
-        </p>
-        <VehicleSimulator
+        </p>}
+        {isPracticeMode ? <CorrectionPractice runtime={runtime} /> : <VehicleSimulator
           learningMode={!isPracticeMode}
           scenarioId={scenario.id}
           mode={isPracticeMode ? 'practice' : 'learning'}
           initialVehicle={retryState}
           runtime={runtime}
           onShowLesson={() => setShowLesson(true)}
-        />
+        />}
       </section>
-      {showLesson && <MiniLessonView lesson={getLesson(scenario.id)} runtime={runtime} onFinish={() => setShowLesson(false)} />}
+      {!isPracticeMode && showLesson && <MiniLessonView lesson={getLesson(scenario.id)} runtime={runtime} onFinish={() => setShowLesson(false)} />}
     </>
   )
 }

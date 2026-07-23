@@ -190,7 +190,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
       vehicle: cloneVehicleState(vehicle),
       clip: sessionTrajectoryRef.current.slice(-18).map(({ vehicle: snapshot }) => snapshot),
     })
-    recordPracticeSession(result, scenarioId, mode, undefined, new Date(), runtime)
+    recordPracticeSession(result, scenarioId, mode, undefined, new Date(), runtime, replayRef.current)
   }
 
   const completeParking = () => {

@@ -25,7 +25,8 @@ test('전진 중 벽 충돌은 계속 전진이 아니라 짧은 직선 후진�
 
   assert.equal(steps[0].answer, 'stop')
   assert.equal(steps[1].answer, 'reverse-straight')
-  assert.match(steps[1].question, /전진.*벽면/)
+  assert.match(steps[0].question, /충돌하기 전에/)
+  assert.match(steps[1].question, /전진.*충돌 직전/)
   assert.match(steps[1].choices.find(({ id }) => id === steps[1].answer)?.label ?? '', /R.*후진/)
 })
 
@@ -34,7 +35,7 @@ test('후진 중 차량 충돌은 계속 후진이 아니라 짧은 직선 전�
 
   assert.equal(steps[0].answer, 'stop')
   assert.equal(steps[1].answer, 'forward-straight')
-  assert.match(steps[1].question, /후진.*주차 차량/)
+  assert.match(steps[1].question, /후진.*충돌 직전/)
   assert.match(steps[1].choices.find(({ id }) => id === steps[1].answer)?.label ?? '', /D.*전진/)
 })
 

@@ -12,6 +12,7 @@ export function ScenarioCard({ scenario, selected, onSelect }: ScenarioCardProps
       type="button"
       className={`scenario-card${selected ? ' selected' : ''}`}
       aria-pressed={selected}
+      disabled={!scenario.available}
       onClick={() => onSelect(scenario.id)}
     >
       <span className={`scenario-visual ${scenario.visual}`} aria-hidden="true">
@@ -24,7 +25,7 @@ export function ScenarioCard({ scenario, selected, onSelect }: ScenarioCardProps
         <span>{scenario.difficulty}</span>
       </span>
       <span className="scenario-description">{scenario.description}</span>
-      <span className="selection-indicator" aria-hidden="true">✓</span>
+      <span className="selection-indicator" aria-hidden="true">{scenario.available ? '✓' : '준비 중'}</span>
     </button>
   )
 }

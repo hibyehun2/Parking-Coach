@@ -20,8 +20,8 @@ const modes: Array<{
   {
     id: 'practice',
     title: '실전 모드',
-    description: '도움 없이 판단하고 연습해요.',
-    features: ['실시간 힌트 없음', '완료 후 분석'],
+    description: '좁은 진입 위험을 보고 안전한 수정 순서를 판단해요.',
+    features: ['움직이는 상황 문제', '선택 결과 확인', '좌우 무작위'],
   },
 ]
 

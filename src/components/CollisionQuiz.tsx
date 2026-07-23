@@ -48,7 +48,7 @@ function QuizParkingCanvas({
   const [playbackKey, setPlaybackKey] = useState(0)
   const scene = useMemo(() => {
     const impact = {
-      ...(event.impactVehicle ?? event.vehicle),
+      ...event.vehicle,
       speed: 0,
       braking: true,
     }
@@ -186,7 +186,7 @@ function QuizParkingCanvas({
   )
 }
 
-export function CollisionQuiz({ event, runtime }: { event: ReplayEvent; runtime?: ScenarioRuntime }) {
+export function CollisionQuiz({ event, runtime, onComplete }: { event: ReplayEvent; runtime?: ScenarioRuntime; onComplete?: () => void }) {
   const [step, setStep] = useState(0)
   const [selected, setSelected] = useState<number | null>(null)
   const steps = useMemo(() => buildCollisionQuiz(event), [event])
@@ -200,7 +200,7 @@ export function CollisionQuiz({ event, runtime }: { event: ReplayEvent; runtime?
 
   return (
     <section className="collision-quiz" aria-labelledby="collision-quiz-title">
-      <header><span>수정 주차 그림 퀴즈</span><h2 id="collision-quiz-title">실제 주차 장면에서 안전한 진로를 찾아보세요</h2></header>
+      <header><span>충돌 직전으로 되돌린 수정 퀴즈</span><h2 id="collision-quiz-title">부딪히기 전에 멈추고 안전한 진로를 찾아보세요</h2></header>
       <div className="quiz-layout">
         <div className="quiz-figure">
           <QuizParkingCanvas key={`${step}-${selected}`} event={event} runtime={runtime} step={step} selected={selected} correct={correct} steps={steps} />
@@ -221,7 +221,10 @@ export function CollisionQuiz({ event, runtime }: { event: ReplayEvent; runtime?
           </div>
           {selected !== null && <p className={correct ? 'quiz-correct-copy' : 'quiz-wrong-copy'}>{correct ? '정답이에요. ' : '그 진로를 그림에서 다시 확인해보세요. '}{item.feedback}</p>}
           {correct && step < steps.length - 1 && <button type="button" className="quiz-next" onClick={next}>다음 장면</button>}
-          {correct && step === steps.length - 1 && <strong className="quiz-complete">정지 → 방금 이동한 경로로 간격 회복 → 진행 방향과 양쪽 재확인 순서를 익혔어요.</strong>}
+          {correct && step === steps.length - 1 && <>
+            <strong className="quiz-complete">정지 → 방금 이동한 경로로 간격 회복 → 진행 방향과 양쪽 재확인 순서를 익혔어요.</strong>
+            {onComplete && <button type="button" className="quiz-next" onClick={onComplete}>실전 결과 보기</button>}
+          </>}
         </div>
       </div>
     </section>

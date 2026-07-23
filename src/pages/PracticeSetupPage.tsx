@@ -6,7 +6,7 @@ import { scenarios } from '../data/scenarios'
 import type { PracticeMode, ScenarioId } from '../types/practice'
 
 function validScenario(value: string | null): ScenarioId | null {
-  return scenarios.some((scenario) => scenario.id === value) ? value as ScenarioId : null
+  return scenarios.some((scenario) => scenario.id === value && scenario.available) ? value as ScenarioId : null
 }
 
 export function PracticeSetupPage() {

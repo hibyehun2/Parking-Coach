@@ -1,9 +1,10 @@
 import type { ParkingResult } from './parkingEvaluation.ts'
+import type { ReplayEvent } from './sessionReplay.ts'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../types/practice.ts'
 import { FIRST_SUCCESS_KEY, markFirstSuccess } from '../data/scenarios.ts'
 
-export const PRACTICE_HISTORY_KEY = 'parking-coach:practice-history:v2'
-export const MAX_PRACTICE_SESSIONS = 10
+export const PRACTICE_HISTORY_KEY = 'parking-coach:practice-history:v3'
+export const MAX_PRACTICE_SESSIONS = 30
 
 export type MistakeType = 'collision'
 
@@ -19,12 +20,14 @@ export type PracticeSession = {
   mistakes: MistakeType[]
   seed?: number
   variant?: ScenarioRuntime['variant']
+  runtime?: ScenarioRuntime
+  moments?: ReplayEvent[]
 }
 
-export type PracticeHistory = { version: 2; sessions: PracticeSession[] }
+export type PracticeHistory = { version: 3; sessions: PracticeSession[] }
 export type PracticeTrend = 'insufficient' | 'improving' | 'steady' | 'needs-focus'
 
-const EMPTY_HISTORY: PracticeHistory = { version: 2, sessions: [] }
+const EMPTY_HISTORY: PracticeHistory = { version: 3, sessions: [] }
 const SCENARIO_IDS: ScenarioId[] = ['both-sides', 'one-side', 'wall-side', 'tight-entry']
 const PRACTICE_MODES: PracticeMode[] = ['learning', 'practice']
 
@@ -69,23 +72,27 @@ function parseSession(value: unknown): PracticeSession | null {
     mistakes: (item.collisionCount as number) > 0 ? ['collision'] : [],
     seed: typeof item.seed === 'number' ? item.seed : undefined,
     variant: item.variant === 'left' || item.variant === 'right' || item.variant === 'fixed' ? item.variant : undefined,
+    runtime: item.runtime && typeof item.runtime === 'object' ? item.runtime as ScenarioRuntime : undefined,
+    moments: Array.isArray(item.moments)
+      ? item.moments.filter((event): event is ReplayEvent => Boolean(event && typeof event === 'object' && typeof (event as ReplayEvent).id === 'string'))
+      : undefined,
   }
 }
 
 export function loadPracticeHistory(storage: Storage | null = defaultStorage()): PracticeHistory {
-  if (!storage) return { version: 2, sessions: [] }
+  if (!storage) return { version: 3, sessions: [] }
   try {
-    const raw = storage.getItem(PRACTICE_HISTORY_KEY) ?? storage.getItem('parking-coach:practice-history:v1')
-    if (!raw) return { version: 2, sessions: [] }
+    const raw = storage.getItem(PRACTICE_HISTORY_KEY) ?? storage.getItem('parking-coach:practice-history:v2') ?? storage.getItem('parking-coach:practice-history:v1')
+    if (!raw) return { version: 3, sessions: [] }
     const parsed = JSON.parse(raw) as { sessions?: unknown[] }
     if (!Array.isArray(parsed.sessions)) throw new Error('invalid')
     const sessions = parsed.sessions.map(parseSession).filter((item): item is PracticeSession => Boolean(item)).slice(0, MAX_PRACTICE_SESSIONS)
-    const history = { version: 2 as const, sessions }
+    const history = { version: 3 as const, sessions }
     persist(storage, history)
     return history
   } catch {
     persist(storage, EMPTY_HISTORY)
-    return { version: 2, sessions: [] }
+    return { version: 3, sessions: [] }
   }
 }
 
@@ -96,6 +103,7 @@ export function recordPracticeSession(
   storage: Storage | null = defaultStorage(),
   completedAt = new Date(),
   runtime?: ScenarioRuntime,
+  replay: ReplayEvent[] = [],
 ) {
   const history = loadPracticeHistory(storage)
   const collisionTargets = result.collisions.map((collision) => collision.obstacleId)
@@ -112,8 +120,18 @@ export function recordPracticeSession(
     mistakes: result.collisionCount ? ['collision'] : [],
     seed: runtime?.seed,
     variant: runtime?.variant,
+    runtime,
+    moments: replay
+      .filter((event) => event.type === 'collision' || (event.type === 'finish' && result.success))
+      .slice(-4)
+      .map((event) => ({
+        ...event,
+        clip: event.clip && event.clip.length > 24
+          ? event.clip.filter((_, index) => index % Math.ceil(event.clip!.length / 24) === 0).slice(-24)
+          : event.clip,
+      })),
   }
-  const next = { version: 2 as const, sessions: [session, ...history.sessions].slice(0, MAX_PRACTICE_SESSIONS) }
+  const next = { version: 3 as const, sessions: [session, ...history.sessions].slice(0, MAX_PRACTICE_SESSIONS) }
   persist(storage, next)
   if (result.success) markFirstSuccess(scenarioId, storage)
   return next
@@ -122,7 +140,7 @@ export function recordPracticeSession(
 export function clearPracticeHistory(storage: Storage | null = defaultStorage()) {
   persist(storage, EMPTY_HISTORY)
   storage?.removeItem(FIRST_SUCCESS_KEY)
-  return { version: 2 as const, sessions: [] }
+  return { version: 3 as const, sessions: [] }
 }
 
 export function countMistakes(sessions: PracticeSession[]) {
@@ -152,9 +170,6 @@ export function calculatePracticeTrend(sessions: PracticeSession[]): PracticeTre
 export function recommendPractice(sessions: PracticeSession[]) {
   if (!sessions.length) return { scenarioId: 'both-sides' as const, reason: '기본 좌우 간격부터 익혀보세요.' }
   const collisions = sessions.filter((item) => item.collisionCount > 0)
-  if (!collisions.length) return { scenarioId: 'one-side' as const, reason: '충돌 없이 안정적입니다. 무작위 한쪽 차량에 도전해보세요.' }
-  if (collisions.some((item) => item.collisionTargets.some((id) => id.includes('wall')))) {
-    return { scenarioId: 'wall-side' as const, reason: '벽 충돌 기록이 있어 벽면 쪽 수정 동작을 추천합니다.' }
-  }
-  return { scenarioId: 'tight-entry' as const, reason: '차량 충돌 전에 멈추고 전진 수정하는 연습을 추천합니다.' }
+  if (!collisions.length) return { scenarioId: 'both-sides' as const, reason: '충돌 없이 안정적입니다. 같은 상황에서 반복해 정확도를 높여보세요.' }
+  return { scenarioId: 'both-sides' as const, reason: '양옆 간격을 다시 확인하고, 실전 모드에서 충돌 전 수정 판단을 연습해보세요.' }
 }

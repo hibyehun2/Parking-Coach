@@ -37,7 +37,7 @@ export function buildCollisionQuiz(event: ReplayEvent): CollisionQuizStep[] {
   return [
     {
       label: '위험 발견',
-      question: `${obstacle}에 가까워지거나 닿았을 때 가장 먼저 할 행동은?`,
+      question: `${obstacle}과의 간격이 빠르게 줄고 있습니다. 충돌하기 전에 가장 먼저 할 행동은?`,
       choices: [
         { id: 'continue', label: unsafeContinue },
         { id: 'stop', label: '브레이크로 완전히 정지' },
@@ -48,7 +48,7 @@ export function buildCollisionQuiz(event: ReplayEvent): CollisionQuizStep[] {
     },
     {
       label: '안전거리 회복',
-      question: `${wasDrivingForward ? '전진' : '후진'} 중 ${obstacle}에 닿았습니다. 어느 동작으로 먼저 간격을 회복할까요?`,
+      question: `${wasDrivingForward ? '전진' : '후진'} 중 충돌 직전에 멈췄습니다. 어느 동작으로 안전거리를 확보할까요?`,
       choices: [
         { id: recoveryAction, label: recoveryLabel },
         { id: 'continue', label: unsafeContinue },
@@ -70,4 +70,3 @@ export function buildCollisionQuiz(event: ReplayEvent): CollisionQuizStep[] {
     },
   ]
 }
-
