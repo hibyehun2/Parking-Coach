@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createScenarioRuntime } from '../src/data/scenarios.ts'
 import { detectCollision } from '../src/engine/collisionDetection.ts'
-import { buildLessonSimulation, lessonDriverShoulder } from '../src/engine/lessonSimulation.ts'
+import { buildLessonSimulation, buildNarrowAisleLessonSimulation, lessonDriverShoulder } from '../src/engine/lessonSimulation.ts'
 import { isVehicleInsideParkingBay, TARGET_PARKING_BAY } from '../src/engine/parkingEvaluation.ts'
 
 test('1단계는 운전자 어깨가 진행 방향의 주차칸 끝 선에 맞을 때 정지한다', () => {
@@ -45,4 +45,18 @@ test('오른쪽 출발 경로는 끝 선과 최종 주차 위치가 좌우 대�
   assert.equal(runtime.startSide, 'right')
   assert.ok(Math.abs(shoulder.x - TARGET_PARKING_BAY.left) < 0.01)
   assert.equal(isVehicleInsideParkingBay(finalVehicle), true)
+})
+
+test('좁은 통로 7단계는 충돌 없이 연속되고 전진 수정 후 주차칸 안에서 끝난다', () => {
+  const runtime = createScenarioRuntime('narrow-aisle', { seed: 2 })
+  const stages = buildNarrowAisleLessonSimulation(runtime)
+  assert.equal(stages.length, 7)
+  assert.equal(stages[5].states[0].gear, 'D')
+  for (let index = 0; index < stages.length - 1; index += 1) {
+    const end = stages[index].states.at(-1)!
+    const start = stages[index + 1].states[0]
+    assert.ok(Math.hypot(end.x - start.x, end.y - start.y) < .001)
+  }
+  assert.equal(stages.flatMap(({ states }) => states).some((vehicle) => detectCollision(vehicle, 0, runtime)), false)
+  assert.equal(isVehicleInsideParkingBay(stages.at(-1)!.states.at(-1)!), true)
 })

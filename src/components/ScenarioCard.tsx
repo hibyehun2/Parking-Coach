@@ -1,4 +1,6 @@
 import type { Scenario, ScenarioId } from '../types/practice'
+import bothSidesImage from '../assets/scenario-both-sides-v2.png'
+import narrowAisleImage from '../assets/scenario-narrow-aisle-v2.png'
 
 type ScenarioCardProps = {
   scenario: Scenario
@@ -7,6 +9,12 @@ type ScenarioCardProps = {
 }
 
 export function ScenarioCard({ scenario, selected, onSelect }: ScenarioCardProps) {
+  const image = scenario.id === 'both-sides'
+    ? bothSidesImage
+    : scenario.id === 'narrow-aisle'
+      ? narrowAisleImage
+      : null
+
   return (
     <button
       type="button"
@@ -16,15 +24,21 @@ export function ScenarioCard({ scenario, selected, onSelect }: ScenarioCardProps
       onClick={() => onSelect(scenario.id)}
     >
       <span className={`scenario-visual ${scenario.visual}`} aria-hidden="true">
-        <span className="parking-bay" />
-        <span className="obstacle obstacle-left" />
-        <span className="obstacle obstacle-right" />
+        {image
+          ? <img src={image} alt="" />
+          : <>
+            <span className="parking-bay" />
+            <span className="obstacle obstacle-left" />
+            <span className="obstacle obstacle-right" />
+          </>}
       </span>
-      <span className="scenario-card-heading">
-        <strong>{scenario.title}</strong>
-        <span>{scenario.difficulty}</span>
+      <span className="scenario-card-copy">
+        <span className="scenario-card-heading">
+          <strong>{scenario.title}</strong>
+          <span>{scenario.difficulty}</span>
+        </span>
+        <span className="scenario-description">{scenario.description}</span>
       </span>
-      <span className="scenario-description">{scenario.description}</span>
       <span className="selection-indicator" aria-hidden="true">{scenario.available ? '✓' : '준비 중'}</span>
     </button>
   )

@@ -201,7 +201,7 @@ export function CollisionQuiz({ event, runtime, onComplete, onlyStep, completion
 
   return (
     <section className="collision-quiz" aria-labelledby="collision-quiz-title">
-      <header><span>충돌 직전으로 되돌린 수정 퀴즈</span><h2 id="collision-quiz-title">부딪히기 전에 멈추고 안전한 진로를 찾아보세요</h2></header>
+      <header><span>{onComplete ? '움직이는 수정 판단 문제' : '직접 수정 전 판단 순서 확인'}</span><h2 id="collision-quiz-title">{onComplete ? '상황을 보고 안전한 수정 동작을 선택하세요' : '부딪히기 전 위치에서 수정 순서를 먼저 확인하세요'}</h2></header>
       <div className="quiz-layout">
         <div className="quiz-figure">
           <QuizParkingCanvas key={`${step}-${selected}`} event={event} runtime={runtime} step={step} selected={selected} correct={correct} steps={steps} />

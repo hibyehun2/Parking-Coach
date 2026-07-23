@@ -83,6 +83,8 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .scenario-card:disabled:hover { transform: none; box-shadow: none; }
 .scenario-card:disabled .selection-indicator { width: auto; padding: 0 8px; border-radius: 99px; display: grid; font-size: .62rem; }
 .scenario-visual { position: relative; height: 145px; margin-bottom: 17px; border-radius: 14px; overflow: hidden; background: #68736e; }
+.scenario-visual img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center; transition: transform 180ms ease; }
+.scenario-card:hover .scenario-visual img { transform: scale(1.025); }
 .parking-bay { position: absolute; left: 35%; bottom: -2px; width: 30%; height: 86%; border: 2px solid rgba(255,255,255,.75); border-bottom: 0; }
 .obstacle { position: absolute; bottom: 8%; width: 23%; height: 70%; border-radius: 7px; background: #d9e0dd; box-shadow: inset 0 0 0 2px rgba(0,0,0,.12); }
 .obstacle-left { left: 7%; }
@@ -92,13 +94,13 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .wall-side .obstacle-right { right: 5%; width: 10%; height: 86%; border-radius: 2px; background: #a99f91; }
 .tight-entry .obstacle-left { transform: rotate(-8deg); }
 .tight-entry .obstacle-right { transform: rotate(8deg); }
-.narrow-aisle::before { content: ""; position: absolute; z-index: 2; left: 3%; right: 3%; top: 8%; height: 13%; border-radius: 3px; background: #a99f91; box-shadow: 0 2px 0 rgba(255,255,255,.25); }
 .ev-space .obstacle-left { display: none; }
 .ev-space .obstacle-right { width: 20%; height: 10%; border-radius: 4px; background: rgba(128, 202, 177, .48); }
 .ev-space::after { content: "EV"; position: absolute; right: 8%; bottom: 30%; color: rgba(175, 231, 212, .62); font-size: .72rem; font-weight: 900; }
 .scenario-card-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .scenario-card-heading strong { font-size: 1.08rem; }
 .scenario-card-heading > span { flex: none; padding: 4px 7px; border-radius: 99px; color: var(--brand); background: var(--brand-soft); font-size: .72rem; font-weight: 800; }
+.scenario-card-copy { min-width: 0; display: flex; flex-direction: column; }
 .scenario-description { min-height: 48px; margin-top: 9px; color: var(--muted); font-size: .9rem; line-height: 1.55; word-break: keep-all; }
 .selection-indicator { position: absolute; top: 24px; right: 24px; width: 28px; height: 28px; border-radius: 50%; display: none; place-items: center; color: var(--brand); background: white; font-weight: 900; box-shadow: 0 4px 12px rgba(0,0,0,.16); }
 .scenario-card.selected .selection-indicator { display: grid; }
@@ -399,6 +401,10 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .history-detail > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .history-detail > header span { color: var(--brand); font-size: .72rem; font-weight: 850; }
 .history-detail > p { color: var(--muted); line-height: 1.55; }
+.next-practice { margin-bottom: 16px; padding: 13px 15px; border: 1px solid var(--border); border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 14px; background: rgba(255,255,255,.68); }
+.next-practice span { color: var(--brand); font-size: .72rem; font-weight: 900; }
+.next-practice p { margin: 3px 0 0; color: var(--muted); font-size: .82rem; line-height: 1.45; }
+.next-practice a { flex: none; color: var(--brand-dark); font-size: .78rem; font-weight: 900; }
 .correction-progress { margin-top: 12px; padding: 14px 16px; border-radius: 15px; display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; background: rgba(255,255,255,.76); }
 .correction-progress span { color: var(--brand); font-weight: 900; }
 .correction-progress progress { grid-column: 1 / -1; width: 100%; accent-color: var(--brand); }
@@ -477,6 +483,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .replay-moment-card p { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.55; }
 .replay-moment-card > div > div { display: flex; flex-wrap: wrap; gap: 7px; }
 .replay-moment-card button { min-height: 36px; padding: 0 11px; border: 1px solid var(--border); border-radius: 9px; color: var(--brand-dark); background: white; font-size: .72rem; font-weight: 800; cursor: pointer; }
+.replay-moment-card .replay-primary-action { border-color: var(--brand); color: white; background: var(--brand); }
 .replay-moment-card.replay-collision { border-color: #efb5af; background: #fff8f7; }
 .practice-history { margin-top: 34px; padding-top: 30px; border-top: 1px solid var(--border); }
 .history-heading { margin-bottom: 18px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
@@ -709,18 +716,22 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .setup-header { margin-bottom: 22px; display: flex; align-items: center; gap: 14px; }
 .setup-header > div { display: grid; gap: 3px; }
 .setup-header h1 { font-size: clamp(2rem, 4vw, 3.4rem); }
-.setup-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(330px, .75fr); gap: 18px; }
+.setup-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .setup-section { padding: 18px; border: 1px solid rgba(255,255,255,.82); border-radius: 25px; background: rgba(255,255,255,.58); box-shadow: 0 14px 38px rgba(32,58,47,.08); backdrop-filter: blur(20px); }
 .setup-section-heading { margin-bottom: 13px; display: flex; align-items: center; gap: 9px; }
 .setup-section-heading > span { width: 27px; height: 27px; border-radius: 50%; display: grid; place-items: center; color: white; background: var(--brand); font-size: .75rem; font-weight: 900; }
 .setup-section-heading h2 { font-size: 1.3rem; }
-.compact-scenario-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.compact-scenario-grid .scenario-card { min-height: 122px; padding: 9px; display: grid; grid-template-columns: 86px minmax(0, 1fr); grid-template-rows: auto 1fr; column-gap: 10px; }
-.compact-scenario-grid .scenario-card.selected { padding: 8px; }
-.compact-scenario-grid .scenario-visual { height: 86px; margin: 0; grid-row: 1 / 3; }
+.compact-scenario-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.compact-scenario-grid .scenario-card { min-height: 132px; padding: 0; display: grid; grid-template-columns: minmax(0, 50%) minmax(0, 50%); overflow: hidden; background: rgba(255,255,255,.86); }
+.compact-scenario-grid .scenario-card.selected { padding: 0; }
+.compact-scenario-grid .scenario-visual { width: 100%; height: 100%; min-height: 130px; margin: 0; border-radius: 0; grid-column: 1; grid-row: 1; }
+.compact-scenario-grid .scenario-visual::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent 58%, rgba(255,255,255,.16) 76%, rgba(255,255,255,.82) 100%); }
+.compact-scenario-grid .scenario-visual img { object-position: center 57%; }
+.compact-scenario-grid .scenario-card-copy { position: relative; z-index: 1; padding: 18px 42px 16px 4px; grid-column: 2; grid-row: 1; align-self: center; }
 .compact-scenario-grid .scenario-description { min-height: 0; font-size: .76rem; line-height: 1.35; }
 .compact-scenario-grid .scenario-card-heading strong { font-size: .92rem; }
 .compact-scenario-grid .scenario-card-heading > span { font-size: .6rem; }
+.compact-scenario-grid .selection-indicator { z-index: 2; top: 14px; right: 14px; }
 .practice-setup .mode-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .practice-setup .mode-card { min-height: 121px; padding: 16px; border-radius: 19px; }
 .practice-setup .mode-card.selected { padding: 15px; }
@@ -833,8 +844,9 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .setup-section-heading { margin-bottom: 9px; }
   .setup-section-heading h2 { font-size: 1.08rem; }
   .compact-scenario-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .compact-scenario-grid .scenario-card { min-height: 92px; grid-template-columns: 72px minmax(0, 1fr); column-gap: 9px; }
-  .compact-scenario-grid .scenario-visual { height: 72px; }
+  .compact-scenario-grid .scenario-card { min-height: 104px; grid-template-columns: minmax(0, 50%) minmax(0, 50%); }
+  .compact-scenario-grid .scenario-visual { width: 100%; height: 100%; min-height: 102px; }
+  .compact-scenario-grid .scenario-card-copy { padding: 13px 34px 12px 2px; }
   .compact-scenario-grid .scenario-description { margin-top: 4px; font-size: .72rem; line-height: 1.3; }
   .practice-setup .mode-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .practice-setup .mode-card { min-height: 78px; padding: 11px; gap: 10px; }
@@ -869,14 +881,15 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .setup-header .eyebrow { display: none; }
   .setup-header h1 { font-size: clamp(1.35rem, 5vh, 2rem); }
   .icon-back { width: 36px; height: 36px; font-size: 1.55rem; }
-  .setup-grid { grid-template-columns: minmax(0, 1.35fr) minmax(260px, .65fr); gap: 10px; }
+  .setup-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .setup-section { padding: 9px; border-radius: 17px; }
   .setup-section-heading { margin-bottom: 7px; }
   .setup-section-heading > span { width: 23px; height: 23px; }
   .setup-section-heading h2 { font-size: 1rem; }
   .compact-scenario-grid { gap: 7px; }
-  .compact-scenario-grid .scenario-card { min-height: 80px; grid-template-columns: 58px minmax(0, 1fr); column-gap: 7px; }
-  .compact-scenario-grid .scenario-visual { width: 58px; height: 58px; }
+  .compact-scenario-grid .scenario-card { min-height: 80px; grid-template-columns: minmax(0, 50%) minmax(0, 50%); }
+  .compact-scenario-grid .scenario-visual { width: 100%; height: 100%; min-height: 78px; }
+  .compact-scenario-grid .scenario-card-copy { padding: 10px 32px 9px 2px; }
   .compact-scenario-grid .scenario-description { display: none; }
   .practice-setup .mode-card { min-height: 80px; padding: 9px; gap: 8px; }
   .practice-setup .mode-card.selected { padding: 8px; }

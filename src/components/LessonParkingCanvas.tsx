@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { buildLessonSimulation, lessonDriverShoulder } from '../engine/lessonSimulation'
+import { buildLessonSimulation, buildNarrowAisleLessonSimulation, lessonDriverShoulder } from '../engine/lessonSimulation'
 import { TARGET_PARKING_BAY } from '../engine/parkingEvaluation'
 import { renderParkingLot } from '../engine/parkingLotRenderer'
 import type { ScenarioRuntime } from '../types/practice'
 
 export function LessonParkingCanvas({ runtime, stepIndex }: { runtime: ScenarioRuntime; stepIndex: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const stages = useMemo(() => buildLessonSimulation(runtime), [runtime])
+  const stages = useMemo(
+    () => runtime.scenarioId === 'narrow-aisle'
+      ? buildNarrowAisleLessonSimulation(runtime)
+      : buildLessonSimulation(runtime),
+    [runtime],
+  )
   const stage = stages[stepIndex]
   const [frame, setFrame] = useState(0)
 
@@ -50,9 +55,13 @@ export function LessonParkingCanvas({ runtime, stepIndex }: { runtime: ScenarioR
           ...(frame > 0 ? [{ vehicle: first, color: '#a7b4af' }] : []),
           ...(frame < stage.states.length - 1 ? [{ vehicle: last, color: '#55d8a8' }] : []),
         ],
+        highlightContactZone: runtime.scenarioId === 'narrow-aisle' && (stepIndex === 3 || stepIndex === 4)
+          ? (runtime.startSide === 'right' ? 'rear-left' : 'rear-right')
+          : undefined,
       })
 
-      if (stepIndex !== 0) return
+      const referenceStep = runtime.scenarioId === 'narrow-aisle' ? 1 : 0
+      if (stepIndex !== referenceStep) return
       const shoulder = lessonDriverShoulder(last)
       const scale = Math.max(width, height) / 14
       const worldLeft = 15 - width / scale / 2

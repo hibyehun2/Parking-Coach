@@ -6,7 +6,8 @@ import type { ScenarioRuntime } from '../types/practice'
 function coaching(event: ReplayEvent) {
   if (event.type === 'collision') {
     const zone = event.collision?.contactZone?.replace('front', '앞').replace('rear', '뒤').replace('left', '왼쪽').replace('right', '오른쪽')
-    return `${zone ? `${zone} 모서리가` : '차량이'} 장애물에 가까워졌습니다. 위험 지점 전에 완전히 정지하고 짧은 전진 수정으로 간격을 확보하세요.`
+    const correction = event.vehicle.gear === 'R' ? '앞쪽을 확인한 뒤 짧게 전진' : '뒤쪽을 확인한 뒤 짧게 후진'
+    return `${zone ? `${zone} 모서리가` : '차량이'} 장애물에 가까워졌습니다. 위험 지점 전에 완전히 정지하고 ${correction}해 간격을 확보하세요.`
   }
   if (event.phase === 'finish') return '최종 차체 각도와 양쪽 주차선 간격을 비교하세요. 평행 상태에서 핸들을 중앙으로 풀어야 합니다.'
   return '차량 위치와 조향 시점을 확인하세요.'
@@ -86,7 +87,7 @@ export function ReplayMomentCard({
         <p>{coaching(event)}</p>
         <div>
           <button type="button" onClick={() => { setFrame(0); setPlayKey((value) => value + 1) }}>다시 보기</button>
-          {onRetry && <button type="button" onClick={onRetry}>이 지점부터 재시도</button>}
+          {onRetry && <button type="button" className="replay-primary-action" onClick={onRetry}>충돌 직전에서 직접 수정</button>}
         </div>
       </div>
     </article>

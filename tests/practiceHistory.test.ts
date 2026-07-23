@@ -83,7 +83,18 @@ test('최근 충돌이 줄면 개선 중이며 차량 충돌은 수정 연습을
   ;[2, 2, 2, 0, 0, 0].forEach((count, index) => recordPracticeSession(result(count), 'both-sides', 'learning', storage, new Date(1_700_000_000_000 + index * 1000)))
   const sessions = loadPracticeHistory(storage).sessions
   assert.equal(calculatePracticeTrend(sessions), 'improving')
-  assert.equal(recommendPractice(sessions).scenarioId, 'both-sides')
+  assert.equal(recommendPractice(sessions)?.scenarioId, 'both-sides')
+  assert.equal(recommendPractice(sessions)?.mode, 'practice')
+})
+
+test('기록이 부족하면 추천을 숨기고 충돌 없는 기본 성공 뒤에는 좁은 통로를 추천한다', () => {
+  const storage = new MemoryStorage()
+  recordPracticeSession(result(), 'both-sides', 'learning', storage)
+  assert.equal(recommendPractice(loadPracticeHistory(storage).sessions), null)
+  recordPracticeSession(result(), 'both-sides', 'learning', storage, new Date(Date.now() + 1000))
+  const recommendation = recommendPractice(loadPracticeHistory(storage).sessions)
+  assert.equal(recommendation?.scenarioId, 'narrow-aisle')
+  assert.equal(recommendation?.mode, 'learning')
 })
 
 test('충돌 기록에 따라 오늘의 수정 연습 문구를 선택한다', () => {

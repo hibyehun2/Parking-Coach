@@ -201,8 +201,26 @@ export function calculatePracticeTrend(sessions: PracticeSession[]): PracticeTre
 }
 
 export function recommendPractice(sessions: PracticeSession[]) {
-  if (!sessions.length) return { scenarioId: 'both-sides' as const, reason: '기본 좌우 간격부터 익혀보세요.' }
-  const collisions = sessions.filter((item) => item.collisionCount > 0)
-  if (!collisions.length) return { scenarioId: 'both-sides' as const, reason: '충돌 없이 안정적입니다. 같은 상황에서 반복해 정확도를 높여보세요.' }
-  return { scenarioId: 'both-sides' as const, reason: '양옆 간격을 다시 확인하고, 실전 모드에서 충돌 전 수정 판단을 연습해보세요.' }
+  if (sessions.length < 2) return null
+  const recent = sessions.slice(0, 6)
+  const collision = recent.find((item) => item.collisionCount > 0)
+  if (collision) {
+    const scenarioId = collision.scenarioId === 'narrow-aisle' ? 'narrow-aisle' as const : 'both-sides' as const
+    const zone = collision.collisionZones[0]?.replace('front', '앞').replace('rear', '뒤').replace('left', '왼쪽').replace('right', '오른쪽')
+    return {
+      scenarioId,
+      mode: 'practice' as const,
+      label: '수정 판단 훈련 시작',
+      reason: `${zone ? `${zone} 모서리` : '차량 모서리'} 위험이 기록됐어요. 충돌 전에 멈추고 간격을 회복하는 순서를 연습해보세요.`,
+    }
+  }
+  const hasBothSidesSuccess = recent.some((item) => item.scenarioId === 'both-sides' && item.success)
+  return {
+    scenarioId: hasBothSidesSuccess ? 'narrow-aisle' as const : 'both-sides' as const,
+    mode: 'learning' as const,
+    label: hasBothSidesSuccess ? '좁은 통로 주차 시작' : '같은 상황 다시 연습',
+    reason: hasBothSidesSuccess
+      ? '양옆 차량 주차를 안정적으로 마쳤어요. 앞쪽 회전 공간이 좁은 상황에 도전해보세요.'
+      : '같은 상황을 반복해 진입 위치와 좌우 간격 확인을 익혀보세요.',
+  }
 }

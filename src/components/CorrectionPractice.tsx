@@ -15,12 +15,12 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
     const definitions: Array<{ gear: 'D' | 'R'; side: 'left' | 'right'; step: number; title: string; kind?: 'vehicle' | 'wall' }> = [
       { gear: 'R', side: baseSide, step: 0, title: '곡선 후진 중 가까워지는 모서리 발견' },
       { gear: 'R', side: oppositeSide, step: 0, title: '반대쪽 차량과의 간격 감소' },
-      { gear: 'D', side: baseSide, step: 0, title: isNarrow ? '전진 수정 중 반대편 벽 접근' : '전진 수정 중 앞 모서리 위험', kind: isNarrow ? 'wall' : 'vehicle' },
+      { gear: isNarrow ? 'D' : 'R', side: baseSide, step: 0, title: isNarrow ? '전진 수정 중 반대편 벽 접근' : '곡선 후진 중 앞 모서리 위험', kind: isNarrow ? 'wall' : 'vehicle' },
       { gear: 'R', side: baseSide, step: 1, title: '후진 위험에서 안전거리 회복' },
-      { gear: 'D', side: oppositeSide, step: 1, title: '전진 위험에서 안전거리 회복' },
+      { gear: isNarrow ? 'D' : 'R', side: oppositeSide, step: 1, title: isNarrow ? '전진 위험에서 안전거리 회복' : '후진 위험에서 반대쪽 간격 회복' },
       { gear: 'R', side: oppositeSide, step: 1, title: '반대 조향보다 안전한 수정 선택' },
       { gear: 'R', side: baseSide, step: 2, title: '짧은 전진 뒤 재출발 확인' },
-      { gear: 'D', side: oppositeSide, step: 2, title: '반대 진행 뒤 양쪽 간격 확인' },
+      { gear: 'R', side: oppositeSide, step: 2, title: '짧은 수정 뒤 양쪽 간격 확인' },
       { gear: 'R', side: oppositeSide, step: 0, title: '재진입 중 새로운 위험 발견' },
       { gear: 'R', side: baseSide, step: 2, title: '최종 재진입 전 종합 확인' },
     ]

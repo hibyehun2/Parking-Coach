@@ -13,7 +13,7 @@ export type LessonStep = {
 export type MiniLesson = {
   scenarioId: ScenarioId
   title: string
-  steps: [LessonStep, LessonStep, LessonStep, LessonStep, LessonStep]
+  steps: LessonStep[]
 }
 
 export const LESSON_TRAJECTORIES = {
@@ -82,11 +82,13 @@ export const lessons: Record<ScenarioId, MiniLesson> = {
     scenarioId: 'narrow-aisle',
     title: '좁은 통로에서 안전하게 수정하기',
     steps: [
-      { title: '앞쪽 여유를 보며 먼저 정지', description: '진입각을 만들 때 앞 범퍼와 반대편 벽의 간격이 부족해지면 충돌 전에 완전히 정지합니다.', cue: '좁은 통로에서는 한 번에 넣으려 하지 말고 먼저 멈추세요.', durationSeconds: 10, gear: 'R', steering: '우측 끝까지', check: '앞 범퍼 · 반대편 벽 · 완전 정지' },
-      { title: '핸들을 중앙으로 복귀', description: '정지 상태에서 핸들을 중앙으로 풀어 다음 수정 동작을 준비합니다.', cue: '기어와 핸들은 브레이크를 유지한 상태에서 바꾸세요.', durationSeconds: 8, gear: 'R', steering: '중앙', check: '브레이크 · 핸들 중앙' },
-      { title: '짧게 전진해 회전 공간 확보', description: 'D로 바꾸고 앞쪽과 양옆 간격이 확보될 만큼만 짧게 전진합니다.', cue: '반대편 벽에 다시 가까워지기 전에 정지하세요.', durationSeconds: 12, gear: 'D', steering: '중앙', check: '앞쪽 벽 · 양옆 차량 · 전진 거리' },
-      { title: '양쪽을 확인하고 재진입', description: '완전히 정지해 R로 바꾸고 주차 방향으로 조향한 뒤 천천히 재진입합니다.', cue: '앞 범퍼와 가까운 옆 차량을 번갈아 확인하세요.', durationSeconds: 12, gear: 'R', steering: '우측 끝까지', check: '앞쪽 여유 · 좌우 모서리 · 수정된 진입각' },
-      { title: '평행해지면 직선 후진', description: '차체가 주차선과 평행해지면 정지해 핸들을 중앙으로 풀고 직선 후진합니다.', cue: '같은 위험이 반복되면 다시 정지하고 수정 순서를 반복하세요.', durationSeconds: 14, gear: 'R', steering: '중앙', check: '차체 평행 · 후방 거리 · 방지턱' },
+      { title: '통로 중앙으로 접근', description: '핸들을 중앙에 두고 목표 주차칸과 반대편 벽 양쪽에 회전 공간이 남도록 천천히 전진합니다.', cue: '주차칸만 보지 말고 앞쪽 벽과의 간격도 함께 확인하세요.', durationSeconds: 8, gear: 'D', steering: '중앙', check: '주차칸 측면 간격 · 반대편 벽 · 차체 평행' },
+      { title: '진입 기준점에서 정지', description: '운전자 어깨가 목표 주차칸의 먼 쪽 끝 선에 맞으면 완전히 정지합니다.', cue: '움직이는 상태에서 기어와 핸들을 바꾸지 마세요.', durationSeconds: 8, gear: 'D', steering: '중앙', check: '운전자 어깨 · 먼 쪽 끝 선 · 완전 정지' },
+      { title: '가능한 만큼 진입각 만들기', description: '주차칸 반대 방향으로 천천히 전진 조향합니다. 앞 모서리와 반대편 벽의 여유를 남기고 정지합니다.', cue: '고정된 각도보다 앞쪽 벽과의 실제 간격을 우선하세요.', durationSeconds: 10, gear: 'D', steering: '좌측 끝까지', check: '벽 쪽 앞 모서리 · 회전 궤적 · 후진 진입각' },
+      { title: '첫 번째 곡선 후진', description: 'R로 바꾸고 주차칸 방향으로 조향해 천천히 후진합니다. 안쪽 뒤 모서리와 옆 차량의 간격이 빠르게 줄면 정지합니다.', cue: '한 번에 넣으려 하지 말고 위험 전에 멈추세요.', durationSeconds: 12, gear: 'R', steering: '우측 끝까지', check: '안쪽 뒤 모서리 · 옆 차량 · 앞쪽 벽' },
+      { title: '위험 전에 멈추고 판단', description: '차량을 완전히 정지한 채 가장 가까운 모서리와 앞뒤 수정 공간을 확인합니다.', cue: '이 단계에서는 움직이지 말고 수정 방향부터 결정하세요.', durationSeconds: 8, gear: 'R', steering: '우측 끝까지', check: '가장 가까운 모서리 · 앞쪽 공간 · 뒤쪽 공간' },
+      { title: '짧게 전진해 각도 재설정', description: 'D로 바꾸고 기존 위험 지점의 간격이 늘어나도록 짧게 전진한 뒤, 벽 여유 안에서 후진하기 좋은 각도를 다시 만듭니다.', cue: '반대편에 새로운 위험이 생기기 전에 다시 정지하세요.', durationSeconds: 12, gear: 'D', steering: '좌측 끝까지', check: '기존 위험 간격 증가 · 앞쪽 벽 · 수정된 차체 각도' },
+      { title: '재진입하고 평행하게 마무리', description: 'R로 바꾸고 천천히 재진입합니다. 주차선과 평행해지면 정지해 핸들을 중앙으로 풀고 방지턱까지 직선 후진합니다.', cue: '앞 모서리와 양옆 간격을 번갈아 확인하며 마무리하세요.', durationSeconds: 14, gear: 'R', steering: '중앙', check: '재진입 간격 · 차체 평행 · 후방 거리 · 방지턱' },
     ],
   },
 }

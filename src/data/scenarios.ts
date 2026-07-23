@@ -86,7 +86,7 @@ export function createScenarioRuntime(
       id: 'narrow-opposite-wall',
       kind: 'wall',
       x: 10.4,
-      y: 1.7,
+      y: 1.5,
       width: 9.2,
       height: 0.3,
     }]
