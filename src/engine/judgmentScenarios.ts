@@ -88,16 +88,16 @@ export function buildJudgmentGuide(runtime: ScenarioRuntime): JudgmentScenario {
     id: 'guided-safe-recovery',
     skill: 'first-correction',
     title: '먼저 예시로 익히기',
-    situation: '곡선 후진 중 가까운 모서리의 간격이 빠르게 줄어 완전히 정지했습니다.',
+    situation: '핸들을 돌린 채 후진하던 중 한쪽 범퍼가 옆 차에 빠르게 가까워져 완전히 정지했습니다.',
     question: '안전한 수정은 방금 이동한 곡선을 반대 방향으로 짧게 되돌아가 공간을 회복하는 것입니다.',
     vehicle,
     choices: [{
       id: 'guided-answer',
-      label: '완전히 정지 → D → 같은 궤적을 짧게 되돌아가기',
-      feedback: '기존 조향 궤적을 반대로 따라가면 새로운 옆 방향 움직임을 줄이며 위험 지점에서 벗어날 수 있습니다.',
+      label: '완전히 정지 → D → 현재 핸들 방향을 유지해 방금 지나온 안전 공간까지 짧게 전진',
+      feedback: '실제 전진 움직임으로 가까워진 범퍼를 옆 차에서 떼고 다음 조향을 위한 공간을 만듭니다.',
       motion: [{ gear: 'D', steeringAngle: turn, seconds: 1.15 }],
     }],
     answer: 'guided-answer',
-    takeaway: '위험하면 먼저 정지하고, 방금 지나온 안전 경로를 짧게 되돌아가세요.',
+    takeaway: '위험하면 먼저 정지하고 D로 바꾼 뒤, 범퍼 간격이 다시 생길 만큼만 짧게 전진하세요.',
   }
 }
