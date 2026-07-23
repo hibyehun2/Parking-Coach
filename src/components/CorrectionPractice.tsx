@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { buildCorrectionDrills } from '../engine/correctionDrills'
 import { buildJudgmentGuide } from '../engine/judgmentScenarios'
 import type { ScenarioRuntime } from '../types/practice'
-import { recordCorrectionSession } from '../engine/practiceHistory'
+import { recordCorrectionSession, type CorrectionAttempt } from '../engine/practiceHistory'
+import type { JudgmentChoice } from '../engine/judgmentScenarios'
 import { JudgmentGuide, JudgmentQuiz } from './JudgmentQuiz'
 
 export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
@@ -12,6 +13,7 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
   const [drillIndex, setDrillIndex] = useState(0)
   const [stepIndex, setStepIndex] = useState(0)
   const [score, setScore] = useState(0)
+  const [attempts, setAttempts] = useState<CorrectionAttempt[]>([])
   const guide = useMemo(() => buildJudgmentGuide(runtime), [runtime])
   const drills = useMemo(() => buildCorrectionDrills(runtime), [runtime])
   const drill = drills[drillIndex]
@@ -20,20 +22,32 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
   const completedBefore = drills.slice(0, drillIndex).reduce((total, item) => total + item.steps.length, 0)
   const currentNumber = completedBefore + stepIndex + 1
 
-  const complete = (firstTryCorrect: boolean) => {
+  const complete = (firstTryCorrect: boolean, answer: JudgmentChoice, firstChoice: JudgmentChoice) => {
     const nextScore = score + (firstTryCorrect ? 1 : 0)
+    const nextAttempts = [...attempts, {
+      drillId: drill.id,
+      drillTitle: drill.title,
+      stepId: step.id,
+      stepTitle: step.title,
+      firstTryCorrect,
+      firstChoiceLabel: firstChoice.label,
+      correctChoiceLabel: answer.label,
+      takeaway: step.takeaway,
+    }]
     if (stepIndex < drill.steps.length - 1) {
       setScore(nextScore)
+      setAttempts(nextAttempts)
       setStepIndex((value) => value + 1)
       return
     }
     if (drillIndex < drills.length - 1) {
       setScore(nextScore)
+      setAttempts(nextAttempts)
       setDrillIndex((value) => value + 1)
       setStepIndex(0)
       return
     }
-    recordCorrectionSession(nextScore, totalSteps, runtime)
+    recordCorrectionSession(nextScore, totalSteps, runtime, undefined, undefined, nextAttempts)
     navigate('/result?tab=current', {
       state: {
         challengeComplete: true,

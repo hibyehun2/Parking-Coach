@@ -128,10 +128,21 @@ export function ResultPage() {
             <div><span>다음 연습</span><p>{recommendation.reason}</p></div>
             <Link to={`/simulator?scenario=${recommendation.scenarioId}&mode=${recommendation.mode}`}>{recommendation.label} →</Link>
           </aside>}
-          <div className="recent-practice"><h3>최근 기록 <small>최대 30개</small></h3><ol>{history.sessions.map((session) => <li key={session.id}><div><strong>{session.mode === 'practice' ? `${getScenario(session.scenarioId).title} · 수정 판단 ${session.quizScore ?? 0}/${session.quizTotal ?? 10}` : `${getScenario(session.scenarioId).title} · ${session.success ? '성공' : '미완료'}`}</strong><span>{formatCompletedAt(session.completedAt)} · {session.mode === 'learning' ? '학습 모드' : '수정 판단'}</span></div><div className="session-measures"><span>{session.mode === 'practice' ? '훈련 완료' : `충돌 ${session.collisionCount}회`}</span></div><button type="button" onClick={() => setSelectedSessionId(session.id)}>{session.moments?.length ? '상세 보기' : '요약 기록'}</button></li>)}</ol></div>
+          <div className="recent-practice"><h3>최근 기록 <small>최대 30개</small></h3><ol>{history.sessions.map((session) => <li key={session.id}><div><strong>{session.mode === 'practice' ? `${getScenario(session.scenarioId).title} · 수정 판단 ${session.quizScore ?? 0}/${session.quizTotal ?? 10}` : `${getScenario(session.scenarioId).title} · ${session.success ? '성공' : '미완료'}`}</strong><span>{formatCompletedAt(session.completedAt)} · {session.mode === 'learning' ? '학습 모드' : '수정 판단'}</span></div><div className="session-measures"><span>{session.mode === 'practice' ? '훈련 완료' : `충돌 ${session.collisionCount}회`}</span></div><button type="button" onClick={() => setSelectedSessionId(session.id)}>{session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 기록'}</button></li>)}</ol></div>
           {selectedSession && <section className="history-detail" aria-labelledby="history-detail-title">
             <header><div><span>저장된 연습</span><h3 id="history-detail-title">{formatCompletedAt(selectedSession.completedAt)} 주요 순간</h3></div><button type="button" onClick={() => setSelectedSessionId(null)}>닫기</button></header>
-            {!selectedSession.moments?.length ? <p>이 기록은 상세 장면 저장 기능이 적용되기 전 기록이거나, 표시할 주요 순간 없이 종료되었습니다.</p> : <>
+            {selectedSession.correctionAttempts?.length ? <div className="correction-history-detail">
+              <div className="correction-history-summary">
+                <strong>첫 선택 정답 {selectedSession.correctionAttempts.filter((attempt) => attempt.firstTryCorrect).length} / {selectedSession.correctionAttempts.length}</strong>
+                <p>정답 수보다 다시 볼 판단과 다음 조작 순서를 중심으로 복기하세요.</p>
+              </div>
+              <ol>{selectedSession.correctionAttempts.map((attempt) => <li key={`${attempt.drillId}-${attempt.stepId}`} className={attempt.firstTryCorrect ? 'correct' : 'review'}>
+                <div><span>{attempt.drillTitle}</span><strong>{attempt.stepTitle}</strong></div>
+                <small>{attempt.firstTryCorrect ? '첫 선택에서 정확히 판단' : `첫 선택: ${attempt.firstChoiceLabel}`}</small>
+                {!attempt.firstTryCorrect && <p><b>안전한 행동</b> {attempt.correctChoiceLabel}</p>}
+                <p><b>강사 핵심</b> {attempt.takeaway}</p>
+              </li>)}</ol>
+            </div> : !selectedSession.moments?.length ? <p>이 기록은 상세 장면 저장 기능이 적용되기 전 기록이거나, 표시할 주요 순간 없이 종료되었습니다.</p> : <>
               <div className="replay-moment-list">{selectedSession.moments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={selectedSession.runtime} />)}</div>
               {selectedSession.moments.find((event) => event.type === 'collision') && <p>과거 기록은 장면 복기용으로 표시합니다. 새로운 판단 문제는 수정 판단 훈련에서 서로 다른 상황으로 연습할 수 있습니다.</p>}
             </>}

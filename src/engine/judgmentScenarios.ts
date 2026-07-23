@@ -35,6 +35,7 @@ export type JudgmentScenario = {
   choices: JudgmentChoice[]
   answer: string
   takeaway: string
+  focusZone?: JudgmentChoice['focusZone']
 }
 
 export function simulateJudgmentChoice(start: VehicleState, choice: JudgmentChoice, runtime: ScenarioRuntime) {

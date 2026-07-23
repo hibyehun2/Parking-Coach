@@ -45,10 +45,10 @@ test('실수 집계는 충돌 횟수만 합산한다', () => {
   assert.deepEqual(countMistakes(loadPracticeHistory(storage).sessions), { collision: 3 })
 })
 
-test('손상된 브라우저 데이터는 버전 3 기본값으로 복구한다', () => {
+test('손상된 브라우저 데이터는 버전 4 기본값으로 복구한다', () => {
   const storage = new MemoryStorage()
   storage.setItem(PRACTICE_HISTORY_KEY, '{broken-json')
-  assert.deepEqual(loadPracticeHistory(storage), { version: 3, sessions: [] })
+  assert.deepEqual(loadPracticeHistory(storage), { version: 4, sessions: [] })
 })
 
 test('기록을 초기화할 수 있다', () => {
@@ -70,12 +70,23 @@ test('미완료 종료 장면은 저장하지 않고 충돌 직전 장면은 유
 
 test('수정 판단 훈련 결과를 일반 주차와 구분해 저장한다', () => {
   const storage = new MemoryStorage()
-  recordCorrectionSession(10, 10, createScenarioRuntime('tight-entry', { seed: 2 }), storage)
+  const attempts = [{
+    drillId: 'crooked',
+    drillTitle: '비스듬한 자세 바로잡기',
+    stepId: 'crooked-assess',
+    stepTitle: '좁아지는 쪽 찾기',
+    firstTryCorrect: false,
+    firstChoiceLabel: '직선 후진',
+    correctChoiceLabel: '각도부터 바로잡기',
+    takeaway: '깊이보다 각도를 먼저 확인하세요.',
+  }]
+  recordCorrectionSession(9, 10, createScenarioRuntime('tight-entry', { seed: 2 }), storage, new Date(), attempts)
   const session = loadPracticeHistory(storage).sessions[0]
 
   assert.equal(session.mode, 'practice')
-  assert.equal(session.quizScore, 10)
+  assert.equal(session.quizScore, 9)
   assert.equal(session.quizTotal, 10)
+  assert.deepEqual(session.correctionAttempts, attempts)
 })
 
 test('최근 충돌이 줄면 개선 중이며 차량 충돌은 수정 연습을 추천한다', () => {

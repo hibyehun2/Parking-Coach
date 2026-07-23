@@ -22,7 +22,7 @@ export function JudgmentCanvas({
   )
 
   useEffect(() => {
-    if (!choice?.motion?.length || simulation.states.length < 2) return
+    if (!choice || simulation.states.length < 2) return
     const timer = window.setInterval(() => {
       setFrame((current) => {
         if (current >= simulation.states.length - 1) {
@@ -58,7 +58,7 @@ export function JudgmentCanvas({
         ghostVehicles: simulation.states.length > 1
           ? [{ vehicle: simulation.states[simulation.states.length - 1], color: correct ? '#31d38b' : '#ff6b62' }]
           : undefined,
-        highlightContactZone: choice?.focusZone,
+        highlightContactZone: scenario.focusZone ?? choice?.focusZone,
       })
     }
     const observer = new ResizeObserver(draw)
@@ -110,11 +110,12 @@ export function JudgmentQuiz({
   runtime: ScenarioRuntime
   questionNumber: number
   total: number
-  onComplete: (firstTryCorrect: boolean, answer: JudgmentChoice) => void
+  onComplete: (firstTryCorrect: boolean, answer: JudgmentChoice, firstChoice: JudgmentChoice) => void
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [attempted, setAttempted] = useState(false)
   const [firstTryCorrect, setFirstTryCorrect] = useState(false)
+  const [firstSelectedId, setFirstSelectedId] = useState<string | null>(null)
   const selected = scenario.choices.find((choice) => choice.id === selectedId) ?? null
   const correct = selectedId === scenario.answer
 
@@ -123,6 +124,7 @@ export function JudgmentQuiz({
     if (!attempted) {
       setAttempted(true)
       setFirstTryCorrect(choice.id === scenario.answer)
+      setFirstSelectedId(choice.id)
     }
     setSelectedId(choice.id)
   }
@@ -137,7 +139,7 @@ export function JudgmentQuiz({
         <div className="quiz-figure">
           <JudgmentCanvas key={selectedId ?? 'idle'} scenario={scenario} choice={selected} correct={correct} runtime={runtime} />
           <div className="quiz-legend">
-            <span><i className="danger" />위험한 선택 결과</span>
+            <span><i className="danger" />{scenario.focusZone ? '빨간 원 · 먼저 확인할 모서리' : '위험한 선택 결과'}</span>
             <span><i className="safe" />안전한 선택 결과</span>
             <b>{scenario.takeaway}</b>
           </div>
@@ -158,7 +160,11 @@ export function JudgmentQuiz({
             ))}
           </div>
           {selected && <p className={correct ? 'quiz-correct-copy' : 'quiz-wrong-copy'}>{selected.feedback}</p>}
-          {correct && selected && <button type="button" className="quiz-next" onClick={() => onComplete(firstTryCorrect, selected)}>
+          {correct && selected && <button type="button" className="quiz-next" onClick={() => onComplete(
+            firstTryCorrect,
+            selected,
+            scenario.choices.find((choice) => choice.id === firstSelectedId) ?? selected,
+          )}>
             {questionNumber === total ? '훈련 결과 보기' : '다음 판단 문제'}
           </button>}
         </div>

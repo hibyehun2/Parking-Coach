@@ -3,10 +3,21 @@ import type { ReplayEvent } from './sessionReplay.ts'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../types/practice.ts'
 import { FIRST_SUCCESS_KEY, markFirstSuccess } from '../data/scenarios.ts'
 
-export const PRACTICE_HISTORY_KEY = 'parking-coach:practice-history:v3'
+export const PRACTICE_HISTORY_KEY = 'parking-coach:practice-history:v4'
 export const MAX_PRACTICE_SESSIONS = 30
 
 export type MistakeType = 'collision'
+
+export type CorrectionAttempt = {
+  drillId: string
+  drillTitle: string
+  stepId: string
+  stepTitle: string
+  firstTryCorrect: boolean
+  firstChoiceLabel: string
+  correctChoiceLabel: string
+  takeaway: string
+}
 
 export type PracticeSession = {
   id: string
@@ -24,12 +35,13 @@ export type PracticeSession = {
   moments?: ReplayEvent[]
   quizScore?: number
   quizTotal?: number
+  correctionAttempts?: CorrectionAttempt[]
 }
 
-export type PracticeHistory = { version: 3; sessions: PracticeSession[] }
+export type PracticeHistory = { version: 4; sessions: PracticeSession[] }
 export type PracticeTrend = 'insufficient' | 'improving' | 'steady' | 'needs-focus'
 
-const EMPTY_HISTORY: PracticeHistory = { version: 3, sessions: [] }
+const EMPTY_HISTORY: PracticeHistory = { version: 4, sessions: [] }
 const SCENARIO_IDS: ScenarioId[] = ['both-sides', 'narrow-aisle', 'one-side', 'wall-side', 'tight-entry']
 const PRACTICE_MODES: PracticeMode[] = ['learning', 'practice']
 
@@ -80,23 +92,40 @@ function parseSession(value: unknown): PracticeSession | null {
       : undefined,
     quizScore: typeof item.quizScore === 'number' ? item.quizScore : undefined,
     quizTotal: typeof item.quizTotal === 'number' ? item.quizTotal : undefined,
+    correctionAttempts: Array.isArray(item.correctionAttempts)
+      ? item.correctionAttempts.filter((attempt): attempt is CorrectionAttempt => {
+        if (!attempt || typeof attempt !== 'object') return false
+        const value = attempt as Record<string, unknown>
+        return typeof value.drillId === 'string'
+          && typeof value.drillTitle === 'string'
+          && typeof value.stepId === 'string'
+          && typeof value.stepTitle === 'string'
+          && typeof value.firstTryCorrect === 'boolean'
+          && typeof value.firstChoiceLabel === 'string'
+          && typeof value.correctChoiceLabel === 'string'
+          && typeof value.takeaway === 'string'
+      })
+      : undefined,
   }
 }
 
 export function loadPracticeHistory(storage: Storage | null = defaultStorage()): PracticeHistory {
-  if (!storage) return { version: 3, sessions: [] }
+  if (!storage) return { version: 4, sessions: [] }
   try {
-    const raw = storage.getItem(PRACTICE_HISTORY_KEY) ?? storage.getItem('parking-coach:practice-history:v2') ?? storage.getItem('parking-coach:practice-history:v1')
-    if (!raw) return { version: 3, sessions: [] }
+    const raw = storage.getItem(PRACTICE_HISTORY_KEY)
+      ?? storage.getItem('parking-coach:practice-history:v3')
+      ?? storage.getItem('parking-coach:practice-history:v2')
+      ?? storage.getItem('parking-coach:practice-history:v1')
+    if (!raw) return { version: 4, sessions: [] }
     const parsed = JSON.parse(raw) as { sessions?: unknown[] }
     if (!Array.isArray(parsed.sessions)) throw new Error('invalid')
     const sessions = parsed.sessions.map(parseSession).filter((item): item is PracticeSession => Boolean(item)).slice(0, MAX_PRACTICE_SESSIONS)
-    const history = { version: 3 as const, sessions }
+    const history = { version: 4 as const, sessions }
     persist(storage, history)
     return history
   } catch {
     persist(storage, EMPTY_HISTORY)
-    return { version: 3, sessions: [] }
+    return { version: 4, sessions: [] }
   }
 }
 
@@ -135,7 +164,7 @@ export function recordPracticeSession(
           : event.clip,
       })),
   }
-  const next = { version: 3 as const, sessions: [session, ...history.sessions].slice(0, MAX_PRACTICE_SESSIONS) }
+  const next = { version: 4 as const, sessions: [session, ...history.sessions].slice(0, MAX_PRACTICE_SESSIONS) }
   persist(storage, next)
   if (result.success) markFirstSuccess(scenarioId, storage)
   return next
@@ -144,7 +173,7 @@ export function recordPracticeSession(
 export function clearPracticeHistory(storage: Storage | null = defaultStorage()) {
   persist(storage, EMPTY_HISTORY)
   storage?.removeItem(FIRST_SUCCESS_KEY)
-  return { version: 3 as const, sessions: [] }
+  return { version: 4 as const, sessions: [] }
 }
 
 export function recordCorrectionSession(
@@ -153,6 +182,7 @@ export function recordCorrectionSession(
   runtime: ScenarioRuntime,
   storage: Storage | null = defaultStorage(),
   completedAt = new Date(),
+  correctionAttempts: CorrectionAttempt[] = [],
 ) {
   const history = loadPracticeHistory(storage)
   const session: PracticeSession = {
@@ -170,8 +200,9 @@ export function recordCorrectionSession(
     runtime,
     quizScore: score,
     quizTotal: total,
+    correctionAttempts,
   }
-  const next = { version: 3 as const, sessions: [session, ...history.sessions].slice(0, MAX_PRACTICE_SESSIONS) }
+  const next = { version: 4 as const, sessions: [session, ...history.sessions].slice(0, MAX_PRACTICE_SESSIONS) }
   persist(storage, next)
   return next
 }
