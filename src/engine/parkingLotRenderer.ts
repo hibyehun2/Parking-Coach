@@ -585,6 +585,9 @@ export function renderParkingLot(
     assistanceSide?: AssistanceSide
     wheelStopActive?: boolean
     runtime?: ScenarioRuntime
+    candidatePaths?: { points: { x: number; y: number }[]; color: string; dashed?: boolean }[]
+    ghostVehicles?: { vehicle: VehicleState; color: string }[]
+    highlightContactZone?: Collision['contactZone']
   } = {},
 ) {
   context.clearRect(0, 0, viewportWidth, viewportHeight)
@@ -622,6 +625,32 @@ export function renderParkingLot(
   drawParkingLines(context)
   drawWheelStop(context, Boolean(options.wheelStopActive))
   drawReverseGuide(context, vehicle)
+  for (const path of options.candidatePaths ?? []) {
+    if (path.points.length < 2) continue
+    context.save()
+    context.strokeStyle = path.color
+    context.lineWidth = .16
+    context.lineCap = 'round'
+    context.lineJoin = 'round'
+    if (path.dashed) context.setLineDash([.35, .24])
+    context.beginPath()
+    context.moveTo(path.points[0].x, path.points[0].y)
+    for (const point of path.points.slice(1)) context.lineTo(point.x, point.y)
+    context.stroke()
+    const end = path.points.at(-1)!
+    const beforeEnd = path.points.at(-2)!
+    const angle = Math.atan2(end.y - beforeEnd.y, end.x - beforeEnd.x)
+    context.translate(end.x, end.y)
+    context.rotate(angle)
+    context.fillStyle = path.color
+    context.beginPath()
+    context.moveTo(0, 0)
+    context.lineTo(-.42, -.24)
+    context.lineTo(-.42, .24)
+    context.closePath()
+    context.fill()
+    context.restore()
+  }
 
   const parkedVehicles = options.runtime?.parkedVehicles ?? PARKED_VEHICLES.map((item, index) => ({ ...item, side: index ? 'right' as const : 'left' as const }))
   for (const parked of parkedVehicles) {
@@ -640,6 +669,17 @@ export function renderParkingLot(
       highlight: Boolean(options.assistanceSide) || options.highlightParkedSide === parked.side,
     })
   }
+  for (const ghost of options.ghostVehicles ?? []) {
+    context.save()
+    context.globalAlpha = .42
+    drawVehicle(context, ghost.vehicle.x, ghost.vehicle.y, ghost.vehicle.heading, {
+      body: ghost.color,
+      roof: ghost.color,
+      outline: '#ffffff',
+      variant: 'hatchback',
+    })
+    context.restore()
+  }
   drawVehicle(context, vehicle.x, vehicle.y, vehicle.heading, {
     body: options.danger ? '#db8b24' : '#128356',
     roof: options.danger ? '#72440f' : '#0b4934',
@@ -648,6 +688,25 @@ export function renderParkingLot(
     reverseLights: vehicle.gear === 'R',
     braking: vehicle.braking,
   })
+  if (options.highlightContactZone) {
+    const localX = options.highlightContactZone.includes('front')
+      ? VEHICLE_DIMENSIONS.length / 2
+      : -VEHICLE_DIMENSIONS.length / 2
+    const localY = options.highlightContactZone.includes('right')
+      ? VEHICLE_DIMENSIONS.width / 2
+      : -VEHICLE_DIMENSIONS.width / 2
+    context.save()
+    context.translate(vehicle.x, vehicle.y)
+    context.rotate(vehicle.heading)
+    context.fillStyle = 'rgba(255, 69, 58, .24)'
+    context.strokeStyle = '#ff453a'
+    context.lineWidth = .13
+    context.beginPath()
+    context.arc(localX, localY, .38, 0, Math.PI * 2)
+    context.fill()
+    context.stroke()
+    context.restore()
+  }
 
   for (const collision of options.collisions ?? []) {
     context.save()
