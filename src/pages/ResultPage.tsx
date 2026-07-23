@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ReplayMomentCard } from '../components/ReplayMomentCard'
 import { ResultCollisionQuiz } from '../components/ResultCollisionQuiz'
+import { JudgmentCanvas } from '../components/JudgmentQuiz'
+import { buildCorrectionDrills } from '../engine/correctionDrills'
 import type { ParkingResult } from '../engine/parkingEvaluation'
-import { clearPracticeHistory, loadPracticeHistory, recommendPractice } from '../engine/practiceHistory'
+import { clearPracticeHistory, loadPracticeHistory, MAX_PRACTICE_SESSIONS, recommendPractice, type CorrectionAttempt, type PracticeSession } from '../engine/practiceHistory'
 import { getScenario } from '../data/scenarios'
+import type { JudgmentScenario } from '../engine/judgmentScenarios'
 import type { ReplayEvent } from '../engine/sessionReplay'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../types/practice'
 
@@ -23,6 +26,81 @@ function collisionCoaching(event: ReplayEvent) {
     cause: `${event.vehicle.gear === 'R' ? '후진' : '전진'} 중 ${side} ${corner}의 간격이 부족해졌습니다.`,
     action: recovery,
   }
+}
+
+function findCorrectionScenario(session: PracticeSession, attempt: CorrectionAttempt) {
+  if (!session.runtime) return null
+  const drill = buildCorrectionDrills(session.runtime).find((item) => item.id === attempt.drillId)
+  return drill?.steps.find((step) => step.id === attempt.stepId) ?? null
+}
+
+function CorrectionReviewCard({
+  attempt,
+  scenario,
+  runtime,
+}: {
+  attempt: CorrectionAttempt
+  scenario: JudgmentScenario | null
+  runtime?: ScenarioRuntime
+}) {
+  const firstChoice = scenario?.choices.find((choice) => choice.label === attempt.firstChoiceLabel) ?? null
+  const correctChoice = scenario?.choices.find((choice) => choice.id === scenario.answer) ?? null
+
+  return (
+    <li className="correction-review-card">
+      <header><div><span>{attempt.drillTitle}</span><strong>{attempt.stepTitle}</strong></div><small>다시 볼 문제</small></header>
+      {scenario && runtime && firstChoice && correctChoice && <div className="correction-path-comparison">
+        <figure>
+          <JudgmentCanvas scenario={scenario} choice={firstChoice} correct={false} runtime={runtime} />
+          <figcaption><i className="danger" />내 선택 결과</figcaption>
+        </figure>
+        <figure>
+          <JudgmentCanvas scenario={scenario} choice={correctChoice} correct runtime={runtime} />
+          <figcaption><i className="safe" />안전한 선택 결과</figcaption>
+        </figure>
+      </div>}
+      <div className="correction-review-copy">
+        {scenario && <p><b>상황</b><span>{scenario.situation}</span></p>}
+        <p><b>내 판단</b><span>{attempt.firstChoiceLabel}</span></p>
+        {firstChoice?.feedback && <p><b>이렇게 되면</b><span>{firstChoice.feedback}</span></p>}
+        <div className="safe-action">
+          <b>안전한 행동</b>
+          {correctChoice?.steps?.length
+            ? <ol>{correctChoice.steps.map((step) => <li key={step}>{step}</li>)}</ol>
+            : <span>{attempt.correctChoiceLabel}</span>}
+          {correctChoice?.feedback && <small>{correctChoice.feedback}</small>}
+        </div>
+        <p className="correction-memory"><b>기억할 기준</b><span>{attempt.takeaway}</span></p>
+      </div>
+    </li>
+  )
+}
+
+function CorrectionHistoryReview({ session }: { session: PracticeSession }) {
+  const attempts = session.correctionAttempts ?? []
+  const reviewAttempts = attempts.filter((attempt) => !attempt.firstTryCorrect)
+  const correctAttempts = attempts.filter((attempt) => attempt.firstTryCorrect)
+
+  return (
+    <div className="correction-history-detail">
+      <div className="correction-history-summary">
+        <strong>다시 볼 판단 {reviewAttempts.length}개</strong>
+        <p>틀린 문제부터 당시 상황과 안전한 수정 순서를 복기해보세요.</p>
+      </div>
+      {reviewAttempts.length > 0
+        ? <ol className="correction-review-list">{reviewAttempts.map((attempt) => <CorrectionReviewCard
+          key={`${attempt.drillId}-${attempt.stepId}`}
+          attempt={attempt}
+          scenario={findCorrectionScenario(session, attempt)}
+          runtime={session.runtime}
+        />)}</ol>
+        : <p className="correction-perfect-review">모든 문제를 첫 선택에서 정확히 판단했습니다. 다음 연습에서도 위험한 모서리를 먼저 확인해보세요.</p>}
+      {correctAttempts.length > 0 && <details className="correct-attempts">
+        <summary>첫 선택에서 정확했던 판단 {correctAttempts.length}개</summary>
+        <ol>{correctAttempts.map((attempt) => <li key={`${attempt.drillId}-${attempt.stepId}`}><span>{attempt.drillTitle}</span><strong>{attempt.stepTitle}</strong><small>{attempt.takeaway}</small></li>)}</ol>
+      </details>}
+    </div>
+  )
 }
 
 export function ResultPage() {
@@ -49,7 +127,6 @@ export function ResultPage() {
   const collisionFeedback = collisionEvent ? collisionCoaching(collisionEvent) : null
   const [history, setHistory] = useState(loadPracticeHistory)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
-  const selectedSession = history.sessions.find((session) => session.id === selectedSessionId)
   const recommendation = recommendPractice(history.sessions)
   const retryPath = `/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=${state?.mode ?? 'learning'}`
   const correctionPracticePath = recommendation?.mode === 'practice'
@@ -67,6 +144,12 @@ export function ResultPage() {
     quiz?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     window.setTimeout(() => document.getElementById('result-collision-quiz-title')?.focus({ preventScroll: true }), 350)
   }
+  useEffect(() => {
+    if (!selectedSessionId) return
+    window.requestAnimationFrame(() => {
+      document.getElementById(`history-session-${selectedSessionId}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    })
+  }, [selectedSessionId])
 
   return (
     <section className={`page single-column result-page${activeTab === 'current' && collisionEvent ? ' result-has-collision' : ''}`} aria-labelledby="result-title">
@@ -129,30 +212,30 @@ export function ResultPage() {
           <div><span>수정 주차 연습</span><strong>위험을 발견하고 안전하게 다시 주차하는 판단을 익혀보세요</strong><p>{recommendation?.mode === 'practice' ? recommendation.reason : '비스듬한 자세와 차량 모서리 접근 상황에서 정지·수정·재접근을 연습합니다.'}</p></div>
           <Link className="primary-button" to={correctionPracticePath}>수정 판단 훈련 시작 →</Link>
         </aside>
-        {history.sessions.length === 0 ? <div className="history-empty"><strong>아직 저장된 기록이 없습니다</strong><p>연습을 종료하면 최근 10회의 충돌 기록이 저장됩니다.</p><Link className="primary-button result-start-link" to="/practice">첫 기록 만들기</Link></div> : <>
+        {history.sessions.length === 0 ? <div className="history-empty"><strong>아직 저장된 기록이 없습니다</strong><p>연습을 종료하면 최근 {MAX_PRACTICE_SESSIONS}회의 연습 기록이 저장됩니다.</p><Link className="primary-button result-start-link" to="/practice">첫 기록 만들기</Link></div> : <>
           {recommendation && recommendation.mode !== 'practice' && <aside className="next-practice">
             <div><span>다음 연습</span><p>{recommendation.reason}</p></div>
             <Link to={`/simulator?scenario=${recommendation.scenarioId}&mode=${recommendation.mode}`}>{recommendation.label} →</Link>
           </aside>}
-          <div className="recent-practice"><h3>최근 기록 <small>최대 30개</small></h3><ol>{history.sessions.map((session) => <li key={session.id}><div><strong>{session.mode === 'practice' ? `${getScenario(session.scenarioId).title} · 수정 판단 ${session.quizScore ?? 0}/${session.quizTotal ?? 10}` : `${getScenario(session.scenarioId).title} · ${session.success ? '성공' : '미완료'}`}</strong><span>{formatCompletedAt(session.completedAt)} · {session.mode === 'learning' ? '학습 모드' : '수정 판단'}</span></div><div className="session-measures"><span>{session.mode === 'practice' ? '훈련 완료' : `충돌 ${session.collisionCount}회`}</span></div><button type="button" onClick={() => setSelectedSessionId(session.id)}>{session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 기록'}</button></li>)}</ol></div>
-          {selectedSession && <section className="history-detail" aria-labelledby="history-detail-title">
-            <header><div><span>저장된 연습</span><h3 id="history-detail-title">{formatCompletedAt(selectedSession.completedAt)} 주요 순간</h3></div><button type="button" onClick={() => setSelectedSessionId(null)}>닫기</button></header>
-            {selectedSession.correctionAttempts?.length ? <div className="correction-history-detail">
-              <div className="correction-history-summary">
-                <strong>첫 선택 정답 {selectedSession.correctionAttempts.filter((attempt) => attempt.firstTryCorrect).length} / {selectedSession.correctionAttempts.length}</strong>
-                <p>정답 수보다 다시 볼 판단과 다음 조작 순서를 중심으로 복기하세요.</p>
+          <div className="recent-practice"><h3>최근 기록 <small>최대 {MAX_PRACTICE_SESSIONS}개</small></h3><ol>{history.sessions.map((session) => {
+            const isSelected = session.id === selectedSessionId
+            const detailId = `history-detail-${session.id}`
+            const titleId = `history-detail-title-${session.id}`
+            return <li key={session.id} id={`history-session-${session.id}`} className={isSelected ? 'selected' : undefined}>
+              <div className="session-row">
+                <div><strong>{session.mode === 'practice' ? `${getScenario(session.scenarioId).title} · 수정 판단 ${session.quizScore ?? 0}/${session.quizTotal ?? 10}` : `${getScenario(session.scenarioId).title} · ${session.success ? '성공' : '미완료'}`}</strong><span>{formatCompletedAt(session.completedAt)} · {session.mode === 'learning' ? '학습 모드' : '수정 판단'}</span></div>
+                <div className="session-measures"><span>{session.mode === 'practice' ? '훈련 완료' : `충돌 ${session.collisionCount}회`}</span></div>
+                <button type="button" aria-expanded={isSelected} aria-controls={detailId} onClick={() => setSelectedSessionId(isSelected ? null : session.id)}>{isSelected ? '상세 닫기' : session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 보기'}</button>
               </div>
-              <ol>{selectedSession.correctionAttempts.map((attempt) => <li key={`${attempt.drillId}-${attempt.stepId}`} className={attempt.firstTryCorrect ? 'correct' : 'review'}>
-                <div><span>{attempt.drillTitle}</span><strong>{attempt.stepTitle}</strong></div>
-                <small>{attempt.firstTryCorrect ? '첫 선택에서 정확히 판단' : `첫 선택: ${attempt.firstChoiceLabel}`}</small>
-                {!attempt.firstTryCorrect && <p><b>안전한 행동</b> {attempt.correctChoiceLabel}</p>}
-                <p><b>강사 핵심</b> {attempt.takeaway}</p>
-              </li>)}</ol>
-            </div> : !selectedSession.moments?.length ? <p>이 기록은 상세 장면 저장 기능이 적용되기 전 기록이거나, 표시할 주요 순간 없이 종료되었습니다.</p> : <>
-              <div className="replay-moment-list">{selectedSession.moments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={selectedSession.runtime} />)}</div>
-              {selectedSession.moments.find((event) => event.type === 'collision') && <p>과거 기록은 장면 복기용으로 표시합니다. 새로운 판단 문제는 수정 판단 훈련에서 서로 다른 상황으로 연습할 수 있습니다.</p>}
-            </>}
-          </section>}
+              {isSelected && <section id={detailId} className="history-detail" aria-labelledby={titleId}>
+                <header><div><span>저장된 연습</span><h3 id={titleId}>{formatCompletedAt(session.completedAt)} 주요 순간</h3></div><button type="button" onClick={() => setSelectedSessionId(null)}>닫기</button></header>
+                {session.correctionAttempts?.length ? <CorrectionHistoryReview session={session} /> : !session.moments?.length ? <p>이 기록은 상세 장면 저장 기능이 적용되기 전 기록이거나, 표시할 주요 순간 없이 종료되었습니다.</p> : <>
+                  <div className="replay-moment-list">{session.moments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={session.runtime} />)}</div>
+                  {session.moments.find((event) => event.type === 'collision') && <p>과거 기록은 장면 복기용으로 표시합니다. 새로운 판단 문제는 수정 판단 훈련에서 서로 다른 상황으로 연습할 수 있습니다.</p>}
+                </>}
+              </section>}
+            </li>
+          })}</ol></div>
         </>}
       </section>}
     </section>
