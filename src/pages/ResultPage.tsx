@@ -56,7 +56,7 @@ export function ResultPage() {
         <Link className="secondary-button" to="/practice">상황 선택</Link>
       </div>}
 
-      {collisionEvent && <CollisionQuiz event={collisionEvent} />}
+      {collisionEvent && <CollisionQuiz event={collisionEvent} runtime={state?.runtime} />}
       {result && !collisionEvent && <section className="no-collision-feedback"><strong>충돌 없이 완료했습니다.</strong><p>다음에는 무작위 출발이나 아직 성공하지 않은 상황에 도전해보세요.</p></section>}
 
       {replay.length > 0 && <section className="replay-timeline" aria-labelledby="replay-title">

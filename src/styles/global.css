@@ -190,6 +190,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .lesson-bay-lines { fill: none; stroke: rgba(255,255,255,.88); stroke-width: 3; }
 .lesson-parked rect { fill: #cdd5d2; stroke: #f4f7f6; stroke-width: 1.5; }
 .lesson-parked path { fill: none; stroke: #788581; stroke-width: 5; }
+.lesson-wall { fill: #a89f93; stroke: #d8d0c7; stroke-width: 2; }
 .lesson-charger { display: none; opacity: .5; }
 .lesson-scene-tight-entry .lesson-charger { display: block; }
 .lesson-charger rect { fill: #dce5e1; stroke: #8cb9aa; stroke-width: 1.5; }
@@ -220,28 +221,29 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .lesson-stage-0 .lesson-stop-entry,
 .lesson-stage-1 .lesson-stop-angle,
 .lesson-stage-4 .lesson-stop-align { display: block; }
-.lesson-mirror-check { display: none; animation: lesson-mirror-pulse 1.4s ease-in-out infinite; }
+.lesson-mirror-check { display: none; animation: lesson-mirror-pulse 1.4s ease-in-out 2; }
 .lesson-stage-3 .lesson-mirror-check { display: block; }
 .lesson-mirror-check path { fill: rgba(9,20,16,.82); stroke: #9aefd1; stroke-width: 2; }
 .lesson-mirror-check circle { fill: #9aefd1; }
 .lesson-mirror-check text { fill: white; font-size: 9px; font-weight: 850; text-anchor: middle; }
 .lesson-mirror-right { animation-delay: .7s; }
 @keyframes lesson-mirror-pulse { 50% { opacity: .35; } }
-.lesson-danger { fill: rgba(255,91,80,.14); stroke: #ff756b; stroke-width: 3; opacity: 0; animation: lesson-danger-pulse 1.2s ease-in-out infinite; }
-.lesson-stage-3.lesson-scene-one-side .lesson-danger-left,
-.lesson-stage-3.lesson-scene-wall-side .lesson-danger-right,
+.lesson-danger { fill: rgba(255,91,80,.14); stroke: #ff756b; stroke-width: 3; opacity: 0; animation: lesson-danger-pulse 1.2s ease-in-out 2; }
+.lesson-stage-3.lesson-scene-one-side.lesson-obstacle-left .lesson-danger-left,
+.lesson-stage-3.lesson-scene-one-side.lesson-obstacle-right .lesson-danger-right,
+.lesson-stage-3.lesson-scene-wall-side.lesson-obstacle-left .lesson-danger-left,
+.lesson-stage-3.lesson-scene-wall-side.lesson-obstacle-right .lesson-danger-right,
 .lesson-stage-3.lesson-scene-both-sides .lesson-danger-left,
 .lesson-stage-3.lesson-scene-both-sides .lesson-danger-right,
-.lesson-stage-0.lesson-scene-tight-entry .lesson-danger-left,
-.lesson-stage-0.lesson-scene-tight-entry .lesson-danger-right { opacity: 1; }
+.lesson-stage-0.lesson-scene-tight-entry.lesson-obstacle-left .lesson-danger-left,
+.lesson-stage-0.lesson-scene-tight-entry.lesson-obstacle-right .lesson-danger-right { opacity: 1; }
 .lesson-reverse-guide { display: none; fill: none; stroke-linecap: round; }
 .lesson-stage-4 .lesson-reverse-guide { display: block; }
 .lesson-guide-neutral { stroke: #32a8ff; stroke-width: 3; stroke-dasharray: 5 4; }
 .lesson-guide-dynamic { stroke: #ffd60a; stroke-width: 2; }
 .lesson-guide-red { stroke: #ff453a; stroke-width: 4; }
 .lesson-guide-yellow { stroke: #ffd60a; stroke-width: 3; }
-.lesson-scene-one-side .lesson-parked-right, .lesson-scene-wall-side .lesson-parked-left { opacity: .16; }
-.lesson-scene-tight-entry .lesson-parked-right { opacity: .7; }
+.lesson-mirrored .lesson-motion-content text { transform: scaleX(-1); transform-box: fill-box; transform-origin: center; }
 .lesson-steering-symbol circle, .lesson-steering-symbol path { fill: none; stroke: rgba(255,255,255,.9); stroke-width: 3; }
 .lesson-steering-symbol .lesson-wheel-arrow { stroke: #ffe078; stroke-width: 3; }
 .lesson-driving-state { position: absolute; right: 8px; top: 8px; display: flex; gap: 6px; }
@@ -383,16 +385,27 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .collision-quiz h2 { margin-top: 4px; }
 .quiz-layout { margin-top: 16px; display: grid; grid-template-columns: minmax(240px, .85fr) minmax(280px, 1.15fr); gap: 22px; align-items: center; }
 .quiz-layout svg { width: 100%; border-radius: 18px; }
+.quiz-figure { min-width: 0; }
 .quiz-road { fill: #59635f; }
 .quiz-lines { fill: none; stroke: rgba(255,255,255,.78); stroke-width: 3; }
 .quiz-wall { fill: #a89f93; }
 .quiz-obstacle { fill: #dce2df; stroke: white; stroke-width: 2; }
+.quiz-obstacle-car path { fill: none; stroke: #7c8883; stroke-width: 4; }
 .quiz-car > rect:first-child { fill: #128356; stroke: #b7ffe4; stroke-width: 2; }
 .quiz-glass { fill: #173d32; }
-.quiz-impact { fill: rgba(255,69,58,.22); stroke: #ff453a; stroke-width: 4; animation: lesson-danger-pulse 1.2s ease-in-out infinite; }
-.quiz-wrong-path, .quiz-correction-path { fill: none; stroke-width: 5; stroke-linecap: round; stroke-dasharray: 8 6; }
+.quiz-car-front { fill: none; stroke: #d9ffef; stroke-width: 4; stroke-linecap: round; }
+.quiz-impact { fill: rgba(255,69,58,.22); stroke: #ff453a; stroke-width: 4; animation: lesson-danger-pulse 1.2s ease-in-out 2; }
+.quiz-wrong-path, .quiz-correction-path, .quiz-reverse-path { fill: none; stroke-width: 5; stroke-linecap: round; stroke-dasharray: 8 6; }
 .quiz-wrong-path { stroke: #ff6b62; }
 .quiz-correction-path { stroke: #49d19b; }
+.quiz-reverse-path { stroke: #ff8c83; }
+.quiz-clearance { stroke: #ffe078; stroke-width: 3; stroke-dasharray: 4 4; }
+.quiz-legend { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 7px 12px; color: var(--muted); font-size: .7rem; font-weight: 750; }
+.quiz-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.quiz-legend i { width: 9px; height: 9px; border-radius: 50%; }
+.quiz-legend .danger { background: #ff645b; }
+.quiz-legend .safe { background: #49d19b; }
+.quiz-legend b { width: 100%; padding: 6px 8px; border-radius: 7px; color: white; background: #263d35; }
 .quiz-copy { display: grid; gap: 12px; }
 .quiz-copy small { color: var(--brand); font-weight: 850; }
 .quiz-copy > strong { font-size: 1.08rem; line-height: 1.45; }

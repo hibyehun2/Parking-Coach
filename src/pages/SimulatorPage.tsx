@@ -58,7 +58,7 @@ export function SimulatorPage() {
           onShowLesson={() => setShowLesson(true)}
         />
       </section>
-      {showLesson && <MiniLessonView lesson={getLesson(scenario.id)} onFinish={() => setShowLesson(false)} />}
+      {showLesson && <MiniLessonView lesson={getLesson(scenario.id)} runtime={runtime} onFinish={() => setShowLesson(false)} />}
     </>
   )
 }
