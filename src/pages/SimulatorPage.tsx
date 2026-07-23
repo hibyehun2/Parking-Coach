@@ -38,7 +38,7 @@ export function SimulatorPage() {
 
   return (
     <>
-      <OrientationNotice />
+      {!isPracticeMode && <OrientationNotice />}
       <section className={`page simulator-shell${isPracticeMode ? ' correction-shell' : ''}`} aria-labelledby="simulator-title">
         <div className="simulator-heading">
           <div>

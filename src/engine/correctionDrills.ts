@@ -19,6 +19,10 @@ function pathChoice(id: string, label: string, feedback: string, states: Vehicle
   return { id, label, feedback, previewStates: states.map((vehicle) => ({ ...vehicle })) }
 }
 
+function steeringDirection(steeringAngle: number) {
+  return steeringAngle > 0 ? '오른쪽' : '왼쪽'
+}
+
 function staticStep(
   id: string,
   title: string,
@@ -153,7 +157,7 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
         '차량 전체는 주차칸 안에 있지만 한쪽 뒤 간격이 더 좁아 후진 공간이 부족합니다.',
         '어떤 순서로 수정 공간을 만들고 차체를 평행하게 할까요?',
         crookedAlignment,
-        pathChoice('finish-curve', `D에서 핸들을 ${left ? '오른쪽' : '왼쪽'}으로 약 반 바퀴 돌려 짧게 전진 → 정지 후 R에서 반대 방향으로 약 반 바퀴 돌려 천천히 후진`, '전진으로 뒤쪽 공간을 먼저 만든 뒤 반대 조향으로 돌아오면 차체가 선과 나란해집니다.', crookedAlignment),
+        pathChoice('finish-curve', `기어를 D에 놓고 핸들을 ${left ? '오른쪽' : '왼쪽'}으로 약 반 바퀴 돌려 짧게 전진 → 정지 후 기어를 R에 놓고 반대 방향으로 약 반 바퀴 돌려 천천히 후진`, '전진으로 뒤쪽 공간을 먼저 만든 뒤 반대 조향으로 돌아오면 차체가 선과 나란해집니다.', crookedAlignment),
         commonWrongChoices(crookedStart, -turn, outerZone),
         '비스듬한 상태에서는 깊이보다 각도를 먼저 맞추고, 나란해지는 순간 멈추세요.',
       ),
@@ -198,7 +202,7 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
         offsetStart,
         { id: 'space-first', label: '옆으로 바로 이동할 수 없으므로 정지 상태에서 앞쪽 수정 공간부터 확인', feedback: '평행한 차량은 제자리에서 옆으로 이동할 수 없어 짧게 전진하며 이동 각도를 만들어야 합니다.' },
         [
-          { id: 'sideways-reverse', label: 'R에서 핸들을 크게 돌려 바로 옆으로 이동', feedback: '뒤 모서리가 먼저 선에 가까워져 오히려 간격이 줄 수 있습니다.' },
+          { id: 'sideways-reverse', label: '기어를 R에 놓고 핸들을 크게 돌려 바로 옆으로 이동', feedback: '뒤 모서리가 먼저 선에 가까워져 오히려 간격이 줄 수 있습니다.' },
           { id: 'accept-offset', label: '선 안에 있으므로 간격 확인 없이 종료', feedback: '문은 열리더라도 옆 차량과의 승하차 간격이 부족할 수 있습니다.' },
         ],
         '평행하지만 치우쳤다면 먼저 전진 수정 공간을 만들고 다시 정렬하세요.',
@@ -209,7 +213,7 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
         `앞쪽 여유를 확인했고 차량을 ${correctionSide}으로 조금 옮겨야 합니다.`,
         '어떻게 수정 공간을 만들까요?',
         offsetCorrection,
-        pathChoice('offset-forward', `D에서 핸들을 ${correctionSide}으로 약 반 바퀴 돌려 전진한 뒤, 반대 방향으로 약 반 바퀴 돌려 차체를 다시 나란하게 하고 정지`, '전진 중 두 번 나눠 조향하면 차체를 평행하게 유지하면서 주차칸 중심 쪽으로 옮길 수 있습니다.', offsetCorrection),
+        pathChoice('offset-forward', `기어를 D에 놓고 핸들을 ${correctionSide}으로 약 반 바퀴 돌려 전진한 뒤, 반대 방향으로 약 반 바퀴 돌려 차체를 다시 나란하게 하고 정지`, '첫 조향으로 중심 쪽 이동 각도를 만들고, 반대 조향으로 차체를 다시 나란하게 맞춥니다.', offsetCorrection),
         [
           { id: 'long-swing', label: '최대 조향으로 길게 전진', feedback: '반대쪽 앞 모서리와 주변 차량에 새 위험을 만들 수 있습니다.', motion: [{ gear: 'D', steeringAngle: left ? .52 : -.52, seconds: 1.8 }] },
           { id: 'reverse-now', label: '현재 자리에서 바로 직선 후진', feedback: '좌우 치우침이 그대로 유지됩니다.', motion: [{ gear: 'R', steeringAngle: 0, seconds: 1.2 }] },
@@ -250,12 +254,13 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
       ? { x: 15.4, y: 5.45, heading: -1.8, steeringAngle: .48, gear: 'R' }
       : { x: 14.5, y: 9, heading: -1.8, steeringAngle: .42, gear: 'R' }))
     const direction = left ? 1 : -1
+    const clearanceMotion: JudgmentMotion = id === 'inner-clearance'
+      ? { gear: 'D', steeringAngle: .48 * direction, seconds: 1.5 }
+      : { gear: 'D', steeringAngle: .533 * direction, seconds: 4.21 }
     const retreatMotions: JudgmentMotion[] = id === 'inner-clearance'
-      ? [{ gear: 'D', steeringAngle: .48 * direction, seconds: 1.5 }]
-      : [
-        { gear: 'D', steeringAngle: .533 * direction, seconds: 4.21 },
-        { gear: 'D', steeringAngle: -.49 * direction, seconds: 4.39 },
-      ]
+      ? [clearanceMotion]
+      : [clearanceMotion, { gear: 'D', steeringAngle: -.49 * direction, seconds: 4.39 }]
+    const clearance = physicalPath(danger, [clearanceMotion], runtime)
     const retreat = physicalPath(danger, retreatMotions, runtime)
     const safe = retreat.at(-1)!
     const reentryMotions: JudgmentMotion[] = id === 'inner-clearance'
@@ -274,12 +279,16 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
       ]
     const reentry = physicalPath(stopped(safe, { gear: 'R' }), reentryMotions, runtime)
     const nearSide = zone.includes('right') ? '오른쪽' : '왼쪽'
-    const retreatLabel = id === 'inner-clearance'
-      ? `D로 바꾸고 핸들을 ${left ? '왼쪽' : '오른쪽'}으로 약 반 바퀴 유지해 아주 짧게 전진`
-      : `D로 바꾸고 ${nearSide} 앞 범퍼가 옆 차에서 멀어지도록 두 번 나눠 조향하며 전진`
+    const retreatLabel = `${nearSide} ${id === 'inner-clearance' ? '뒤' : '앞'} 범퍼의 간격부터 회복하기`
+    const retreatSteps = [
+      '완전히 정지한 상태를 확인',
+      '기어를 D에 놓기',
+      `핸들을 ${steeringDirection(clearanceMotion.steeringAngle)}으로 약 반 바퀴 유지해 천천히 전진`,
+      '범퍼와 옆 차 사이에 다시 간격이 보이면 정지',
+    ]
     const reentryLabel = id === 'inner-clearance'
-      ? `R에서 핸들을 ${left ? '오른쪽' : '왼쪽'}으로 약 반 바퀴 돌려 천천히 후진 → 반대 방향으로 풀어 차체를 나란하게 만들기`
-      : `R에서 ${nearSide} 앞 범퍼 간격을 보며 천천히 후진 → 필요하면 한 번 더 짧게 전진해 각도를 바로잡기`
+      ? `기어를 R에 놓고 핸들을 ${steeringDirection(-.495 * direction)}으로 약 반 바퀴 돌려 천천히 후진한 뒤, 반대 방향으로 풀어 차체를 나란하게 만들기`
+      : `기어를 R에 놓고 ${nearSide} 앞 범퍼 간격을 보며 천천히 후진하고, 필요하면 다시 정지해 각도를 바로잡기`
     return {
       id,
       title,
@@ -300,14 +309,37 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
           '방금 경로 되돌아가기',
           '충돌 전에 정지했고 방금 지나온 전방 경로에는 여유가 있습니다.',
           '가까워진 모서리의 간격을 회복하려면?',
-          retreat,
-          pathChoice('retrace', retreatLabel, '차량 물리에 따라 실제 전진 경로를 새로 계산해 위험한 모서리의 간격을 회복합니다.', retreat),
+          clearance,
+          {
+            ...pathChoice('retrace', retreatLabel, '핸들을 유지한 채 천천히 전진하면 가까워졌던 범퍼가 옆 차에서 떨어집니다. 사이드미러에 다시 간격이 보이는 순간 멈추세요.', clearance),
+            steps: retreatSteps,
+          },
           [
             { id: 'center-forward', label: '핸들을 무조건 중앙으로 하고 길게 전진', feedback: '원래 궤적에서 벗어나 반대편에 새 위험을 만들 수 있습니다.', motion: [{ gear: 'D', steeringAngle: 0, seconds: 1.6 }] },
             { id: 'reverse-more', label: 'R을 유지해 조금 더 후진', feedback: '가까워진 모서리 쪽으로 계속 접근합니다.', motion: [{ gear: 'R', steeringAngle: danger.steeringAngle, seconds: 1.1 }], focusZone: zone },
           ],
           '먼저 이전 궤적을 짧게 되돌려 안전거리를 확보하세요.',
         ),
+        ...(id === 'outer-swing' ? [pathStep(
+          `${id}-realign`,
+          '재진입 전 차체 각도 만들기',
+          '앞 범퍼의 간격을 회복해 정지했지만, 바로 후진하기에는 차체 각도가 아직 부족합니다.',
+          '다음 후진을 안전하게 시작하려면?',
+          retreat.slice(clearance.length - 1),
+          {
+            ...pathChoice('realign-forward', '남은 전방 여유로 재진입 각도 만들기', '간격 회복과 재정렬은 목적이 다릅니다. 먼저 범퍼를 떼어 멈춘 뒤, 주변을 다시 확인하고 다음 후진에 필요한 각도만 만드세요.', retreat.slice(clearance.length - 1)),
+            steps: [
+              '앞쪽과 반대편 모서리의 여유를 다시 확인',
+              `기어를 D에 둔 채 핸들을 ${steeringDirection(-.49 * direction)}으로 약 반 바퀴 조정`,
+              '차체가 후진하기 좋은 각도가 되면 정지',
+            ],
+          },
+          [
+            { id: 'reverse-immediately', label: '간격만 생겼으므로 곧바로 후진', feedback: '차체 각도를 확인하지 않으면 같은 앞 범퍼가 다시 가까워질 수 있습니다.', focusZone: zone },
+            { id: 'long-forward-realign', label: '핸들을 끝까지 돌리고 길게 전진', feedback: '반대편 모서리나 앞쪽 공간에 새로운 위험을 만들 수 있습니다.' },
+          ],
+          '간격 회복과 차체 재정렬을 분리하고, 각 동작 뒤에는 반드시 다시 멈춰 확인하세요.',
+        )] : []),
         staticStep(
           `${id}-recheck`,
           '양쪽 간격 재확인',
@@ -442,7 +474,7 @@ function buildNarrowDrill(runtime: ScenarioRuntime): CorrectionDrill {
         '재진입할 공간과 각도를 확보했습니다.',
         '어떻게 최종 주차를 완료할까요?',
         finish,
-        pathChoice('final-reentry', `R에서 핸들을 ${left ? '왼쪽' : '오른쪽'}으로 돌려 천천히 후진 → 나란해지는 순간 정지 → 핸들을 정면으로 돌려 직선 후진`, '두 번째 후진으로 평행을 만든 뒤 완전히 멈추고 핸들을 정면으로 돌려 주차를 완료합니다.', finish),
+        pathChoice('final-reentry', `기어를 R에 놓고 핸들을 ${left ? '왼쪽' : '오른쪽'}으로 돌려 천천히 후진 → 나란해지는 순간 정지 → 핸들을 정면으로 돌려 직선 후진`, '두 번째 후진으로 평행을 만든 뒤 완전히 멈추고 핸들을 정면으로 돌려 주차를 완료합니다.', finish),
         [
           { id: 'force-turn', label: '최대 조향을 끝까지 유지해 한 번에 후진', feedback: '평행해진 뒤에도 조향하면 반대쪽 선을 넘을 수 있습니다.', motion: [{ gear: 'R', steeringAngle: turn, seconds: 2 }] },
           { id: 'another-forward', label: '안전한 재진입각이지만 다시 크게 전진', feedback: '현재는 두 번째 후진으로 마무리할 공간이 확보되었습니다.' },

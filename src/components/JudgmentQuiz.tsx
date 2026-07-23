@@ -91,7 +91,11 @@ export function JudgmentGuide({
         <div className="quiz-copy">
           <small>먼저 정답 이동을 확인하세요</small>
           <strong>{scenario.question}</strong>
-          <div className="guided-action"><b>{answer.label}</b><p>{answer.feedback}</p></div>
+          <div className="guided-action">
+            <b>{answer.label}</b>
+            {answer.steps && <ol>{answer.steps.map((step) => <li key={step}>{step}</li>)}</ol>}
+            <p>{answer.feedback}</p>
+          </div>
           <button type="button" className="quiz-next" onClick={onStart}>6가지 판단 문제 시작</button>
         </div>
       </div>
@@ -155,7 +159,10 @@ export function JudgmentQuiz({
                 className={selectedId === choice.id ? (correct ? 'correct' : 'wrong') : ''}
                 onClick={() => select(choice)}
               >
-                {choice.label}
+                <span className="choice-title">{choice.label}</span>
+                {choice.steps && <span className="choice-steps">
+                  {choice.steps.map((step, index) => <span key={step}><b>{index + 1}</b>{step}</span>)}
+                </span>}
               </button>
             ))}
           </div>

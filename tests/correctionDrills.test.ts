@@ -50,8 +50,30 @@ test('정답 문구는 실제 조작 순서를 쓰고 모호한 조향 표현을
   const drills = buildCorrectionDrills(createScenarioRuntime('both-sides', { seed: 2 }))
   const labels = drills.flatMap(({ steps }) => steps.map((step) => step.choices.find(({ id }) => id === step.answer)!.label)).join(' ')
   assert.doesNotMatch(labels, /주차 방향 조향|중앙 조향/)
+  assert.doesNotMatch(labels, /R에서|D에서/)
   assert.match(labels, /정지/)
   assert.match(labels, /핸들을 정면/)
+})
+
+test('모서리 간격 회복은 재정렬과 분리되고 실제 조향 방향을 단계별로 안내한다', () => {
+  for (const seed of [2, 3]) {
+    const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
+    const drills = buildCorrectionDrills(runtime)
+    const inner = drills.find(({ id }) => id === 'inner-clearance')!
+    const outer = drills.find(({ id }) => id === 'outer-swing')!
+    const innerAnswer = inner.steps.find(({ id }) => id.endsWith('-retreat'))!.choices[0]
+    const outerRetreat = outer.steps.find(({ id }) => id.endsWith('-retreat'))!
+    const outerRealign = outer.steps.find(({ id }) => id.endsWith('-realign'))
+
+    assert.ok(innerAnswer.steps?.some((step) => step.includes('기어를 D에 놓기')))
+    assert.ok(innerAnswer.steps?.some((step) => step.includes(runtime.startSide === 'left' ? '오른쪽' : '왼쪽')))
+    assert.ok(outerRealign, '앞 범퍼 간격 회복과 차체 재정렬을 별도 판단으로 제공')
+
+    const simulation = simulateJudgmentChoice(outerRetreat.vehicle, outerRetreat.choices[0], runtime)
+    assert.equal(simulation.collided, false)
+    assert.equal(simulation.states.at(-1)!.gear, 'D')
+    assert.ok(simulation.states.length > 2)
+  }
 })
 
 test('각 드릴의 정답 경로는 충돌 없이 다음 판단 위치로 이어지고 최종 주차를 완료한다', () => {

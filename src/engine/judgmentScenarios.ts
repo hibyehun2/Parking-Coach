@@ -19,6 +19,7 @@ export type JudgmentMotion = {
 export type JudgmentChoice = {
   id: string
   label: string
+  steps?: string[]
   feedback: string
   motion?: JudgmentMotion[]
   previewStates?: VehicleState[]
@@ -93,7 +94,13 @@ export function buildJudgmentGuide(runtime: ScenarioRuntime): JudgmentScenario {
     vehicle,
     choices: [{
       id: 'guided-answer',
-      label: '완전히 정지 → D → 현재 핸들 방향을 유지해 방금 지나온 안전 공간까지 짧게 전진',
+      label: '가까워진 범퍼의 간격부터 회복하기',
+      steps: [
+        '완전히 정지',
+        '기어를 D에 놓기',
+        '현재 핸들 방향을 유지해 방금 지나온 안전 공간까지 짧게 전진',
+        '간격이 보이면 다시 정지',
+      ],
       feedback: '실제 전진 움직임으로 가까워진 범퍼를 옆 차에서 떼고 다음 조향을 위한 공간을 만듭니다.',
       motion: [{ gear: 'D', steeringAngle: turn, seconds: 1.15 }],
     }],
