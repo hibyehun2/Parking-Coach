@@ -25,6 +25,25 @@ function mirrorPriority(scenarioId: ScenarioId) {
   return '좌우 사이드미러를 짧게 번갈아 보며 양쪽 간격을 비교하세요.'
 }
 
+function wrappedAngle(value: number) {
+  return ((value + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI
+}
+
+function expectedSteeringDirection(runtime?: ScenarioRuntime) {
+  return runtime?.startSide === 'right' ? -1 : 1
+}
+
+function entryProgress(vehicle: VehicleState, runtime?: ScenarioRuntime) {
+  return runtime?.startSide === 'right'
+    ? 24.5 - vehicle.x
+    : vehicle.x - 5.5
+}
+
+function entryAngle(vehicle: VehicleState, runtime?: ScenarioRuntime) {
+  const startHeading = runtime?.startSide === 'right' ? Math.PI : 0
+  return Math.abs(wrappedAngle(vehicle.heading - startHeading))
+}
+
 export function getLearningHint(vehicle: VehicleState, scenarioId: ScenarioId, runtime?: ScenarioRuntime): LearningHint | null {
   if (detectCollision(vehicle, 0, runtime)) {
     return { id: 'collision', level: 'danger', title: '충돌했습니다', message: '브레이크를 유지하고 처음 위치에서 다시 시도하세요.' }
@@ -55,17 +74,75 @@ export function getLearningHint(vehicle: VehicleState, scenarioId: ScenarioId, r
     return { id: 'rear-camera-finish', level: 'info', title: '후방 가이드로 마무리', message: '바퀴를 일자로 유지하고 뒤쪽 장애물과 남은 거리를 확인하며 천천히 후진하세요.' }
   }
 
-  if (vehicle.gear === 'R' && vehicle.steeringAngle >= 0.18) {
+  const parkingSteeringDirection = expectedSteeringDirection(runtime)
+  const steeringTowardSpace = vehicle.steeringAngle * parkingSteeringDirection
+
+  if (vehicle.gear === 'R' && steeringTowardSpace >= 0.18) {
     return { id: 'alternate-side-mirrors', level: 'info', title: '좌우 사이드미러 교차 확인', message: mirrorPriority(scenarioId) }
   }
 
   if (vehicle.gear === 'R') {
-    return { id: 'turn-toward-space', level: 'info', title: '주차 방향으로 끝까지', message: '정지 상태에서 핸들을 오른쪽 끝까지 돌린 뒤, 좌우 사이드미러를 번갈아 보며 후진하세요.' }
+    return { id: 'turn-toward-space', level: 'info', title: '주차 공간 방향으로 조향', message: '완전히 정지한 상태에서 주차 공간 방향으로 핸들을 돌린 뒤, 양쪽 간격을 확인하며 천천히 후진하세요.' }
   }
 
-  if (vehicle.steeringAngle <= -0.18) {
-    return { id: 'make-entry-angle', level: 'info', title: '사이드미러 기준점까지 전진', message: '내 차 뒷부분이 주차 공간 중간쯤 오면 완전히 정지하세요.' }
+  if (scenarioId === 'tight-entry') {
+    return {
+      id: 'correction-forward',
+      level: 'caution',
+      title: '짧게 전진해 간격 확보',
+      message: '핸들을 중앙으로 유지하고 가까운 모서리의 간격이 회복될 만큼만 천천히 전진하세요.',
+    }
   }
 
-  return { id: 'set-entry-point', level: 'info', title: '진입 간격과 끝 선 맞추기', message: '주차선과 50cm~2m 간격을 두고 끝 선에 운전자 어깨를 맞춘 뒤 핸들을 왼쪽 끝까지 돌리세요.' }
+  const progress = entryProgress(vehicle, runtime)
+  const angle = entryAngle(vehicle, runtime)
+  const inApproachLane = vehicle.y >= 2.2 && vehicle.y <= TARGET_PARKING_BAY.top + 0.4
+  const steeringAwayFromSpace = vehicle.steeringAngle * parkingSteeringDirection <= -0.18
+  const reachedTurningZone = progress >= 5.5
+  const passedTurningZone = progress > 12 || vehicle.y > TARGET_PARKING_BAY.top + 0.4
+
+  if (passedTurningZone || angle > Math.PI * .42) {
+    return {
+      id: 'entry-overshot',
+      level: 'caution',
+      title: '진입 위치를 다시 확인',
+      message: '후진 준비 위치를 지나쳤습니다. 완전히 정지하고 앞부분과 옆 차량의 여유를 확인한 뒤 위치를 수정하세요.',
+    }
+  }
+
+  if (steeringAwayFromSpace && (!inApproachLane || !reachedTurningZone)) {
+    return {
+      id: 'turning-too-early',
+      level: 'caution',
+      title: '조향이 너무 이릅니다',
+      message: '핸들을 중앙으로 돌리고 주차칸 앞 진입 위치를 먼저 맞추세요.',
+    }
+  }
+
+  if (steeringAwayFromSpace && angle >= Math.PI / 6) {
+    return {
+      id: 'entry-angle-ready',
+      level: 'info',
+      title: '후진 준비 위치입니다',
+      message: '완전히 정지하세요. 목표 주차칸 입구와 내 차 앞부분의 회전 여유를 확인한 뒤 R로 바꾸세요.',
+    }
+  }
+
+  if (steeringAwayFromSpace) {
+    return {
+      id: 'make-entry-angle',
+      level: 'info',
+      title: '차를 비스듬히 세우세요',
+      message: '주차칸 반대 방향으로 천천히 조향하세요. 후진할 공간이 확보되면 완전히 정지하세요.',
+    }
+  }
+
+  return {
+    id: 'set-entry-point',
+    level: 'info',
+    title: '주차칸 앞 진입 위치 맞추기',
+    message: reachedTurningZone
+      ? '완전히 정지한 뒤 주차칸 반대 방향으로 천천히 조향해 후진 공간을 만드세요.'
+      : '주차칸과 나란히 천천히 전진하세요. 목표 주차칸과 옆 차량의 간격을 함께 확인하세요.',
+  }
 }

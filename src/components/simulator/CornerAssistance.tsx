@@ -9,8 +9,8 @@ function rearSideFocus(vehicle: VehicleState, sideName: RearSide) {
   const sideSign = sideName === 'left' ? -1 : 1
   const cosine = Math.cos(vehicle.heading)
   const sine = Math.sin(vehicle.heading)
-  const forwardOffset = 0.35
-  const sideOffset = 2.1
+  const forwardOffset = -1.25
+  const sideOffset = 1.15
   return {
     x: vehicle.x + cosine * forwardOffset + -sine * sideOffset * sideSign,
     y: vehicle.y + sine * forwardOffset + cosine * sideOffset * sideSign,
@@ -35,7 +35,7 @@ function RearSideCanvas({ vehicle, sideName, runtime }: { vehicle: VehicleState;
       context.setTransform(ratio, 0, 0, ratio, 0, 0)
       const focus = rearSideFocus(vehicle, sideName)
       renderParkingLot(context, width, height, vehicle, {
-        focus: { ...focus, span: 5.2, heading: vehicle.heading },
+        focus: { ...focus, span: 6.8, heading: vehicle.heading },
         assistanceSide: sideName,
         runtime,
       })

@@ -16,6 +16,15 @@ export type MiniLesson = {
   steps: [LessonStep, LessonStep, LessonStep, LessonStep, LessonStep]
 }
 
+export const LESSON_TRAJECTORIES = {
+  approach: 'M104 76 H184',
+  angle: 'M184 76 C214 76 238 64 250 45',
+  reverseTurn: 'M250 45 C220 93 160 98 160 152',
+  straightReverse: 'M160 152 V218',
+  correctionForward: 'M160 164 V120',
+  correctionReverse: 'M160 120 C160 155 138 180 160 200 C160 208 160 214 160 218',
+} as const
+
 export const lessons: Record<ScenarioId, MiniLesson> = {
   'both-sides': {
     scenarioId: 'both-sides',

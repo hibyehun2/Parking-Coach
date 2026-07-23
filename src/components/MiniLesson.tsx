@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { lessonDuration, type MiniLesson } from '../data/lessons'
+import { LESSON_TRAJECTORIES, lessonDuration, type MiniLesson } from '../data/lessons'
 import type { ScenarioRuntime } from '../types/practice'
 
 type MiniLessonProps = {
@@ -61,56 +61,56 @@ export function MiniLessonView({ lesson, runtime, onFinish }: MiniLessonProps) {
         </header>
 
         <div className={`lesson-animation lesson-scene-${lesson.scenarioId} lesson-obstacle-${sceneObstacleSide} lesson-stage-${stepIndex}`} aria-hidden="true">
-          <svg key={`${lesson.scenarioId}-${runtime.variant}-${runtime.startSide}-${stepIndex}`} className={mirrored ? 'lesson-mirrored' : undefined} viewBox="0 0 320 240">
+          <svg key={`${lesson.scenarioId}-${runtime.variant}-${runtime.startSide}-${stepIndex}`} className={mirrored ? 'lesson-mirrored' : undefined} viewBox="0 0 320 260">
             <defs>
               <marker id="lesson-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" />
               </marker>
             </defs>
-            <rect className="lesson-road" width="320" height="240" />
+            <rect className="lesson-road" width="320" height="260" />
             <g className="lesson-scene-content" transform={mirrored ? 'translate(320 0) scale(-1 1)' : undefined}>
-            <path className="lesson-bay-lines" d="M72 238V90H248V238 M130 90V238 M190 90V238" />
+            <path className="lesson-bay-lines" d="M72 258V120H248V258 M130 120V258 M190 120V258" />
             {showLeftVehicle && <g className="lesson-parked lesson-parked-left">
-              <rect x="88" y="132" width="34" height="84" rx="7" />
-              <path d="M93 147H117M93 199H117" />
+              <rect x="88" y="154" width="34" height="84" rx="7" />
+              <path d="M93 169H117M93 221H117" />
             </g>}
             {showRightVehicle && <g className="lesson-parked lesson-parked-right">
-              <rect x="198" y="132" width="34" height="84" rx="7" />
-              <path d="M203 147H227M203 199H227" />
+              <rect x="198" y="154" width="34" height="84" rx="7" />
+              <path d="M203 169H227M203 221H227" />
             </g>}
-            {lesson.scenarioId === 'wall-side' && <rect className="lesson-wall" x={sceneObstacleSide === 'left' ? 73 : 239} y="91" width="10" height="147" rx="2" />}
+            {lesson.scenarioId === 'wall-side' && <rect className="lesson-wall" x={sceneObstacleSide === 'left' ? 73 : 239} y="121" width="10" height="137" rx="2" />}
             <g className="lesson-motion-content">
-            <path className="lesson-motion-path lesson-path-approach" d="M112 60H190" markerEnd="url(#lesson-arrow)" />
-            <path className="lesson-motion-path lesson-path-angle" d="M190 60C218 60 238 42 240 25" markerEnd="url(#lesson-arrow)" />
-            <path className="lesson-motion-path lesson-path-reverse-turn" d="M240 25C240 100 160 100 160 142" markerEnd="url(#lesson-arrow)" />
-            <path className="lesson-motion-path lesson-path-straight" d="M160 142V204" markerEnd="url(#lesson-arrow)" />
-            <path className="lesson-motion-path lesson-path-correction-forward" d="M160 142V100" markerEnd="url(#lesson-arrow)" />
-            <path className="lesson-motion-path lesson-path-correction-reverse" d="M160 100C138 124 145 166 160 190" markerEnd="url(#lesson-arrow)" />
-            <line className="lesson-reference lesson-reference-entry" x1="190" y1="22" x2="190" y2="91" />
-            <line className="lesson-reference lesson-reference-middle" x1="130" y1="105" x2="190" y2="105" />
-            <g className="lesson-stop lesson-stop-entry" transform="translate(190 60)"><circle r="13" /><text y="4">정지</text></g>
-            <g className="lesson-stop lesson-stop-angle" transform="translate(240 25)"><circle r="13" /><text y="4">정지</text></g>
-            <g className="lesson-stop lesson-stop-align" transform="translate(160 142)"><circle r="13" /><text y="4">정지</text></g>
-            <g className="lesson-mirror-check lesson-mirror-left" transform="translate(48 104)"><path d="M-16 0Q0-13 16 0Q0 13-16 0Z" /><circle r="4" /><text y="25">{mirrored ? '우측' : '좌측'}</text></g>
-            <g className="lesson-mirror-check lesson-mirror-right" transform="translate(272 104)"><path d="M-16 0Q0-13 16 0Q0 13-16 0Z" /><circle r="4" /><text y="25">{mirrored ? '좌측' : '우측'}</text></g>
-            <circle className="lesson-danger lesson-danger-left" cx="102" cy="128" r="15" />
-            <circle className="lesson-danger lesson-danger-right" cx="216" cy="128" r="15" />
+            <path className="lesson-motion-path lesson-path-approach" d={LESSON_TRAJECTORIES.approach} markerEnd="url(#lesson-arrow)" />
+            <path className="lesson-motion-path lesson-path-angle" d={LESSON_TRAJECTORIES.angle} markerEnd="url(#lesson-arrow)" />
+            <path className="lesson-motion-path lesson-path-reverse-turn" d={LESSON_TRAJECTORIES.reverseTurn} markerEnd="url(#lesson-arrow)" />
+            <path className="lesson-motion-path lesson-path-straight" d={LESSON_TRAJECTORIES.straightReverse} markerEnd="url(#lesson-arrow)" />
+            <path className="lesson-motion-path lesson-path-correction-forward" d={LESSON_TRAJECTORIES.correctionForward} markerEnd="url(#lesson-arrow)" />
+            <path className="lesson-motion-path lesson-path-correction-reverse" d={LESSON_TRAJECTORIES.correctionReverse} markerEnd="url(#lesson-arrow)" />
+            <line className="lesson-reference lesson-reference-entry" x1="184" y1="30" x2="184" y2="120" />
+            <line className="lesson-reference lesson-reference-middle" x1="130" y1="134" x2="190" y2="134" />
+            <g className="lesson-stop lesson-stop-entry" transform="translate(184 76)"><circle r="13" /><text y="4">정지</text></g>
+            <g className="lesson-stop lesson-stop-angle" transform="translate(250 45)"><circle r="13" /><text y="4">정지</text></g>
+            <g className="lesson-stop lesson-stop-align" transform="translate(160 152)"><circle r="13" /><text y="4">정지</text></g>
+            <g className="lesson-mirror-check lesson-mirror-left" transform="translate(48 130)"><path d="M-16 0Q0-13 16 0Q0 13-16 0Z" /><circle r="4" /><text y="25">{mirrored ? '우측' : '좌측'}</text></g>
+            <g className="lesson-mirror-check lesson-mirror-right" transform="translate(272 130)"><path d="M-16 0Q0-13 16 0Q0 13-16 0Z" /><circle r="4" /><text y="25">{mirrored ? '좌측' : '우측'}</text></g>
+            <circle className="lesson-danger lesson-danger-left" cx="102" cy="150" r="15" />
+            <circle className="lesson-danger lesson-danger-right" cx="216" cy="150" r="15" />
             <g className="lesson-reverse-guide">
-              <path className="lesson-guide-neutral" d="M145 158V218M175 158V218" />
-              <path className="lesson-guide-dynamic" d="M145 158V218M175 158V218" />
-              <path className="lesson-guide-red" d="M145 175H175" />
-              <path className="lesson-guide-yellow" d="M145 198H175M145 218H175" />
+              <path className="lesson-guide-neutral" d="M145 174V246M175 174V246" />
+              <path className="lesson-guide-dynamic" d="M145 174V246M175 174V246" />
+              <path className="lesson-guide-red" d="M145 194H175" />
+              <path className="lesson-guide-yellow" d="M145 220H175M145 246H175" />
             </g>
-            <g className="lesson-user-car" transform={isCorrectionLesson && [0, 1].includes(stepIndex) ? 'translate(160 142) rotate(-82)' : isCorrectionLesson && stepIndex === 3 ? 'translate(160 100) rotate(-90)' : !isCorrectionLesson && stepIndex === 2 ? 'translate(240 25) rotate(-55)' : undefined}>
+            <g className="lesson-user-car" transform={isCorrectionLesson && [0, 1].includes(stepIndex) ? 'translate(160 164) rotate(-90)' : isCorrectionLesson && stepIndex === 3 ? 'translate(160 120) rotate(-90)' : !isCorrectionLesson && stepIndex === 2 ? 'translate(250 45) rotate(-58)' : undefined}>
               <rect x="-34" y="-15" width="68" height="30" rx="7" />
               <path d="M-18 -11V11M18 -11V11" />
               <circle cx="-25" cy="-10" r="2" /><circle cx="-25" cy="10" r="2" />
-              {!isCorrectionLesson && stepIndex === 0 && <animateMotion dur="3s" path="M112 60 H190" rotate="auto" repeatCount="1" fill="freeze" />}
-              {!isCorrectionLesson && stepIndex === 1 && <animateMotion dur="3.2s" path="M190 60 C218 60 238 42 240 25" rotate="auto" repeatCount="1" fill="freeze" />}
-              {!isCorrectionLesson && stepIndex === 3 && <animateMotion dur="3.6s" path="M240 25 C240 100 160 100 160 142" rotate="auto-reverse" repeatCount="1" fill="freeze" />}
-              {!isCorrectionLesson && stepIndex === 4 && <animateMotion dur="3s" path="M160 142 V204" rotate="auto-reverse" repeatCount="1" fill="freeze" />}
-              {isCorrectionLesson && stepIndex === 2 && <animateMotion dur="2.8s" path="M160 142 V100" rotate="auto" repeatCount="1" fill="freeze" />}
-              {isCorrectionLesson && stepIndex === 4 && <animateMotion dur="3.2s" path="M160 100 C138 124 145 166 160 190" rotate="auto-reverse" repeatCount="1" fill="freeze" />}
+              {!isCorrectionLesson && stepIndex === 0 && <animateMotion dur="3s" path={LESSON_TRAJECTORIES.approach} rotate="auto" repeatCount="1" fill="freeze" />}
+              {!isCorrectionLesson && stepIndex === 1 && <animateMotion dur="3.2s" path={LESSON_TRAJECTORIES.angle} rotate="auto" repeatCount="1" fill="freeze" />}
+              {!isCorrectionLesson && stepIndex === 3 && <animateMotion dur="3.6s" path={LESSON_TRAJECTORIES.reverseTurn} rotate="auto-reverse" repeatCount="1" fill="freeze" />}
+              {!isCorrectionLesson && stepIndex === 4 && <animateMotion dur="3s" path={LESSON_TRAJECTORIES.straightReverse} rotate="auto-reverse" repeatCount="1" fill="freeze" />}
+              {isCorrectionLesson && stepIndex === 2 && <animateMotion dur="2.8s" path={LESSON_TRAJECTORIES.correctionForward} rotate="auto" repeatCount="1" fill="freeze" />}
+              {isCorrectionLesson && stepIndex === 4 && <animateMotion dur="3.2s" path={LESSON_TRAJECTORIES.correctionReverse} rotate="auto-reverse" repeatCount="1" fill="freeze" />}
             </g>
             </g>
             </g>

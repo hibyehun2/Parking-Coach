@@ -625,8 +625,11 @@ export function renderParkingLot(
 
   const parkedVehicles = options.runtime?.parkedVehicles ?? PARKED_VEHICLES.map((item, index) => ({ ...item, side: index ? 'right' as const : 'left' as const }))
   for (const parked of parkedVehicles) {
+    const deltaX = parked.x - vehicle.x
+    const deltaY = parked.y - vehicle.y
+    const vehicleRelativeSide = -deltaX * Math.sin(vehicle.heading) + deltaY * Math.cos(vehicle.heading)
     const visibleInAssistance = !options.assistanceSide
-      || (options.assistanceSide === 'left' ? parked.side === 'right' : parked.side === 'left')
+      || (options.assistanceSide === 'left' ? vehicleRelativeSide < 0 : vehicleRelativeSide >= 0)
     if (!visibleInAssistance) continue
     const isSedan = parked.side === 'left'
     drawVehicle(context, parked.x, parked.y, parked.heading, {
