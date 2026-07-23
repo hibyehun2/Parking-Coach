@@ -1,6 +1,6 @@
 import type { Scenario, ScenarioId } from '../types/practice'
-import bothSidesImage from '../assets/scenario-both-sides-v2.png'
-import narrowAisleImage from '../assets/scenario-narrow-aisle-v2.png'
+import bothSidesImage from '../assets/scenario-both-sides-v3-wide.png'
+import narrowAisleImage from '../assets/scenario-narrow-aisle-v4-wide-reversing.png'
 
 type ScenarioCardProps = {
   scenario: Scenario
@@ -25,7 +25,10 @@ export function ScenarioCard({ scenario, selected, onSelect }: ScenarioCardProps
     >
       <span className={`scenario-visual ${scenario.visual}`} aria-hidden="true">
         {image
-          ? <img src={image} alt="" />
+          ? <>
+            <img className="scenario-image-watermark" src={image} alt="" />
+            <img className="scenario-image-primary" src={image} alt="" />
+          </>
           : <>
             <span className="parking-bay" />
             <span className="obstacle obstacle-left" />
