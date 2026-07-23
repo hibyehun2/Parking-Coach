@@ -3,8 +3,11 @@ import type { ReplayEvent } from './sessionReplay.ts'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../types/practice.ts'
 import { FIRST_SUCCESS_KEY, markFirstSuccess } from '../data/scenarios.ts'
 
-export const PRACTICE_HISTORY_KEY = 'parking-coach:practice-history:v4'
+export const PRACTICE_HISTORY_KEY = 'parking-coach:practice-history:v5'
 export const MAX_PRACTICE_SESSIONS = 30
+export const MAX_BOOKMARKED_SESSIONS = 5
+export const PRACTICE_HISTORY_RETENTION_DAYS = 7
+const PRACTICE_HISTORY_RETENTION_MS = PRACTICE_HISTORY_RETENTION_DAYS * 24 * 60 * 60 * 1000
 
 export type MistakeType = 'collision'
 
@@ -36,12 +39,14 @@ export type PracticeSession = {
   quizScore?: number
   quizTotal?: number
   correctionAttempts?: CorrectionAttempt[]
+  bookmarked: boolean
+  bookmarkedAt?: string
 }
 
-export type PracticeHistory = { version: 4; sessions: PracticeSession[] }
+export type PracticeHistory = { version: 5; sessions: PracticeSession[] }
 export type PracticeTrend = 'insufficient' | 'improving' | 'steady' | 'needs-focus'
 
-const EMPTY_HISTORY: PracticeHistory = { version: 4, sessions: [] }
+const EMPTY_HISTORY: PracticeHistory = { version: 5, sessions: [] }
 const SCENARIO_IDS: ScenarioId[] = ['both-sides', 'narrow-aisle', 'one-side', 'wall-side', 'tight-entry']
 const PRACTICE_MODES: PracticeMode[] = ['learning', 'practice']
 
@@ -106,26 +111,46 @@ function parseSession(value: unknown): PracticeSession | null {
           && typeof value.takeaway === 'string'
       })
       : undefined,
+    bookmarked: item.bookmarked === true,
+    bookmarkedAt: typeof item.bookmarkedAt === 'string' && !Number.isNaN(Date.parse(item.bookmarkedAt)) ? item.bookmarkedAt : undefined,
   }
 }
 
-export function loadPracticeHistory(storage: Storage | null = defaultStorage()): PracticeHistory {
-  if (!storage) return { version: 4, sessions: [] }
+function retainSessions(sessions: PracticeSession[], now = new Date()) {
+  const cutoff = now.getTime() - PRACTICE_HISTORY_RETENTION_MS
+  const bookmarked = sessions
+    .filter((session) => session.bookmarked)
+    .sort((left, right) => Date.parse(right.bookmarkedAt ?? right.completedAt) - Date.parse(left.bookmarkedAt ?? left.completedAt))
+    .slice(0, MAX_BOOKMARKED_SESSIONS)
+  const recent = sessions
+    .filter((session) => !session.bookmarked && Date.parse(session.completedAt) >= cutoff)
+    .sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))
+    .slice(0, MAX_PRACTICE_SESSIONS)
+  return [...bookmarked, ...recent].sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))
+}
+
+export function isPracticeSessionExpired(session: PracticeSession, now = new Date()) {
+  return now.getTime() - Date.parse(session.completedAt) >= PRACTICE_HISTORY_RETENTION_MS
+}
+
+export function loadPracticeHistory(storage: Storage | null = defaultStorage(), now = new Date()): PracticeHistory {
+  if (!storage) return { version: 5, sessions: [] }
   try {
     const raw = storage.getItem(PRACTICE_HISTORY_KEY)
+      ?? storage.getItem('parking-coach:practice-history:v4')
       ?? storage.getItem('parking-coach:practice-history:v3')
       ?? storage.getItem('parking-coach:practice-history:v2')
       ?? storage.getItem('parking-coach:practice-history:v1')
-    if (!raw) return { version: 4, sessions: [] }
+    if (!raw) return { version: 5, sessions: [] }
     const parsed = JSON.parse(raw) as { sessions?: unknown[] }
     if (!Array.isArray(parsed.sessions)) throw new Error('invalid')
-    const sessions = parsed.sessions.map(parseSession).filter((item): item is PracticeSession => Boolean(item)).slice(0, MAX_PRACTICE_SESSIONS)
-    const history = { version: 4 as const, sessions }
+    const sessions = retainSessions(parsed.sessions.map(parseSession).filter((item): item is PracticeSession => Boolean(item)), now)
+    const history = { version: 5 as const, sessions }
     persist(storage, history)
     return history
   } catch {
     persist(storage, EMPTY_HISTORY)
-    return { version: 4, sessions: [] }
+    return { version: 5, sessions: [] }
   }
 }
 
@@ -138,7 +163,7 @@ export function recordPracticeSession(
   runtime?: ScenarioRuntime,
   replay: ReplayEvent[] = [],
 ) {
-  const history = loadPracticeHistory(storage)
+  const history = loadPracticeHistory(storage, completedAt)
   const collisionTargets = result.collisions.map((collision) => collision.obstacleId)
   const collisionZones = result.collisions.flatMap((collision) => collision.contactZone ? [collision.contactZone] : [])
   const session: PracticeSession = {
@@ -163,8 +188,9 @@ export function recordPracticeSession(
           ? event.clip.filter((_, index) => index % Math.ceil(event.clip!.length / 24) === 0).slice(-24)
           : event.clip,
       })),
+    bookmarked: false,
   }
-  const next = { version: 4 as const, sessions: [session, ...history.sessions].slice(0, MAX_PRACTICE_SESSIONS) }
+  const next = { version: 5 as const, sessions: retainSessions([session, ...history.sessions], completedAt) }
   persist(storage, next)
   if (result.success) markFirstSuccess(scenarioId, storage)
   return next
@@ -173,7 +199,7 @@ export function recordPracticeSession(
 export function clearPracticeHistory(storage: Storage | null = defaultStorage()) {
   persist(storage, EMPTY_HISTORY)
   storage?.removeItem(FIRST_SUCCESS_KEY)
-  return { version: 4 as const, sessions: [] }
+  return { version: 5 as const, sessions: [] }
 }
 
 export function recordCorrectionSession(
@@ -184,7 +210,7 @@ export function recordCorrectionSession(
   completedAt = new Date(),
   correctionAttempts: CorrectionAttempt[] = [],
 ) {
-  const history = loadPracticeHistory(storage)
+  const history = loadPracticeHistory(storage, completedAt)
   const session: PracticeSession = {
     id: `${completedAt.getTime()}-correction`,
     completedAt: completedAt.toISOString(),
@@ -201,10 +227,30 @@ export function recordCorrectionSession(
     quizScore: score,
     quizTotal: total,
     correctionAttempts,
+    bookmarked: false,
   }
-  const next = { version: 4 as const, sessions: [session, ...history.sessions].slice(0, MAX_PRACTICE_SESSIONS) }
+  const next = { version: 5 as const, sessions: retainSessions([session, ...history.sessions], completedAt) }
   persist(storage, next)
   return next
+}
+
+export function togglePracticeBookmark(
+  sessionId: string,
+  storage: Storage | null = defaultStorage(),
+  now = new Date(),
+) {
+  const history = loadPracticeHistory(storage, now)
+  const target = history.sessions.find((session) => session.id === sessionId)
+  if (!target) return { history, status: 'not-found' as const }
+  if (!target.bookmarked && history.sessions.filter((session) => session.bookmarked).length >= MAX_BOOKMARKED_SESSIONS) {
+    return { history, status: 'limit' as const }
+  }
+  const sessions = history.sessions.map((session) => session.id === sessionId
+    ? { ...session, bookmarked: !session.bookmarked, bookmarkedAt: session.bookmarked ? undefined : now.toISOString() }
+    : session)
+  const next = { version: 5 as const, sessions: retainSessions(sessions, now) }
+  persist(storage, next)
+  return { history: next, status: target.bookmarked ? 'removed' as const : 'added' as const }
 }
 
 export function countMistakes(sessions: PracticeSession[]) {

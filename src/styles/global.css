@@ -404,7 +404,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .current-result-dashboard .result-detail-column:empty { display: none; }
 .result-primary-actions { align-items: stretch; }
 .result-primary-actions a { flex: 1 1 150px; text-align: center; }
-.recent-practice .session-row > button, .history-detail header button { min-height: 34px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; color: var(--brand-dark); background: white; font-weight: 800; cursor: pointer; }
+.recent-practice .session-buttons button, .history-detail header button { min-height: 34px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; color: var(--brand-dark); background: white; font-weight: 800; cursor: pointer; }
 .history-detail { margin-top: 20px; padding: 18px; border: 1px solid var(--border); border-radius: 18px; background: rgba(255,255,255,.76); }
 .history-detail > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .history-detail > header span { color: var(--brand); font-size: .72rem; font-weight: 850; }
@@ -599,8 +599,14 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .recent-practice .session-row { padding: 13px 15px; display: grid; grid-template-columns: minmax(130px, 1fr) auto auto; align-items: center; gap: 12px; }
 .recent-practice .session-row > div:first-child { display: grid; gap: 3px; }
 .recent-practice .session-row > div:first-child span { color: var(--muted); font-size: .69rem; }
+.session-buttons { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.recent-practice .session-buttons .bookmark-button { width: 36px; padding: 0; color: #8b9691; font-size: 1.15rem; line-height: 1; }
+.recent-practice .session-buttons .bookmark-button.bookmarked { border-color: #e2b95e; color: #c7890b; background: #fff8df; }
 .recent-practice > ol > li.selected .session-row { border-bottom: 1px solid rgba(108,197,164,.45); }
 .recent-practice .history-detail { margin: 0; border: 0; border-radius: 0; background: rgba(255,255,255,.7); }
+.bookmarked-practice { padding: 12px; border: 1px solid #ead292; border-radius: 15px; background: rgba(255,249,224,.58); }
+.bookmarked-practice > h3 { color: #75530d; }
+.recent-history-empty { margin: 10px 0 0; padding: 14px; border: 1px dashed var(--border); border-radius: 12px; color: var(--muted); font-size: .8rem; text-align: center; }
 .session-measures { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
 .session-measures span { padding: 4px 6px; border-radius: 6px; color: #3f514a; background: #edf4f1; font-size: .68rem; font-weight: 750; }
 .recent-practice li > small { min-width: 76px; color: #a34239; font-weight: 750; text-align: right; }
@@ -670,6 +676,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .mistake-summary { grid-template-columns: minmax(0, 1fr); }
   .recent-practice .session-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .session-measures { justify-content: flex-start; }
+  .recent-practice .session-buttons { justify-content: flex-start; }
   .recent-practice li > small { text-align: left; }
   .mini-lesson { grid-template-columns: minmax(0, 1fr); }
   .lesson-header, .lesson-progress, .lesson-footer { grid-column: auto; }
@@ -1087,7 +1094,9 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .recent-practice .session-row > div:first-child strong { font-size: .76rem; }
   .recent-practice .session-row > div:first-child span,
   .recent-practice .session-measures span { font-size: .62rem; }
-  .recent-practice .session-row > button { min-height: 30px; padding-inline: 8px; font-size: .68rem; }
+  .recent-practice .session-buttons button { min-height: 30px; padding-inline: 8px; font-size: .68rem; }
+  .recent-practice .session-buttons .bookmark-button { width: 32px; font-size: 1rem; }
+  .bookmarked-practice { padding: 7px; }
   .recent-practice .history-detail { padding: 9px; }
   .recent-practice .history-detail > header { min-height: 32px; }
   .recent-practice .history-detail > header h3 { font-size: .88rem; }

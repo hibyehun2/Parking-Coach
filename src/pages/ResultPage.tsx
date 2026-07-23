@@ -5,7 +5,7 @@ import { ResultCollisionQuiz } from '../components/ResultCollisionQuiz'
 import { JudgmentCanvas } from '../components/JudgmentQuiz'
 import { buildCorrectionDrills } from '../engine/correctionDrills'
 import type { ParkingResult } from '../engine/parkingEvaluation'
-import { clearPracticeHistory, loadPracticeHistory, MAX_PRACTICE_SESSIONS, recommendPractice, type CorrectionAttempt, type PracticeSession } from '../engine/practiceHistory'
+import { clearPracticeHistory, isPracticeSessionExpired, loadPracticeHistory, MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, PRACTICE_HISTORY_RETENTION_DAYS, recommendPractice, togglePracticeBookmark, type CorrectionAttempt, type PracticeSession } from '../engine/practiceHistory'
 import { getScenario } from '../data/scenarios'
 import type { JudgmentScenario } from '../engine/judgmentScenarios'
 import type { ReplayEvent } from '../engine/sessionReplay'
@@ -127,6 +127,8 @@ export function ResultPage() {
   const collisionFeedback = collisionEvent ? collisionCoaching(collisionEvent) : null
   const [history, setHistory] = useState(loadPracticeHistory)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
+  const bookmarkedSessions = history.sessions.filter((session) => session.bookmarked)
+  const recentSessions = history.sessions.filter((session) => !session.bookmarked)
   const recommendation = recommendPractice(history.sessions)
   const retryPath = `/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=${state?.mode ?? 'learning'}`
   const correctionPracticePath = recommendation?.mode === 'practice'
@@ -150,6 +152,39 @@ export function ResultPage() {
       document.getElementById(`history-session-${selectedSessionId}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     })
   }, [selectedSessionId])
+  const toggleBookmark = (session: PracticeSession) => {
+    const expired = isPracticeSessionExpired(session)
+    if (session.bookmarked && expired && !window.confirm('보관을 해제하면 7일이 지난 이 기록은 바로 삭제됩니다. 해제할까요?')) return
+    const result = togglePracticeBookmark(session.id)
+    if (result.status === 'limit') {
+      window.alert(`보관할 수 있는 기록은 최대 ${MAX_BOOKMARKED_SESSIONS}개입니다. 기존 기록을 먼저 해제해주세요.`)
+      return
+    }
+    setHistory(result.history)
+    if (result.status === 'removed' && expired) setSelectedSessionId(null)
+  }
+  const renderHistorySession = (session: PracticeSession) => {
+    const isSelected = session.id === selectedSessionId
+    const detailId = `history-detail-${session.id}`
+    const titleId = `history-detail-title-${session.id}`
+    return <li key={session.id} id={`history-session-${session.id}`} className={isSelected ? 'selected' : undefined}>
+      <div className="session-row">
+        <div><strong>{session.mode === 'practice' ? `${getScenario(session.scenarioId).title} · 수정 판단 ${session.quizScore ?? 0}/${session.quizTotal ?? 10}` : `${getScenario(session.scenarioId).title} · ${session.success ? '성공' : '미완료'}`}</strong><span>{formatCompletedAt(session.completedAt)} · {session.mode === 'learning' ? '학습 모드' : '수정 판단'}</span></div>
+        <div className="session-measures"><span>{session.mode === 'practice' ? '훈련 완료' : `충돌 ${session.collisionCount}회`}</span></div>
+        <div className="session-buttons">
+          <button type="button" className={`bookmark-button${session.bookmarked ? ' bookmarked' : ''}`} aria-label={session.bookmarked ? '보관에서 해제하기' : '이 기록 보관하기'} aria-pressed={session.bookmarked} title={session.bookmarked ? '보관에서 해제하기' : '이 기록 보관하기'} onClick={() => toggleBookmark(session)}>{session.bookmarked ? '★' : '☆'}</button>
+          <button type="button" aria-expanded={isSelected} aria-controls={detailId} onClick={() => setSelectedSessionId(isSelected ? null : session.id)}>{isSelected ? '상세 닫기' : session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 보기'}</button>
+        </div>
+      </div>
+      {isSelected && <section id={detailId} className="history-detail" aria-labelledby={titleId}>
+        <header><div><span>{session.bookmarked ? '보관한 기록' : '저장된 연습'}</span><h3 id={titleId}>{formatCompletedAt(session.completedAt)} 주요 순간</h3></div><button type="button" onClick={() => setSelectedSessionId(null)}>닫기</button></header>
+        {session.correctionAttempts?.length ? <CorrectionHistoryReview session={session} /> : !session.moments?.length ? <p>이 기록은 상세 장면 저장 기능이 적용되기 전 기록이거나, 표시할 주요 순간 없이 종료되었습니다.</p> : <>
+          <div className="replay-moment-list">{session.moments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={session.runtime} />)}</div>
+          {session.moments.find((event) => event.type === 'collision') && <p>과거 기록은 장면 복기용으로 표시합니다. 새로운 판단 문제는 수정 판단 훈련에서 서로 다른 상황으로 연습할 수 있습니다.</p>}
+        </>}
+      </section>}
+    </li>
+  }
 
   return (
     <section className={`page single-column result-page${activeTab === 'current' && collisionEvent ? ' result-has-collision' : ''}`} aria-labelledby="result-title">
@@ -212,30 +247,13 @@ export function ResultPage() {
           <div><span>수정 주차 연습</span><strong>위험을 발견하고 안전하게 다시 주차하는 판단을 익혀보세요</strong><p>{recommendation?.mode === 'practice' ? recommendation.reason : '비스듬한 자세와 차량 모서리 접근 상황에서 정지·수정·재접근을 연습합니다.'}</p></div>
           <Link className="primary-button" to={correctionPracticePath}>수정 판단 훈련 시작 →</Link>
         </aside>
-        {history.sessions.length === 0 ? <div className="history-empty"><strong>아직 저장된 기록이 없습니다</strong><p>연습을 종료하면 최근 {MAX_PRACTICE_SESSIONS}회의 연습 기록이 저장됩니다.</p><Link className="primary-button result-start-link" to="/practice">첫 기록 만들기</Link></div> : <>
+        {history.sessions.length === 0 ? <div className="history-empty"><strong>아직 저장된 기록이 없습니다</strong><p>연습 기록은 {PRACTICE_HISTORY_RETENTION_DAYS}일간 저장되며, 중요한 기록은 최대 {MAX_BOOKMARKED_SESSIONS}개까지 계속 보관할 수 있습니다.</p><Link className="primary-button result-start-link" to="/practice">첫 기록 만들기</Link></div> : <>
           {recommendation && recommendation.mode !== 'practice' && <aside className="next-practice">
             <div><span>다음 연습</span><p>{recommendation.reason}</p></div>
             <Link to={`/simulator?scenario=${recommendation.scenarioId}&mode=${recommendation.mode}`}>{recommendation.label} →</Link>
           </aside>}
-          <div className="recent-practice"><h3>최근 기록 <small>최대 {MAX_PRACTICE_SESSIONS}개</small></h3><ol>{history.sessions.map((session) => {
-            const isSelected = session.id === selectedSessionId
-            const detailId = `history-detail-${session.id}`
-            const titleId = `history-detail-title-${session.id}`
-            return <li key={session.id} id={`history-session-${session.id}`} className={isSelected ? 'selected' : undefined}>
-              <div className="session-row">
-                <div><strong>{session.mode === 'practice' ? `${getScenario(session.scenarioId).title} · 수정 판단 ${session.quizScore ?? 0}/${session.quizTotal ?? 10}` : `${getScenario(session.scenarioId).title} · ${session.success ? '성공' : '미완료'}`}</strong><span>{formatCompletedAt(session.completedAt)} · {session.mode === 'learning' ? '학습 모드' : '수정 판단'}</span></div>
-                <div className="session-measures"><span>{session.mode === 'practice' ? '훈련 완료' : `충돌 ${session.collisionCount}회`}</span></div>
-                <button type="button" aria-expanded={isSelected} aria-controls={detailId} onClick={() => setSelectedSessionId(isSelected ? null : session.id)}>{isSelected ? '상세 닫기' : session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 보기'}</button>
-              </div>
-              {isSelected && <section id={detailId} className="history-detail" aria-labelledby={titleId}>
-                <header><div><span>저장된 연습</span><h3 id={titleId}>{formatCompletedAt(session.completedAt)} 주요 순간</h3></div><button type="button" onClick={() => setSelectedSessionId(null)}>닫기</button></header>
-                {session.correctionAttempts?.length ? <CorrectionHistoryReview session={session} /> : !session.moments?.length ? <p>이 기록은 상세 장면 저장 기능이 적용되기 전 기록이거나, 표시할 주요 순간 없이 종료되었습니다.</p> : <>
-                  <div className="replay-moment-list">{session.moments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={session.runtime} />)}</div>
-                  {session.moments.find((event) => event.type === 'collision') && <p>과거 기록은 장면 복기용으로 표시합니다. 새로운 판단 문제는 수정 판단 훈련에서 서로 다른 상황으로 연습할 수 있습니다.</p>}
-                </>}
-              </section>}
-            </li>
-          })}</ol></div>
+          {bookmarkedSessions.length > 0 && <div className="recent-practice bookmarked-practice"><h3>보관한 기록 <small>{bookmarkedSessions.length} / {MAX_BOOKMARKED_SESSIONS} · 직접 해제하기 전까지 보관</small></h3><ol>{bookmarkedSessions.map(renderHistorySession)}</ol></div>}
+          <div className="recent-practice"><h3>최근 {PRACTICE_HISTORY_RETENTION_DAYS}일 기록 <small>최대 {MAX_PRACTICE_SESSIONS}개</small></h3>{recentSessions.length > 0 ? <ol>{recentSessions.map(renderHistorySession)}</ol> : <p className="recent-history-empty">최근 {PRACTICE_HISTORY_RETENTION_DAYS}일 동안 저장된 기록이 없습니다.</p>}</div>
         </>}
       </section>}
     </section>
