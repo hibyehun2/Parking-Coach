@@ -8,7 +8,7 @@ import {
 import { OrientationNotice } from '../components/OrientationNotice'
 import { VehicleSimulator } from '../components/simulator/VehicleSimulator'
 import { CorrectionPractice } from '../components/CorrectionPractice'
-import { getScenario } from '../data/scenarios'
+import { scenarios } from '../data/scenarios'
 import { createScenarioRuntime, loadFirstSuccess } from '../data/scenarios'
 import { getLesson } from '../data/lessons'
 import type { VehicleState } from '../engine/vehiclePhysics'
@@ -19,10 +19,10 @@ export function SimulatorPage() {
   const location = useLocation()
   const retryPayload = location.state as { retryVehicle?: VehicleState; runtime?: ScenarioRuntime } | null
   const retryState = retryPayload?.retryVehicle
-  const scenario = getScenario(searchParams.get('scenario'))
+  const scenario = scenarios.find((item) => item.id === searchParams.get('scenario')) ?? scenarios[0]
   const isPracticeMode = searchParams.get('mode') === 'practice'
   const forceLesson = searchParams.get('lesson') === '1'
-  const [runtime] = useState(() => retryPayload?.runtime ?? createScenarioRuntime(isPracticeMode ? 'tight-entry' : scenario.id, {
+  const [runtime] = useState(() => retryPayload?.runtime ?? createScenarioRuntime(scenario.id, {
     firstSuccess: loadFirstSuccess()[scenario.id],
   }))
   const [showLesson, setShowLesson] = useState(() => {
@@ -42,8 +42,8 @@ export function SimulatorPage() {
       <section className="page simulator-shell" aria-labelledby="simulator-title">
         <div className="simulator-heading">
           <div>
-            <p className="eyebrow">{isPracticeMode ? '실전 모드' : '학습 모드'}</p>
-            <h1 id="simulator-title">{scenario.title} 후진주차</h1>
+            <p className="eyebrow">{isPracticeMode ? '수정 판단 훈련' : '학습 모드'}</p>
+            <h1 id="simulator-title">{isPracticeMode ? '충돌 전 안전한 수정 판단' : `${scenario.title} 후진주차`}</h1>
           </div>
           <Link className="secondary-button" to="/">상황 다시 선택</Link>
         </div>

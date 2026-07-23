@@ -4,14 +4,19 @@ import { createScenarioRuntime, scenarios } from '../src/data/scenarios.ts'
 import { detectCollision } from '../src/engine/collisionDetection.ts'
 
 test('모든 추가 상황을 공통 런타임 데이터로 생성한다', () => {
-  assert.deepEqual(scenarios.map(({ id }) => id), ['both-sides', 'one-side', 'wall-side', 'tight-entry'])
-  assert.deepEqual(scenarios.filter(({ available }) => available).map(({ id }) => id), ['both-sides'])
+  assert.deepEqual(scenarios.map(({ id }) => id), ['both-sides', 'narrow-aisle'])
+  assert.deepEqual(scenarios.filter(({ available }) => available).map(({ id }) => id), ['both-sides', 'narrow-aisle'])
   for (const scenario of scenarios) {
     const runtime = createScenarioRuntime(scenario.id, { seed: 2, firstSuccess: false })
     assert.equal(runtime.scenarioId, scenario.id)
     assert.ok(runtime.parkedVehicles.length >= 1)
     assert.ok(runtime.walls.length >= 4)
   }
+})
+
+test('좁은 통로 주차는 목표 칸 반대편에 실제 충돌 벽을 둔다', () => {
+  const runtime = createScenarioRuntime('narrow-aisle', { seed: 2 })
+  assert.ok(runtime.walls.some(({ id }) => id === 'narrow-opposite-wall'))
 })
 
 test('한쪽 차량은 시드에 따라 좌우에 무작위 배치된다', () => {

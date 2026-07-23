@@ -18,7 +18,7 @@ export function MiniLessonView({ lesson, runtime, onFinish }: MiniLessonProps) {
     () => localStorage.getItem(ALWAYS_SKIP_LESSONS_KEY) === 'true',
   )
   const step = lesson.steps[stepIndex]
-  const isCorrectionLesson = lesson.scenarioId === 'tight-entry'
+  const isCorrectionLesson = lesson.scenarioId === 'tight-entry' || lesson.scenarioId === 'narrow-aisle'
   const mirrored = runtime.startSide === 'right' || (isCorrectionLesson && runtime.variant === 'right')
   const obstacleSide = runtime.variant === 'right' ? 'right' : 'left'
   const sceneObstacleSide = mirrored ? (obstacleSide === 'left' ? 'right' : 'left') : obstacleSide

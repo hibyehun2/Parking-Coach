@@ -1,6 +1,6 @@
 import type { VehicleState } from '../engine/vehiclePhysics'
 
-export type ScenarioId = 'both-sides' | 'one-side' | 'wall-side' | 'tight-entry'
+export type ScenarioId = 'both-sides' | 'narrow-aisle' | 'one-side' | 'wall-side' | 'tight-entry'
 
 export type PracticeMode = 'learning' | 'practice'
 
@@ -9,7 +9,7 @@ export type Scenario = {
   title: string
   description: string
   difficulty: string
-  visual: 'cars-both' | 'car-left' | 'wall-side' | 'tight-entry'
+  visual: 'cars-both' | 'narrow-aisle' | 'car-left' | 'wall-side' | 'tight-entry'
   available: boolean
 }
 

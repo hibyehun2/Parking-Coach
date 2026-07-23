@@ -186,12 +186,13 @@ function QuizParkingCanvas({
   )
 }
 
-export function CollisionQuiz({ event, runtime, onComplete }: { event: ReplayEvent; runtime?: ScenarioRuntime; onComplete?: () => void }) {
-  const [step, setStep] = useState(0)
+export function CollisionQuiz({ event, runtime, onComplete, onlyStep, completionLabel }: { event: ReplayEvent; runtime?: ScenarioRuntime; onComplete?: () => void; onlyStep?: number; completionLabel?: string }) {
+  const [step, setStep] = useState(onlyStep ?? 0)
   const [selected, setSelected] = useState<number | null>(null)
   const steps = useMemo(() => buildCollisionQuiz(event), [event])
   const item = steps[step]
   const correct = selected !== null && item.choices[selected].id === item.answer
+  const isComplete = correct && (onlyStep !== undefined || step === steps.length - 1)
 
   const next = () => {
     setStep((current) => current + 1)
@@ -220,10 +221,10 @@ export function CollisionQuiz({ event, runtime, onComplete }: { event: ReplayEve
             ))}
           </div>
           {selected !== null && <p className={correct ? 'quiz-correct-copy' : 'quiz-wrong-copy'}>{correct ? '정답이에요. ' : '그 진로를 그림에서 다시 확인해보세요. '}{item.feedback}</p>}
-          {correct && step < steps.length - 1 && <button type="button" className="quiz-next" onClick={next}>다음 장면</button>}
-          {correct && step === steps.length - 1 && <>
+          {correct && onlyStep === undefined && step < steps.length - 1 && <button type="button" className="quiz-next" onClick={next}>다음 장면</button>}
+          {isComplete && <>
             <strong className="quiz-complete">정지 → 방금 이동한 경로로 간격 회복 → 진행 방향과 양쪽 재확인 순서를 익혔어요.</strong>
-            {onComplete && <button type="button" className="quiz-next" onClick={onComplete}>실전 결과 보기</button>}
+            {onComplete && <button type="button" className="quiz-next" onClick={onComplete}>{completionLabel ?? (onlyStep === undefined ? '훈련 결과 보기' : '다음 문제')}</button>}
           </>}
         </div>
       </div>

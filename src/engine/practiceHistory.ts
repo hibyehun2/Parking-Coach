@@ -22,13 +22,15 @@ export type PracticeSession = {
   variant?: ScenarioRuntime['variant']
   runtime?: ScenarioRuntime
   moments?: ReplayEvent[]
+  quizScore?: number
+  quizTotal?: number
 }
 
 export type PracticeHistory = { version: 3; sessions: PracticeSession[] }
 export type PracticeTrend = 'insufficient' | 'improving' | 'steady' | 'needs-focus'
 
 const EMPTY_HISTORY: PracticeHistory = { version: 3, sessions: [] }
-const SCENARIO_IDS: ScenarioId[] = ['both-sides', 'one-side', 'wall-side', 'tight-entry']
+const SCENARIO_IDS: ScenarioId[] = ['both-sides', 'narrow-aisle', 'one-side', 'wall-side', 'tight-entry']
 const PRACTICE_MODES: PracticeMode[] = ['learning', 'practice']
 
 function defaultStorage() {
@@ -76,6 +78,8 @@ function parseSession(value: unknown): PracticeSession | null {
     moments: Array.isArray(item.moments)
       ? item.moments.filter((event): event is ReplayEvent => Boolean(event && typeof event === 'object' && typeof (event as ReplayEvent).id === 'string'))
       : undefined,
+    quizScore: typeof item.quizScore === 'number' ? item.quizScore : undefined,
+    quizTotal: typeof item.quizTotal === 'number' ? item.quizTotal : undefined,
   }
 }
 
@@ -141,6 +145,35 @@ export function clearPracticeHistory(storage: Storage | null = defaultStorage())
   persist(storage, EMPTY_HISTORY)
   storage?.removeItem(FIRST_SUCCESS_KEY)
   return { version: 3 as const, sessions: [] }
+}
+
+export function recordCorrectionSession(
+  score: number,
+  total: number,
+  runtime: ScenarioRuntime,
+  storage: Storage | null = defaultStorage(),
+  completedAt = new Date(),
+) {
+  const history = loadPracticeHistory(storage)
+  const session: PracticeSession = {
+    id: `${completedAt.getTime()}-correction`,
+    completedAt: completedAt.toISOString(),
+    scenarioId: runtime.scenarioId,
+    mode: 'practice',
+    success: score === total,
+    collisionCount: 0,
+    collisionTargets: [],
+    collisionZones: [],
+    mistakes: [],
+    seed: runtime.seed,
+    variant: runtime.variant,
+    runtime,
+    quizScore: score,
+    quizTotal: total,
+  }
+  const next = { version: 3 as const, sessions: [session, ...history.sessions].slice(0, MAX_PRACTICE_SESSIONS) }
+  persist(storage, next)
+  return next
 }
 
 export function countMistakes(sessions: PracticeSession[]) {

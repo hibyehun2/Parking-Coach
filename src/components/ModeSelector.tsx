@@ -10,18 +10,20 @@ const modes: Array<{
   title: string
   description: string
   features: string[]
+  recommended?: boolean
 }> = [
+  {
+    id: 'practice',
+    title: '수정 판단 훈련',
+    description: '다양한 충돌 직전 상황에서 안전하게 멈추고 위치를 고치는 방법을 익혀요.',
+    features: ['움직이는 10가지 상황', '선택 결과 확인', '좌우 무작위'],
+    recommended: true,
+  },
   {
     id: 'learning',
     title: '학습 모드',
-    description: '처음 원리를 익힐 때 추천해요.',
-    features: ['조향 힌트', '미러 확인 안내', '위험 경고'],
-  },
-  {
-    id: 'practice',
-    title: '실전 모드',
-    description: '좁은 진입 위험을 보고 안전한 수정 순서를 판단해요.',
-    features: ['움직이는 상황 문제', '선택 결과 확인', '좌우 무작위'],
+    description: '단계별 안내를 보며 차량을 직접 조작해 후진주차를 연습해요.',
+    features: ['단계별 탑뷰', '실시간 조향 안내', '위험 경고'],
   },
 ]
 
@@ -39,7 +41,7 @@ export function ModeSelector({ value, onChange }: ModeSelectorProps) {
         >
           <span className="mode-radio" aria-hidden="true" />
           <span className="mode-copy">
-            <strong>{mode.title}</strong>
+            <strong>{mode.title}{mode.recommended && <em>먼저 추천</em>}</strong>
             <span>{mode.description}</span>
             <span className="mode-features">
               {mode.features.map((feature) => <small key={feature}>{feature}</small>)}

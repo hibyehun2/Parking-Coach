@@ -23,6 +23,8 @@ export function ResultPage() {
     replay?: ReplayEvent[]
     runtime?: ScenarioRuntime
     challengeComplete?: boolean
+    challengeScore?: number
+    challengeTotal?: number
   } | null
   const result = state?.result
   const challengeComplete = state?.challengeComplete === true
@@ -55,9 +57,9 @@ export function ResultPage() {
       </div>
 
       {activeTab === 'current' && challengeComplete && <section className="challenge-result-summary">
-        <strong>충돌 전에 정지하고 안전거리를 회복하는 순서를 완료했습니다.</strong>
+        <strong>수정 판단 훈련 {state?.challengeScore ?? 10} / {state?.challengeTotal ?? 10}문제를 완료했습니다.</strong>
         <p>정지 → 핸들 중앙 → 짧은 반대 진행 → 양쪽 간격과 차체 각도 확인 순서로 반복 연습하세요.</p>
-        <div className="result-actions"><Link className="primary-button" to="/simulator?scenario=both-sides&mode=practice">같은 퀴즈 다시 도전</Link><Link className="secondary-button" to="/simulator?scenario=both-sides&mode=learning">학습 모드에서 직접 연습</Link></div>
+        <div className="result-actions"><Link className="primary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=practice`}>같은 퀴즈 다시 도전</Link><Link className="secondary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=learning`}>학습 모드에서 직접 연습</Link></div>
       </section>}
 
       {activeTab === 'current' && result && <div className="result-summary-grid collision-only-summary">
@@ -88,7 +90,7 @@ export function ResultPage() {
         <header className="history-heading"><div><h2 id="history-title">나의 연습 기록</h2></div>{history.sessions.length > 0 && <button type="button" className="history-reset" onClick={() => { if (window.confirm('저장된 연습 기록을 모두 초기화할까요?')) setHistory(clearPracticeHistory()) }}>기록 초기화</button>}</header>
         {history.sessions.length === 0 ? <div className="history-empty"><strong>아직 저장된 기록이 없습니다</strong><p>연습을 종료하면 최근 10회의 충돌 기록이 저장됩니다.</p><Link className="primary-button result-start-link" to="/practice">첫 기록 만들기</Link></div> : <>
           <article className="history-recommendation"><span>맞춤 연습 추천</span><strong>{recommendedScenario.title}</strong><p>{recommendation.reason}</p><Link to={`/simulator?scenario=${recommendation.scenarioId}&mode=learning`}>추천 연습 시작 →</Link></article>
-          <div className="recent-practice"><h3>최근 기록 <small>최대 30개</small></h3><ol>{history.sessions.map((session) => <li key={session.id}><div><strong>{getScenario(session.scenarioId).title} · {session.success ? '성공' : '미완료'}</strong><span>{formatCompletedAt(session.completedAt)} · {session.mode === 'learning' ? '학습' : '실전'}</span></div><div className="session-measures"><span>충돌 {session.collisionCount}회</span></div><button type="button" onClick={() => setSelectedSessionId(session.id)}>{session.moments?.length ? '상세 보기' : '요약 기록'}</button></li>)}</ol></div>
+          <div className="recent-practice"><h3>최근 기록 <small>최대 30개</small></h3><ol>{history.sessions.map((session) => <li key={session.id}><div><strong>{session.mode === 'practice' ? `${getScenario(session.scenarioId).title} · 수정 판단 ${session.quizScore ?? 0}/${session.quizTotal ?? 10}` : `${getScenario(session.scenarioId).title} · ${session.success ? '성공' : '미완료'}`}</strong><span>{formatCompletedAt(session.completedAt)} · {session.mode === 'learning' ? '학습 모드' : '수정 판단'}</span></div><div className="session-measures"><span>{session.mode === 'practice' ? '훈련 완료' : `충돌 ${session.collisionCount}회`}</span></div><button type="button" onClick={() => setSelectedSessionId(session.id)}>{session.moments?.length ? '상세 보기' : '요약 기록'}</button></li>)}</ol></div>
           {selectedSession && <section className="history-detail" aria-labelledby="history-detail-title">
             <header><div><span>저장된 연습</span><h3 id="history-detail-title">{formatCompletedAt(selectedSession.completedAt)} 주요 순간</h3></div><button type="button" onClick={() => setSelectedSessionId(null)}>닫기</button></header>
             {!selectedSession.moments?.length ? <p>이 기록은 상세 장면 저장 기능이 적용되기 전 기록이거나, 표시할 주요 순간 없이 종료되었습니다.</p> : <>

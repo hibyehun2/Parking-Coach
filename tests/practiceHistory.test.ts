@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { ParkingResult } from '../src/engine/parkingEvaluation.ts'
-import { MAX_PRACTICE_SESSIONS, PRACTICE_HISTORY_KEY, calculatePracticeTrend, clearPracticeHistory, countMistakes, loadPracticeHistory, recommendPractice, recordPracticeSession, todayPracticeMessage } from '../src/engine/practiceHistory.ts'
+import { MAX_PRACTICE_SESSIONS, PRACTICE_HISTORY_KEY, calculatePracticeTrend, clearPracticeHistory, countMistakes, loadPracticeHistory, recommendPractice, recordCorrectionSession, recordPracticeSession, todayPracticeMessage } from '../src/engine/practiceHistory.ts'
+import { createScenarioRuntime } from '../src/data/scenarios.ts'
 import type { ReplayEvent } from '../src/engine/sessionReplay.ts'
 import { INITIAL_VEHICLE_STATE } from '../src/engine/vehiclePhysics.ts'
 
@@ -65,6 +66,16 @@ test('미완료 종료 장면은 저장하지 않고 충돌 직전 장면은 유
   recordPracticeSession({ ...result(1), success: false, fullyInside: false }, 'both-sides', 'learning', storage, new Date(), undefined, replay)
 
   assert.deepEqual(loadPracticeHistory(storage).sessions[0].moments?.map(({ type }) => type), ['collision'])
+})
+
+test('수정 판단 훈련 결과를 일반 주차와 구분해 저장한다', () => {
+  const storage = new MemoryStorage()
+  recordCorrectionSession(10, 10, createScenarioRuntime('tight-entry', { seed: 2 }), storage)
+  const session = loadPracticeHistory(storage).sessions[0]
+
+  assert.equal(session.mode, 'practice')
+  assert.equal(session.quizScore, 10)
+  assert.equal(session.quizTotal, 10)
 })
 
 test('최근 충돌이 줄면 개선 중이며 차량 충돌은 수정 연습을 추천한다', () => {

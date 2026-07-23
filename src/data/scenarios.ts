@@ -6,9 +6,13 @@ export const FIRST_SUCCESS_KEY = 'parking-coach:first-success:v1'
 
 export const scenarios: Scenario[] = [
   { id: 'both-sides', title: '양옆 차량', description: '양쪽 차량 사이의 간격을 번갈아 확인해요.', difficulty: '첫 번째 연습', visual: 'cars-both', available: true },
-  { id: 'one-side', title: '한쪽 차량', description: '차량이 좌우 중 무작위로 배치돼요.', difficulty: '준비 중', visual: 'car-left', available: false },
-  { id: 'wall-side', title: '벽면 옆', description: '벽면 쪽 회전 여유와 간격을 익혀요.', difficulty: '준비 중', visual: 'wall-side', available: false },
-  { id: 'tight-entry', title: '좁은 진입 수정', description: '실전 모드의 움직이는 판단 퀴즈로 먼저 만나요.', difficulty: '준비 중', visual: 'tight-entry', available: false },
+  { id: 'narrow-aisle', title: '좁은 통로 주차', description: '앞쪽 공간이 부족할 때 짧게 위치를 수정해요.', difficulty: '수정 연습', visual: 'narrow-aisle', available: true },
+]
+
+const LEGACY_SCENARIOS: Scenario[] = [
+  { id: 'one-side', title: '한쪽 차량', description: '이전 연습 기록입니다.', difficulty: '이전 연습', visual: 'car-left', available: false },
+  { id: 'wall-side', title: '벽면 옆', description: '이전 연습 기록입니다.', difficulty: '이전 연습', visual: 'wall-side', available: false },
+  { id: 'tight-entry', title: '좁은 진입 수정', description: '이전 연습 기록입니다.', difficulty: '이전 연습', visual: 'tight-entry', available: false },
 ]
 
 const LEFT_CAR: ScenarioParkedVehicle = { id: 'parked-left', kind: 'vehicle', x: 12.3, y: 9.75, heading: -Math.PI / 2, side: 'left' }
@@ -75,6 +79,18 @@ export function createScenarioRuntime(
       height: 6.95,
     }]
   }
+  if (scenarioId === 'narrow-aisle') {
+    variant = 'fixed'
+    parkedVehicles = [LEFT_CAR, RIGHT_CAR]
+    walls = [...walls, {
+      id: 'narrow-opposite-wall',
+      kind: 'wall',
+      x: 10.4,
+      y: 1.7,
+      width: 9.2,
+      height: 0.3,
+    }]
+  }
   if (scenarioId === 'tight-entry') {
     variant = randomSide
     parkedVehicles = [LEFT_CAR, RIGHT_CAR]
@@ -93,5 +109,7 @@ export function createScenarioRuntime(
 
 export function getScenario(id: string | null) {
   const migrated = id === 'left-side' || id === 'right-side' ? 'one-side' : id === 'pillar-side' ? 'wall-side' : id
-  return scenarios.find((scenario) => scenario.id === migrated && scenario.available) ?? scenarios[0]
+  return scenarios.find((scenario) => scenario.id === migrated)
+    ?? LEGACY_SCENARIOS.find((scenario) => scenario.id === migrated)
+    ?? scenarios[0]
 }
