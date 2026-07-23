@@ -110,7 +110,7 @@ export function JudgmentQuiz({
   runtime: ScenarioRuntime
   questionNumber: number
   total: number
-  onComplete: (firstTryCorrect: boolean) => void
+  onComplete: (firstTryCorrect: boolean, answer: JudgmentChoice) => void
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [attempted, setAttempted] = useState(false)
@@ -158,7 +158,7 @@ export function JudgmentQuiz({
             ))}
           </div>
           {selected && <p className={correct ? 'quiz-correct-copy' : 'quiz-wrong-copy'}>{selected.feedback}</p>}
-          {correct && <button type="button" className="quiz-next" onClick={() => onComplete(firstTryCorrect)}>
+          {correct && selected && <button type="button" className="quiz-next" onClick={() => onComplete(firstTryCorrect, selected)}>
             {questionNumber === total ? '훈련 결과 보기' : '다음 판단 문제'}
           </button>}
         </div>

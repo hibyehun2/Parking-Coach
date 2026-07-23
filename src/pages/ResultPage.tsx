@@ -52,6 +52,9 @@ export function ResultPage() {
   const selectedSession = history.sessions.find((session) => session.id === selectedSessionId)
   const recommendation = recommendPractice(history.sessions)
   const retryPath = `/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=${state?.mode ?? 'learning'}`
+  const correctionPracticePath = recommendation?.mode === 'practice'
+    ? `/simulator?scenario=${recommendation.scenarioId}&mode=practice`
+    : '/simulator?scenario=both-sides&mode=practice'
   const replayMoments = replay
     .filter((event) => event.type === 'collision' || (event.type === 'finish' && result?.success))
     .slice(-3)
@@ -59,9 +62,14 @@ export function ResultPage() {
   const retryAtEvent = (event: ReplayEvent) => navigate(retryPath, {
     state: { retryVehicle: { ...event.vehicle, braking: true, speed: 0 }, runtime: state?.runtime },
   })
+  const openCollisionQuiz = () => {
+    const quiz = document.getElementById('collision-judgment-quiz')
+    quiz?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    window.setTimeout(() => document.getElementById('result-collision-quiz-title')?.focus({ preventScroll: true }), 350)
+  }
 
   return (
-    <section className="page single-column" aria-labelledby="result-title">
+    <section className={`page single-column result-page${activeTab === 'current' && collisionEvent ? ' result-has-collision' : ''}`} aria-labelledby="result-title">
       <p className="eyebrow">연습 결과</p>
       <h1 id="result-title">{challengeComplete ? '후진주차 상황 판단 훈련 완료' : result ? (result.success ? '주차 성공' : '아직 주차가 완료되지 않았습니다') : '연습 기록'}</h1>
       <div className="result-tabs" role="tablist" aria-label="결과 보기">
@@ -71,7 +79,7 @@ export function ResultPage() {
 
       {activeTab === 'current' && challengeComplete && <section className="challenge-result-summary">
         <strong>첫 선택 기준 {state?.challengeScore ?? 0} / {state?.challengeTotal ?? 6}문제를 정확히 판단했습니다.</strong>
-        <p>위험 지점 예측, 정지 시점, 수정 공간, 첫 수정 동작, 재확인, 재접근 판단을 완료했습니다.</p>
+        <p>위험 지점 발견부터 정지·간격 회복·재확인·재진입·최종 주차까지 차량 상태가 이어지는 수정 드릴을 완료했습니다.</p>
         <div className="result-actions"><Link className="primary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=practice`}>새 판단 훈련 시작</Link><Link className="secondary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=learning`}>직접 주차에 적용</Link></div>
       </section>}
 
@@ -80,14 +88,9 @@ export function ResultPage() {
           <span>충돌 기록</span>
           <strong>{result.collisionCount ? `${result.collisionCount}회 충돌` : '충돌 없음'}</strong>
           <p>{result.collisionCount ? '실제 충돌 장면의 원인과 다음 수정 행동을 확인하세요.' : '장애물과 안전거리를 유지했습니다.'}</p>
+          {collisionEvent && state?.runtime && <button type="button" className="collision-quiz-jump" onClick={openCollisionQuiz}>충돌 직전 판단해보기 ↓</button>}
         </article>
         {!result.success && <article className="result-card needs-work"><span>완료 상태</span><strong>{result.fullyInside ? '브레이크 확인 필요' : '차량 전체 진입 필요'}</strong><p>수치를 기록하지 않고 완료 조건만 확인합니다.</p></article>}
-      </div>}
-
-      {activeTab === 'current' && result && <div className="result-actions">
-        <Link className="primary-button" to={retryPath}>같은 상황 다시 연습</Link>
-        <Link className="secondary-button" to={`${retryPath}&lesson=1`}>단계 안내부터 다시</Link>
-        <Link className="secondary-button" to="/practice">상황 선택</Link>
       </div>}
 
       {activeTab === 'current' && result && !collisionEvent && <section className="no-collision-feedback"><strong>충돌 없이 완료했습니다.</strong><p>같은 상황을 반복해 안정적인 주차 순서를 익혀보세요.</p></section>}
@@ -95,12 +98,19 @@ export function ResultPage() {
       {activeTab === 'current' && collisionEvent && state?.runtime && <ResultCollisionQuiz event={collisionEvent} runtime={state.runtime} onRetry={() => retryAtEvent(collisionEvent)} />}
 
       {activeTab === 'current' && collisionEvent && !state?.runtime && collisionFeedback && <section className="collision-debrief" aria-labelledby="collision-debrief-title">
-        <span>이번 주행 피드백</span>
-        <h2 id="collision-debrief-title">실제 충돌 장면에서 고칠 한 가지</h2>
+        <span>이전 형식의 연습 기록</span>
+        <h2 id="collision-debrief-title">실제 배치 정보가 없어 판단 퀴즈를 만들 수 없습니다</h2>
         <div><strong>발생 원인</strong><p>{collisionFeedback.cause}</p></div>
         <div><strong>다음 행동</strong><p>{collisionFeedback.action}</p></div>
+        <p>새 학습 연습부터 실제 차량 위치와 장애물 배치를 이용한 충돌 판단 퀴즈가 제공됩니다.</p>
         <button type="button" className="primary-button" onClick={() => retryAtEvent(collisionEvent)}>충돌 직전부터 다시 연습</button>
       </section>}
+
+      {activeTab === 'current' && result && <div className="result-actions">
+        <Link className="primary-button" to={retryPath}>같은 상황 다시 연습</Link>
+        <Link className="secondary-button" to={`${retryPath}&lesson=1`}>단계 안내부터 다시</Link>
+        <Link className="secondary-button" to="/practice">상황 선택</Link>
+      </div>}
 
       {activeTab === 'current' && replayMoments.length > 0 && <section className="replay-timeline" aria-labelledby="replay-title">
         <header><div><span>실제 주행 탑뷰</span><h2 id="replay-title">이번 연습의 주요 순간</h2></div><small>충돌과 최종 자세를 우선 표시합니다</small></header>
@@ -109,8 +119,12 @@ export function ResultPage() {
 
       {activeTab === 'history' && <section className="practice-history" aria-labelledby="history-title">
         <header className="history-heading"><div><h2 id="history-title">나의 연습 기록</h2></div>{history.sessions.length > 0 && <button type="button" className="history-reset" onClick={() => { if (window.confirm('저장된 연습 기록을 모두 초기화할까요?')) setHistory(clearPracticeHistory()) }}>기록 초기화</button>}</header>
+        <aside className="correction-practice-cta">
+          <div><span>수정 주차 연습</span><strong>위험을 발견하고 안전하게 다시 주차하는 판단을 익혀보세요</strong><p>{recommendation?.mode === 'practice' ? recommendation.reason : '비스듬한 자세와 차량 모서리 접근 상황에서 정지·수정·재접근을 연습합니다.'}</p></div>
+          <Link className="primary-button" to={correctionPracticePath}>수정 판단 훈련 시작 →</Link>
+        </aside>
         {history.sessions.length === 0 ? <div className="history-empty"><strong>아직 저장된 기록이 없습니다</strong><p>연습을 종료하면 최근 10회의 충돌 기록이 저장됩니다.</p><Link className="primary-button result-start-link" to="/practice">첫 기록 만들기</Link></div> : <>
-          {recommendation && <aside className="next-practice">
+          {recommendation && recommendation.mode !== 'practice' && <aside className="next-practice">
             <div><span>다음 연습</span><p>{recommendation.reason}</p></div>
             <Link to={`/simulator?scenario=${recommendation.scenarioId}&mode=${recommendation.mode}`}>{recommendation.label} →</Link>
           </aside>}

@@ -17,10 +17,10 @@ export function ResultCollisionQuiz({
   const [stage, setStage] = useState<1 | 2 | 'complete'>(1)
 
   return (
-    <section className="result-collision-quiz" aria-labelledby="result-collision-quiz-title">
+    <section id="collision-judgment-quiz" className="result-collision-quiz" aria-labelledby="result-collision-quiz-title">
       <div className="result-collision-quiz-heading">
         <span>실제 충돌 장면 미니 퀴즈</span>
-        <h2 id="result-collision-quiz-title">위험을 찾고 안전한 수정 경로를 선택하세요</h2>
+        <h2 id="result-collision-quiz-title" tabIndex={-1}>위험을 찾고 안전한 수정 경로를 선택하세요</h2>
         <p>저장된 차량 위치와 장애물 배치로 선택 결과를 다시 계산합니다.</p>
       </div>
       {stage === 1 && <JudgmentQuiz
