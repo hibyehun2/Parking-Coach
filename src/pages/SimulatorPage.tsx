@@ -39,7 +39,7 @@ export function SimulatorPage() {
   return (
     <>
       <OrientationNotice />
-      <section className="page simulator-shell" aria-labelledby="simulator-title">
+      <section className={`page simulator-shell${isPracticeMode ? ' correction-shell' : ''}`} aria-labelledby="simulator-title">
         <div className="simulator-heading">
           <div>
             <p className="eyebrow">{isPracticeMode ? '수정 판단 훈련' : '학습 모드'}</p>
