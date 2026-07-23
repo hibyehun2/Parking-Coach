@@ -4,6 +4,7 @@ import { ReplayMomentCard } from '../components/ReplayMomentCard'
 import { ResultCollisionQuiz } from '../components/ResultCollisionQuiz'
 import { JudgmentCanvas } from '../components/JudgmentQuiz'
 import { buildCorrectionDrills } from '../engine/correctionDrills'
+import { ANONYMOUS_ALIAS_COMBINATIONS, createAnonymousAlias } from '../engine/anonymousAlias'
 import type { ParkingResult } from '../engine/parkingEvaluation'
 import { clearPracticeHistory, isPracticeSessionExpired, loadPracticeHistory, MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, PRACTICE_HISTORY_RETENTION_DAYS, recommendPractice, togglePracticeBookmark, type CorrectionAttempt, type PracticeSession } from '../engine/practiceHistory'
 import { getScenario } from '../data/scenarios'
@@ -121,7 +122,7 @@ export function ResultPage() {
   const challengeComplete = state?.challengeComplete === true
   const hasCurrentResult = Boolean(result || challengeComplete)
   const requestedTab = searchParams.get('tab')
-  const activeTab = requestedTab === 'history' || !hasCurrentResult ? 'history' : 'current'
+  const activeTab = requestedTab === 'community' ? 'community' : requestedTab === 'history' || !hasCurrentResult ? 'history' : 'current'
   const replay = state?.replay ?? []
   const collisionEvent = replay.filter((event) => event.type === 'collision').at(-1)
   const collisionFeedback = collisionEvent ? collisionCoaching(collisionEvent) : null
@@ -182,6 +183,10 @@ export function ResultPage() {
           <div className="replay-moment-list">{session.moments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={session.runtime} />)}</div>
           {session.moments.find((event) => event.type === 'collision') && <p>과거 기록은 장면 복기용으로 표시합니다. 새로운 판단 문제는 수정 판단 훈련에서 서로 다른 상황으로 연습할 수 있습니다.</p>}
         </>}
+        <aside className="share-case-preparation">
+          <div><strong>익명 학습 사례로 공유</strong><p>보관과 공유는 별도 기능입니다. 공유에 직접 동의한 경우에만 사례별 익명 별명으로 공개될 예정입니다.</p></div>
+          <button type="button" disabled>공유 기능 준비 중</button>
+        </aside>
       </section>}
     </li>
   }
@@ -193,6 +198,7 @@ export function ResultPage() {
       <div className="result-tabs" role="tablist" aria-label="결과 보기">
         <button type="button" role="tab" aria-selected={activeTab === 'current'} disabled={!hasCurrentResult} onClick={() => setSearchParams({ tab: 'current' })}>이번 연습</button>
         <button type="button" role="tab" aria-selected={activeTab === 'history'} onClick={() => setSearchParams({ tab: 'history' })}>연습 기록</button>
+        <button type="button" role="tab" aria-selected={activeTab === 'community'} onClick={() => setSearchParams({ tab: 'community' })}>학습 사례</button>
       </div>
 
       {activeTab === 'current' && challengeComplete && <section className="challenge-result-summary">
@@ -239,6 +245,23 @@ export function ResultPage() {
       {activeTab === 'current' && replayMoments.length > 0 && <section className="replay-timeline" aria-labelledby="replay-title">
         <header><div><span>실제 주행 탑뷰</span><h2 id="replay-title">이번 연습의 주요 순간</h2></div><small>충돌과 최종 자세를 우선 표시합니다</small></header>
         <div className="replay-moment-list">{replayMoments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={state?.runtime} onRetry={event.type === 'collision' ? () => retryAtEvent(event) : undefined} />)}</div>
+      </section>}
+
+      {activeTab === 'community' && <section className="community-learning" aria-labelledby="community-learning-title">
+        <header>
+          <span>함께 배우는 주차 사례</span>
+          <h2 id="community-learning-title">다른 연습자의 경험을 새로운 판단 문제로 만나보세요</h2>
+          <p>공유에 동의한 기록만 개인 정보 없이 학습 사례로 제공할 예정입니다. 기록 원본이나 개인 보관 상태는 공개되지 않습니다.</p>
+        </header>
+        <div className="community-learning-flow" aria-label="학습 사례 이용 순서">
+          <article><b>1</b><strong>상황 먼저 확인</strong><p>차량 배치와 위험한 모서리만 보고 스스로 판단합니다.</p></article>
+          <article><b>2</b><strong>내 선택 결정</strong><p>정답을 보기 전에 멈춤과 수정 순서를 선택합니다.</p></article>
+          <article><b>3</b><strong>경로 비교 복기</strong><p>익명 연습자의 선택과 안전한 경로를 비교합니다.</p></article>
+        </div>
+        <aside className="anonymous-case-preview">
+          <div><span>익명 별명 예시 · {ANONYMOUS_ALIAS_COMBINATIONS.toLocaleString('ko-KR')}가지 조합</span><div className="anonymous-alias-examples">{[7, 289, 731, 1219].map((seed) => <strong key={seed}>{createAnonymousAlias(seed)}</strong>)}</div><p>공유 사례마다 귀여운 형용사와 동물을 조합합니다. 같은 사례에서는 같은 별명을 유지하지만 계정이나 다른 사례와는 연결하지 않습니다.</p></div>
+          <button type="button" disabled>로그인·사례 공유 기능 준비 중</button>
+        </aside>
       </section>}
 
       {activeTab === 'history' && <section className="practice-history" aria-labelledby="history-title">
