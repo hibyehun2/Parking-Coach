@@ -717,26 +717,28 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .setup-header > div { display: grid; gap: 3px; }
 .setup-header h1 { font-size: clamp(2rem, 4vw, 3.4rem); }
 .setup-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-.setup-section { padding: 18px; border: 1px solid rgba(255,255,255,.82); border-radius: 25px; background: rgba(255,255,255,.58); box-shadow: 0 14px 38px rgba(32,58,47,.08); backdrop-filter: blur(20px); }
+.setup-section { min-width: 0; padding: 18px; border: 1px solid rgba(255,255,255,.82); border-radius: 25px; display: flex; flex-direction: column; background: rgba(255,255,255,.58); box-shadow: 0 14px 38px rgba(32,58,47,.08); backdrop-filter: blur(20px); }
 .setup-section-heading { margin-bottom: 13px; display: flex; align-items: center; gap: 9px; }
 .setup-section-heading > span { width: 27px; height: 27px; border-radius: 50%; display: grid; place-items: center; color: white; background: var(--brand); font-size: .75rem; font-weight: 900; }
 .setup-section-heading h2 { font-size: 1.3rem; }
-.compact-scenario-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
-.compact-scenario-grid .scenario-card { min-height: 132px; padding: 0; display: grid; grid-template-columns: minmax(0, 50%) minmax(0, 50%); overflow: hidden; background: rgba(255,255,255,.86); }
+.compact-scenario-grid { flex: 1; grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.compact-scenario-grid .scenario-card { min-height: 140px; padding: 0; display: grid; grid-template-columns: minmax(0, 60%) minmax(0, 40%); overflow: hidden; background: rgba(255,255,255,.9); }
 .compact-scenario-grid .scenario-card.selected { padding: 0; }
-.compact-scenario-grid .scenario-visual { width: 100%; height: 100%; min-height: 130px; margin: 0; border-radius: 0; grid-column: 1; grid-row: 1; }
-.compact-scenario-grid .scenario-visual::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent 58%, rgba(255,255,255,.16) 76%, rgba(255,255,255,.82) 100%); }
+.compact-scenario-grid .scenario-visual { width: 100%; height: 100%; min-height: 138px; margin: 0; border-radius: 0; grid-column: 1; grid-row: 1; }
+.compact-scenario-grid .scenario-visual::after { content: none; }
 .compact-scenario-grid .scenario-visual img { object-position: center 57%; }
-.compact-scenario-grid .scenario-card-copy { position: relative; z-index: 1; padding: 18px 42px 16px 4px; grid-column: 2; grid-row: 1; align-self: center; }
-.compact-scenario-grid .scenario-description { min-height: 0; font-size: .76rem; line-height: 1.35; }
-.compact-scenario-grid .scenario-card-heading strong { font-size: .92rem; }
+.compact-scenario-grid .scenario-card-copy { position: relative; z-index: 1; width: calc(100% + 28px); height: 100%; margin-left: -28px; padding: 18px 42px 16px 28px; border-radius: 24px 0 0 24px; grid-column: 2; grid-row: 1; align-self: stretch; justify-content: center; background: rgba(255,255,255,.96); box-shadow: -10px 0 24px rgba(26,47,39,.09); }
+.compact-scenario-grid .scenario-card-heading { align-items: flex-start; justify-content: flex-start; flex-direction: column; gap: 7px; }
+.compact-scenario-grid .scenario-description { min-height: 0; margin-top: 9px; font-size: .76rem; line-height: 1.4; }
+.compact-scenario-grid .scenario-card-heading strong { font-size: .96rem; line-height: 1.3; }
 .compact-scenario-grid .scenario-card-heading > span { font-size: .6rem; }
 .compact-scenario-grid .selection-indicator { z-index: 2; top: 14px; right: 14px; }
-.practice-setup .mode-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
-.practice-setup .mode-card { min-height: 121px; padding: 16px; border-radius: 19px; }
-.practice-setup .mode-card.selected { padding: 15px; }
-.practice-setup .mode-copy strong { font-size: 1rem; }
-.practice-setup .mode-copy > span { font-size: .8rem; }
+.practice-setup .mode-grid { flex: 1; grid-template-columns: minmax(0, 1fr); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.practice-setup .mode-card { min-height: 140px; padding: 18px; border-radius: 19px; align-items: center; }
+.practice-setup .mode-card.selected { padding: 17px; }
+.practice-setup .mode-copy { justify-content: center; }
+.practice-setup .mode-copy strong { font-size: .96rem; }
+.practice-setup .mode-copy > span { font-size: .78rem; line-height: 1.4; word-break: keep-all; }
 .practice-setup .mode-features { margin-top: 2px; }
 .practice-setup .mode-features small { padding: 3px 6px; font-size: .66rem; }
 .setup-action { position: sticky; z-index: 5; bottom: 12px; margin-top: 16px; padding: 12px 14px; border: 1px solid rgba(255,255,255,.28); border-radius: 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; color: white; background: rgba(20,53,42,.9); box-shadow: 0 18px 45px rgba(13,45,34,.28); backdrop-filter: blur(22px); }
@@ -844,10 +846,13 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .setup-section-heading { margin-bottom: 9px; }
   .setup-section-heading h2 { font-size: 1.08rem; }
   .compact-scenario-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
-  .compact-scenario-grid .scenario-card { min-height: 104px; grid-template-columns: minmax(0, 50%) minmax(0, 50%); }
-  .compact-scenario-grid .scenario-visual { width: 100%; height: 100%; min-height: 102px; }
-  .compact-scenario-grid .scenario-card-copy { padding: 13px 34px 12px 2px; }
-  .compact-scenario-grid .scenario-description { margin-top: 4px; font-size: .72rem; line-height: 1.3; }
+  .compact-scenario-grid .scenario-card { min-height: 184px; grid-template-columns: minmax(0, 1fr); grid-template-rows: 108px auto; }
+  .compact-scenario-grid .scenario-visual { width: 100%; height: 108px; min-height: 108px; grid-column: 1; grid-row: 1; }
+  .compact-scenario-grid .scenario-visual img { object-position: center 54%; }
+  .compact-scenario-grid .scenario-card-copy { width: 100%; height: auto; min-height: 76px; margin: -16px 0 0; padding: 17px 40px 13px 15px; border-radius: 18px 18px 0 0; grid-column: 1; grid-row: 2; justify-content: flex-start; box-shadow: 0 -8px 20px rgba(26,47,39,.08); }
+  .compact-scenario-grid .scenario-card-heading { align-items: center; flex-direction: row; gap: 7px; }
+  .compact-scenario-grid .scenario-description { margin-top: 5px; font-size: .72rem; line-height: 1.35; }
+  .compact-scenario-grid .selection-indicator { top: auto; right: 13px; bottom: 21px; }
   .practice-setup .mode-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .practice-setup .mode-card { min-height: 78px; padding: 11px; gap: 10px; }
   .practice-setup .mode-card.selected { padding: 10px; }
@@ -887,9 +892,11 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .setup-section-heading > span { width: 23px; height: 23px; }
   .setup-section-heading h2 { font-size: 1rem; }
   .compact-scenario-grid { gap: 7px; }
-  .compact-scenario-grid .scenario-card { min-height: 80px; grid-template-columns: minmax(0, 50%) minmax(0, 50%); }
+  .compact-scenario-grid .scenario-card { min-height: 80px; grid-template-columns: minmax(0, 58%) minmax(0, 42%); grid-template-rows: minmax(0, 1fr); }
   .compact-scenario-grid .scenario-visual { width: 100%; height: 100%; min-height: 78px; }
-  .compact-scenario-grid .scenario-card-copy { padding: 10px 32px 9px 2px; }
+  .compact-scenario-grid .scenario-card-copy { width: calc(100% + 20px); height: 100%; min-height: 0; margin: 0 0 0 -20px; padding: 10px 32px 9px 20px; border-radius: 18px 0 0 18px; grid-column: 2; grid-row: 1; justify-content: center; }
+  .compact-scenario-grid .scenario-card-heading { align-items: flex-start; flex-direction: column; gap: 4px; }
+  .compact-scenario-grid .selection-indicator { top: 10px; right: 10px; bottom: auto; }
   .compact-scenario-grid .scenario-description { display: none; }
   .practice-setup .mode-card { min-height: 80px; padding: 9px; gap: 8px; }
   .practice-setup .mode-card.selected { padding: 8px; }
