@@ -130,6 +130,19 @@ function CorrectionReviewCard({
             <JudgmentCanvas scenario={reviewScenario} choice={reviewView === 'first' ? firstChoice : correctChoice} correct={reviewView === 'safe' || attempt.firstTryCorrect} runtime={runtime} />
             <figcaption>{reviewView === 'first' ? '내가 선택한 동작의 결과' : '안전한 선택의 결과'}</figcaption>
           </figure>
+          <div className="expanded-review-copy">
+            <p><b>상황</b><span>{reviewScenario.situation}</span></p>
+            <p><b>내 판단</b><span>{attempt.firstChoiceLabel}</span></p>
+            {firstChoice.feedback && <p><b>이렇게 되면</b><span>{firstChoice.feedback}</span></p>}
+            <div className="safe-action">
+              <b>안전한 행동</b>
+              {correctChoice.steps?.length
+                ? <ol>{correctChoice.steps.map((step) => <li key={step}>{step}</li>)}</ol>
+                : <span>{attempt.correctChoiceLabel}</span>}
+              {correctChoice.feedback && <small>{correctChoice.feedback}</small>}
+            </div>
+            <p className="correction-memory"><b>기억할 기준</b><span>{attempt.takeaway}</span></p>
+          </div>
         </section>
       </div>, document.body)}
     </li>

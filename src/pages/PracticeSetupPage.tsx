@@ -39,7 +39,7 @@ export function PracticeSetupPage() {
           <div className="setup-section-heading"><span>2</span><h2 id="setup-mode-title">연습 방식</h2></div>
           <ModeSelector value={mode} onChange={setMode} />
           <footer className="setup-action">
-            <div><span>준비 완료</span><strong>{scenario?.title} · {mode === 'learning' ? '직접 연습' : '판단 연습'}</strong></div>
+            <div><span><i aria-hidden="true">✓</i>준비 완료</span><strong>{scenario?.title} · {mode === 'learning' ? '직접 연습' : '판단 연습'}</strong></div>
             <button type="button" className="primary-button" onClick={start}>연습 시작 →</button>
           </footer>
         </section>
