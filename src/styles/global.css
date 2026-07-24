@@ -2151,23 +2151,25 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 }
 
 .learning-case-card > header button {
+  min-width: 0;
+  max-width: 100%;
   min-height: 34px;
   padding: 0 10px;
-  border: 1px solid #b5dcca;
-  border-radius: 999px;
+  border: 1px solid rgba(181,220,202,.72);
+  border-radius: 12px;
   color: var(--brand-dark);
-  background: #eff9f4;
+  background: rgba(239,249,244,.82);
   font-size: .72rem;
   font-weight: 900;
   cursor: pointer;
 }
 
 .learning-case-card > header button:hover { background: #dff3e9; }
-.learning-case-card > header small { color: var(--muted); font-size: .66rem; }
+.learning-case-card > header small { flex: none; color: var(--muted); font-size: .66rem; white-space: nowrap; }
 .learning-case-card > span { color: var(--brand); font-size: .68rem; font-weight: 900; }
-.learning-case-card > strong { font-size: .96rem; line-height: 1.35; }
-.learning-case-card > p { margin: 0; color: var(--muted); font-size: .78rem; line-height: 1.5; }
-.learning-case-card > small { margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--border); color: #375b4d; font-size: .72rem; line-height: 1.45; }
+.learning-case-card > strong { font-size: .96rem; line-height: 1.35; word-break: keep-all; overflow-wrap: break-word; }
+.learning-case-card > p { margin: 0; color: var(--muted); font-size: .78rem; line-height: 1.5; word-break: keep-all; overflow-wrap: break-word; }
+.learning-case-card > small { margin-top: 4px; padding-top: 8px; border-top: 1px solid var(--border); color: #375b4d; font-size: .72rem; line-height: 1.45; word-break: keep-all; overflow-wrap: break-word; }
 
 .case-author-backdrop {
   position: fixed;
@@ -2644,9 +2646,23 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .learning-case-detail .case-author-link,
 .case-author-panel > header h3,
 .learning-case-master > button small {
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: 7px;
+}
+
+.case-author-name {
+  min-width: 0;
+  overflow: hidden;
+  display: block;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.learning-case-detail .case-author-link {
+  max-width: 100%;
+  border-radius: 12px;
 }
 
 .learning-case-master > button small { min-height: 30px; }

@@ -24,13 +24,16 @@ function TabIcon({ name }: { name: string }) {
 
 export function AppLayout() {
   const { pathname } = useLocation()
+  const showInstallPromptFromHome = () => {
+    window.dispatchEvent(new Event('parking-coach:show-install-prompt'))
+  }
 
   return (
     <div className="app-shell">
       <AppInstallPrompt />
       <PwaUpdatePrompt />
       <header className="site-header">
-        <NavLink className="brand" to="/" aria-label="Parking Coach 홈">
+        <NavLink className="brand" to="/" aria-label="Parking Coach 홈" onClick={showInstallPromptFromHome}>
           <span className="brand-mark" aria-hidden="true">P</span>
           <span>Parking Coach</span>
         </NavLink>
@@ -40,6 +43,7 @@ export function AppLayout() {
               key={to}
               to={to}
               end={end}
+              onClick={to === '/' ? showInstallPromptFromHome : undefined}
               className={({ isActive }) => isActive ? 'active' : undefined}
             >
               {label}
@@ -59,6 +63,7 @@ export function AppLayout() {
             key={to}
             to={to}
             end={end}
+            onClick={to === '/' ? showInstallPromptFromHome : undefined}
             className={({ isActive }) => isActive || (to === '/practice' && pathname === '/simulator') ? 'active' : undefined}
           >
             <TabIcon name={icon} />

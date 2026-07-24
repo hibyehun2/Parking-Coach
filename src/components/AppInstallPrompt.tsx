@@ -6,8 +6,6 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>
 }
 
-const DISMISSED_KEY = 'parking-coach:install-prompt-dismissed'
-
 export function AppInstallPrompt() {
   const { pathname } = useLocation()
   const userAgent = navigator.userAgent
@@ -26,37 +24,42 @@ export function AppInstallPrompt() {
   const [visible, setVisible] = useState(() => (
     (isIos || hasAndroidInstallGuide)
     && !isStandalone
-    && sessionStorage.getItem(DISMISSED_KEY) !== 'true'
   ))
   const [showGuide, setShowGuide] = useState(false)
+  const [canOfferInstall, setCanOfferInstall] = useState(isIos || hasAndroidInstallGuide)
 
   useEffect(() => {
     const capturePrompt = (event: Event) => {
       event.preventDefault()
       setInstallPrompt(event as BeforeInstallPromptEvent)
-      if (sessionStorage.getItem(DISMISSED_KEY) !== 'true') setVisible(true)
+      setCanOfferInstall(true)
+      setVisible(true)
     }
     const markInstalled = () => {
       setVisible(false)
       setInstallPrompt(null)
     }
     const dismissForPractice = () => setVisible(false)
+    const showFromHome = () => {
+      if (isStandalone || !canOfferInstall) return
+      setShowGuide(false)
+      setVisible(true)
+    }
     window.addEventListener('beforeinstallprompt', capturePrompt)
     window.addEventListener('appinstalled', markInstalled)
     window.addEventListener('parking-coach:dismiss-install-prompt', dismissForPractice)
+    window.addEventListener('parking-coach:show-install-prompt', showFromHome)
     return () => {
       window.removeEventListener('beforeinstallprompt', capturePrompt)
       window.removeEventListener('appinstalled', markInstalled)
       window.removeEventListener('parking-coach:dismiss-install-prompt', dismissForPractice)
+      window.removeEventListener('parking-coach:show-install-prompt', showFromHome)
     }
-  }, [])
+  }, [canOfferInstall, isStandalone])
 
   if (!visible || pathname !== '/') return null
 
-  const dismiss = () => {
-    sessionStorage.setItem(DISMISSED_KEY, 'true')
-    setVisible(false)
-  }
+  const dismiss = () => setVisible(false)
   const install = async () => {
     if (!installPrompt) {
       setShowGuide(true)

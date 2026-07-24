@@ -429,7 +429,7 @@ export function ResultPage() {
             }}>
               <span>{learningCase.scenario} · {learningCase.sharedLabel}</span>
               <strong>{learningCase.title}</strong>
-              <small><AnimalAvatar nickname={learningCase.nickname} className="case-author-avatar" />{learningCase.nickname}</small>
+              <small><AnimalAvatar nickname={learningCase.nickname} className="case-author-avatar" /><span className="case-author-name">{learningCase.nickname}</span></small>
             </button>)}
           </div>
           <aside className="learning-case-detail" aria-live="polite">
@@ -442,14 +442,14 @@ export function ResultPage() {
               </>
             })() : selectedLearningCase && <>
               <header><div><span>{selectedLearningCase.scenario}</span><h3>{selectedLearningCase.title}</h3></div><small>{selectedLearningCase.sharedLabel}</small></header>
-              <button type="button" className="case-author-link" onClick={() => setSelectedCaseAuthorId(selectedLearningCase.authorId)}><AnimalAvatar nickname={selectedLearningCase.nickname} className="case-author-avatar" />{selectedLearningCase.nickname}의 다른 사례 보기 →</button>
+              <button type="button" className="case-author-link" onClick={() => setSelectedCaseAuthorId(selectedLearningCase.authorId)}><AnimalAvatar nickname={selectedLearningCase.nickname} className="case-author-avatar" /><span className="case-author-name">{selectedLearningCase.nickname}의 다른 사례 보기 →</span></button>
               <p>{selectedLearningCase.summary}</p>
               <div><span>기억할 기준</span><strong>{selectedLearningCase.takeaway}</strong></div>
             </>}
           </aside>
         </div> : <div className="learning-case-grid" aria-label="학습 사례 예시">
           {LEARNING_CASES.map((learningCase) => <article key={learningCase.id} className="learning-case-card">
-            <header><button type="button" onClick={() => setSelectedCaseAuthorId(learningCase.authorId)}><AnimalAvatar nickname={learningCase.nickname} className="case-author-avatar" />{learningCase.nickname}</button><small>{learningCase.sharedLabel}</small></header>
+            <header><button type="button" onClick={() => setSelectedCaseAuthorId(learningCase.authorId)}><AnimalAvatar nickname={learningCase.nickname} className="case-author-avatar" /><span className="case-author-name">{learningCase.nickname}</span></button><small>{learningCase.sharedLabel}</small></header>
             <span>{learningCase.scenario}</span><strong>{learningCase.title}</strong><p>{learningCase.summary}</p><small>{learningCase.takeaway}</small>
           </article>)}
         </div>}
@@ -461,7 +461,7 @@ export function ResultPage() {
           }}>
             <section className="case-author-panel" role="dialog" aria-modal="true" aria-labelledby="case-author-title">
               <header>
-                <div><span>공개 학습 사례</span><h3 id="case-author-title"><AnimalAvatar nickname={nickname ?? ''} className="case-author-avatar" />{nickname}</h3><small>{authorCases.length}개의 예시 사례</small></div>
+                <div><span>공개 학습 사례</span><h3 id="case-author-title"><AnimalAvatar nickname={nickname ?? ''} className="case-author-avatar" /><span className="case-author-name">{nickname}</span></h3><small>{authorCases.length}개의 예시 사례</small></div>
                 <button type="button" aria-label="사례 목록 닫기" onClick={() => setSelectedCaseAuthorId(null)}>×</button>
               </header>
               <ol>{authorCases.map((learningCase) => <li key={learningCase.id}>

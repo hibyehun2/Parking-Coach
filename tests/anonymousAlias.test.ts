@@ -26,9 +26,16 @@ test('닉네임의 동물은 캐릭터 아틀라스 순서와 정확히 연결�
 test('모든 동물은 서로 분리된 최적화 이미지 파일을 가진다', () => {
   const directory = resolve('public/images/animal-avatars')
   const files = readdirSync(directory).filter((file) => /^avatar-\d{2}\.jpg$/.test(file)).sort()
+  let totalSize = 0
 
   assert.equal(files.length, ANONYMOUS_ALIAS_ANIMALS.length)
   assert.equal(files[0], 'avatar-01.jpg')
   assert.equal(files.at(-1), 'avatar-48.jpg')
-  for (const file of files) assert.ok(statSync(resolve(directory, file)).size > 1_000)
+  for (const file of files) {
+    const size = statSync(resolve(directory, file)).size
+    totalSize += size
+    assert.ok(size > 5_000)
+    assert.ok(size < 30_000)
+  }
+  assert.ok(totalSize < 1_000_000)
 })

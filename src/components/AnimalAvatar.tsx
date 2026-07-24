@@ -24,8 +24,8 @@ export function AnimalAvatar({
       src={avatarImageUrl(index)}
       alt=""
       aria-hidden="true"
-      width="192"
-      height="192"
+      width="256"
+      height="256"
       loading="lazy"
       decoding="async"
       draggable="false"
