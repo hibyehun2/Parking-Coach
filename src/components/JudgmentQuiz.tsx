@@ -20,6 +20,12 @@ export function JudgmentCanvas({
     () => choice ? simulateJudgmentChoice(scenario.vehicle, choice, runtime) : { states: [scenario.vehicle], points: [], collided: false },
     [choice, runtime, scenario],
   )
+  const focusZone = scenario.focusZone ?? choice?.focusZone
+  const highlightedParkedSide = focusZone?.includes('right')
+    ? 'right'
+    : focusZone?.includes('left')
+      ? 'left'
+      : undefined
 
   useEffect(() => {
     if (!choice || simulation.states.length < 2) return
@@ -58,15 +64,15 @@ export function JudgmentCanvas({
         ghostVehicles: simulation.states.length > 1
           ? [{ vehicle: simulation.states[simulation.states.length - 1], color: correct ? '#31d38b' : '#ff6b62' }]
           : undefined,
-        highlightContactZone: scenario.focusZone ?? choice?.focusZone,
-        reverseGuideOpacity: 0.24,
+        highlightParkedCorner: highlightedParkedSide,
+        reverseGuideOpacity: 0.38,
       })
     }
     const observer = new ResizeObserver(draw)
     observer.observe(canvas)
     draw()
     return () => observer.disconnect()
-  }, [choice?.focusZone, correct, frame, runtime, scenario, simulation])
+  }, [correct, frame, highlightedParkedSide, runtime, scenario, simulation])
 
   return <canvas ref={canvasRef} role="img" aria-label={`${scenario.title} 상황의 차량 위치와 선택 결과`} />
 }
@@ -163,13 +169,16 @@ export function JudgmentQuiz({
                 onClick={() => select(choice)}
               >
                 <span className="choice-title">{choice.label}</span>
-                {choice.steps && <span className="choice-steps">
-                  {choice.steps.map((step, index) => <span key={step}><b>{index + 1}</b>{step}</span>)}
-                </span>}
               </button>
             ))}
           </div>
           {selected && <p className={correct ? 'quiz-correct-copy' : 'quiz-wrong-copy'}>{selected.feedback}</p>}
+          {correct && selected?.steps?.length && (
+            <section className="quiz-answer-steps" aria-live="polite" aria-label="안전한 동작의 상세 순서">
+              <strong>동작 순서</strong>
+              <ol>{selected.steps.map((step) => <li key={step}>{step}</li>)}</ol>
+            </section>
+          )}
           {correct && selected && <button type="button" className="quiz-next" onClick={() => onComplete(
             firstTryCorrect,
             selected,

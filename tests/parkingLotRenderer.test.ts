@@ -10,6 +10,7 @@ import {
   isRearWheelAtStop,
   isRedGuideAlignedWithParkingLine,
   parkingCameraCueCenter,
+  parkedVehicleFrontInnerCorner,
   redGuideParkingLineDistance,
   reverseNeutralGuideGeometry,
   reverseTrapezoidGeometry,
@@ -128,6 +129,19 @@ test('빨간 모서리가 주차칸 입구 모서리에 가까워질 때만 정�
 
   assert.equal(isRedGuideAlignedWithParkingLine(alignedVehicle), true)
   assert.equal(isRedGuideAlignedWithParkingLine({ ...alignedVehicle, x: alignedVehicle.x + 0.5 }), false)
+})
+
+test('판단 연습 위험 표시는 양옆 차량의 주차칸 쪽 앞모서리를 가리킨다', () => {
+  const runtime = createScenarioRuntime('both-sides', { seed: 2 })
+  const left = runtime.parkedVehicles.find((vehicle) => vehicle.side === 'left')!
+  const right = runtime.parkedVehicles.find((vehicle) => vehicle.side === 'right')!
+  const leftCorner = parkedVehicleFrontInnerCorner(left)
+  const rightCorner = parkedVehicleFrontInnerCorner(right)
+
+  assert.ok(leftCorner.x > left.x, '왼쪽 차량은 오른쪽 안쪽 모서리를 표시해야 한다')
+  assert.ok(rightCorner.x < right.x, '오른쪽 차량은 왼쪽 안쪽 모서리를 표시해야 한다')
+  assert.ok(leftCorner.y < left.y, '왼쪽 차량은 통로 쪽 앞모서리를 표시해야 한다')
+  assert.ok(rightCorner.y < right.y, '오른쪽 차량은 통로 쪽 앞모서리를 표시해야 한다')
 })
 
 test('카메라 모서리를 맞춘 뒤 최대 조향하면 좌우 진입 모두 충돌 없이 주차칸 안에서 평행해진다', () => {

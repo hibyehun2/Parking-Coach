@@ -28,10 +28,29 @@ import {
   type Collision,
 } from './collisionDetection.ts'
 import { TARGET_PARKING_BAY } from './parkingEvaluation.ts'
-import type { ScenarioRuntime, ScenarioWall } from '../types/practice.ts'
+import type { ScenarioParkedVehicle, ScenarioRuntime, ScenarioWall } from '../types/practice.ts'
 import { WHEEL_STOP } from './wheelStop.ts'
 
 export { WHEEL_STOP, isRearWheelAtStop } from './wheelStop.ts'
+
+export function parkedVehicleFrontInnerCorner(
+  parked: Pick<ScenarioParkedVehicle, 'x' | 'y' | 'heading' | 'side'>,
+) {
+  const forwardX = Math.cos(parked.heading)
+  const forwardY = Math.sin(parked.heading)
+  const lateralX = -Math.sin(parked.heading)
+  const lateralY = Math.cos(parked.heading)
+  const innerDirection = parked.side === 'left' ? 1 : -1
+
+  return {
+    x: parked.x
+      + forwardX * VEHICLE_DIMENSIONS.length / 2
+      + lateralX * VEHICLE_DIMENSIONS.width / 2 * innerDirection,
+    y: parked.y
+      + forwardY * VEHICLE_DIMENSIONS.length / 2
+      + lateralY * VEHICLE_DIMENSIONS.width / 2 * innerDirection,
+  }
+}
 
 type VehicleStyle = {
   body: string
@@ -601,6 +620,7 @@ export function renderParkingLot(
     topInsetRatio?: number
     bottomInsetRatio?: number
     highlightParkedSide?: 'left' | 'right'
+    highlightParkedCorner?: 'left' | 'right'
     assistanceSide?: AssistanceSide
     wheelStopActive?: boolean
     runtime?: ScenarioRuntime
@@ -713,6 +733,27 @@ export function renderParkingLot(
     reverseLights: vehicle.gear === 'R',
     braking: vehicle.braking,
   })
+  if (options.highlightParkedCorner) {
+    const parked = parkedVehicles.find((item) => item.side === options.highlightParkedCorner)
+    if (parked) {
+      const corner = parkedVehicleFrontInnerCorner(parked)
+      context.save()
+      context.translate(corner.x, corner.y)
+      context.fillStyle = 'rgba(255, 69, 58, .32)'
+      context.strokeStyle = '#ff453a'
+      context.lineWidth = .13
+      context.beginPath()
+      context.arc(0, 0, .4, 0, Math.PI * 2)
+      context.fill()
+      context.stroke()
+      context.fillStyle = '#ffffff'
+      context.font = '800 .35px sans-serif'
+      context.textAlign = 'center'
+      context.textBaseline = 'middle'
+      context.fillText('!', 0, .02)
+      context.restore()
+    }
+  }
   if (options.highlightContactZone) {
     const localX = options.highlightContactZone.includes('front')
       ? VEHICLE_DIMENSIONS.length / 2

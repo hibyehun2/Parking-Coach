@@ -28,8 +28,20 @@ test('도움이 적은 확인형 판단과 단순 직선 재진입 문제를 제
   assert.equal(steps.some(({ skill }) => ['hazard-prediction', 'stop-timing', 'recheck'].includes(skill)), false)
   assert.equal(steps.some(({ title }) => /위험 지점|멈출 시점|재확인|직선 재진입/.test(title)), false)
   for (const step of steps.filter(({ id }) => id.endsWith('-resume'))) {
-    assert.match(answerOf(step).label, /처음 주차하던/)
-    assert.match(answerOf(step).label, /최대 조향/)
+    assert.match(answerOf(step).label, /처음 주차 방향/)
+    assert.ok(answerOf(step).steps?.some((item) => /끝까지 돌리기/.test(item)))
+  }
+})
+
+test('선택지는 짧게 보여주고 여러 동작의 상세 순서는 정답 데이터로 분리한다', () => {
+  const steps = buildCorrectionDrills(createScenarioRuntime('both-sides', { seed: 2 }))
+    .flatMap(({ steps: items }) => items)
+  for (const step of steps) {
+    assert.ok(Math.max(...step.choices.map(({ label }) => label.length)) <= 26, step.id)
+    const answer = answerOf(step)
+    if (['near-resume', 'far-resume', 'off-center-exit', 'off-center-realign', 'crooked-space', 'crooked-align'].includes(step.id)) {
+      assert.ok((answer.steps?.length ?? 0) >= 2, step.id)
+    }
   }
 })
 
@@ -72,7 +84,7 @@ test('공간을 만든 뒤 처음 주차 방향으로 다시 조향해 주차를
       const step = drills.find((drill) => drill.id === id)!.steps[2]
       const answer = answerOf(step)
       const simulation = simulateJudgmentChoice(step.vehicle, answer, runtime)
-      assert.match(answer.label, runtime.startSide === 'left' ? /오른쪽 방향/ : /왼쪽 방향/)
+      assert.ok(answer.steps?.some((item) => runtime.startSide === 'left' ? /오른쪽 방향/.test(item) : /왼쪽 방향/.test(item)))
       assert.ok(answer.steps?.some((item) => /평행/.test(item)))
       assert.equal(simulation.collided, false)
       assert.equal(isVehicleInsideParkingBay(simulation.states.at(-1)!), true)
@@ -97,11 +109,10 @@ test('가운데와 기울기 수정은 공간 만들기와 평행 복귀를 연�
   const drills = buildCorrectionDrills(createScenarioRuntime('both-sides', { seed: 2 }))
   const offCenter = drills.find(({ id }) => id === 'off-center')!
   const crooked = drills.find(({ id }) => id === 'crooked')!
-  assert.match(answerOf(offCenter.steps[0]).label, /핸들을 중앙/)
-  assert.match(answerOf(offCenter.steps[0]).label, /뒷범퍼/)
-  assert.match(answerOf(offCenter.steps[1]).label, /^R로/)
-  assert.match(answerOf(crooked.steps[0]).label, /^D로/)
-  assert.match(answerOf(crooked.steps[1]).label, /^R로/)
+  assert.match(answerOf(offCenter.steps[0]).label, /직선 전진/)
+  assert.match(answerOf(offCenter.steps[1]).label, /후진 S자/)
+  assert.match(answerOf(crooked.steps[0]).label, /차체를 펴며/)
+  assert.match(answerOf(crooked.steps[1]).label, /후진 S자/)
   assert.equal(answerOf(offCenter.steps[0]).steps?.length, 2)
   assert.equal(answerOf(offCenter.steps[1]).steps?.length, 3)
   assert.equal(answerOf(crooked.steps[0]).steps?.length, 3)

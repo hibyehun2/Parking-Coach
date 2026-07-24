@@ -169,8 +169,8 @@ function buildEntryCorrectionCourse(
   const targetSide = kind === 'near' ? nearSide : farSide
   const courseTitle = kind === 'near' ? '가까운 쪽 간격 수정' : '먼 쪽 간격 수정'
   const moveLabel = kind === 'near'
-    ? '핸들을 중앙에 둔 채 R로 50cm~1m만 직선 후진'
-    : '핸들을 중앙에 둔 채 D로 50cm~1m만 직선 전진'
+    ? '직선 후진으로 가까운 쪽 공간 만들기'
+    : '직선 전진으로 먼 쪽 공간 만들기'
   const focusZone = kind === 'near'
     ? (leftEntry ? 'rear-right' as const : 'rear-left' as const)
     : (leftEntry ? 'front-left' as const : 'front-right' as const)
@@ -191,7 +191,7 @@ function buildEntryCorrectionCourse(
         centered,
         pathChoice(
           'center-steering',
-          '브레이크를 유지한 채 핸들을 정중앙으로 풀기',
+          '핸들을 정중앙으로 풀기',
           '수정 이동의 기준을 만들기 위해 먼저 바퀴를 일자로 맞춥니다.',
           centered,
         ),
@@ -236,7 +236,7 @@ function buildEntryCorrectionCourse(
         finish,
         pathChoice(
           `${kind}-resume-answer`,
-          `R로 바꾸고 처음 주차하던 ${nearSide} 방향으로 다시 최대 조향`,
+          '처음 주차 방향으로 다시 후진하기',
           '처음 꺾었던 방향으로 후진을 재개하고, 평행해지는 순간 핸들을 중앙으로 풀어 깊이를 맞춥니다.',
           finish,
           [
@@ -291,13 +291,13 @@ function buildInsideBayCourses(runtime: ScenarioRuntime): CorrectionDrill[] {
         offsetExit,
         pathChoice(
           'offset-exit',
-          '핸들을 중앙에 두고 뒷범퍼가 주차칸 입구를 벗어날 때까지 전진',
+          '직선 전진으로 재진입 공간 만들기',
           '평행한 차체를 그대로 유지하며, 후진 조향을 시작할 수 있는 통로 공간까지 빠져나옵니다.',
           offsetExit,
           ['핸들을 중앙에 놓고 D로 천천히 전진', '뒷범퍼가 주차칸 입구를 완전히 벗어나면 정지'],
         ),
         [
-          { id: 'sideways-reverse', label: '현재 자리에서 R과 최대 조향으로 바로 옆으로 이동', feedback: '차는 제자리에서 옆으로 이동할 수 없어 뒤 모서리만 선에 가까워집니다.' },
+          { id: 'sideways-reverse', label: '현재 자리에서 최대 조향으로 옆 이동', feedback: '차는 제자리에서 옆으로 이동할 수 없어 뒤 모서리만 선에 가까워집니다.' },
           { id: 'early-turn', label: `${correctionSide}으로 조향하며 주차칸 안에서 바로 전진`, feedback: '좁은 주차칸 안에서 먼저 꺾으면 앞 모서리의 회전 궤적이 옆 차량에 가까워질 수 있습니다.' },
         ],
         '차체가 평행하다면 핸들을 중앙에 두고, 뒷범퍼가 입구를 벗어날 때까지 직선으로 나오세요.',
@@ -311,7 +311,7 @@ function buildInsideBayCourses(runtime: ScenarioRuntime): CorrectionDrill[] {
         offsetReentryAndFinish,
         pathChoice(
           'offset-realign',
-          `R로 바꾸고 ${correctionSide}으로 조향한 뒤 ${oppositeSide}으로 되돌려 평행 맞추기`,
+          '후진 S자 조향으로 가운데 맞추기',
           '넓은 공간 쪽으로 차량 뒤를 옮기고, 중심선에 가까워지면 반대 조향해 차체를 나란하게 만듭니다.',
           offsetReentryAndFinish,
           [
@@ -369,7 +369,7 @@ function buildInsideBayCourses(runtime: ScenarioRuntime): CorrectionDrill[] {
         crookedExit,
         pathChoice(
           'crooked-space-answer',
-          `D로 바꾸고 ${straightenSide}으로 조금씩 조향해 차체를 편 뒤 통로까지 전진`,
+          '차체를 펴며 통로로 전진하기',
           '차 앞부분이 향한 쪽의 반대로 조향해 차체를 먼저 펴고, 뒷범퍼가 입구를 벗어날 때까지 나옵니다.',
           crookedExit,
           [
@@ -393,7 +393,7 @@ function buildInsideBayCourses(runtime: ScenarioRuntime): CorrectionDrill[] {
         crookedReentryAndFinish,
         pathChoice(
           'crooked-align-answer',
-          `R로 바꾸고 ${reentrySide}으로 조향한 뒤 ${counterSide}으로 되돌려 평행 맞추기`,
+          '후진 S자 조향으로 가운데 맞추기',
           '주차칸 중심으로 후진한 뒤 반대 조향으로 차체 각도를 회복하고 중앙 조향으로 마무리합니다.',
           crookedReentryAndFinish,
           [
@@ -418,7 +418,6 @@ function buildNarrowDrill(runtime: ScenarioRuntime): CorrectionDrill {
   const stages = buildNarrowAisleLessonSimulation(runtime)
   const correction = stages[5].states
   const finish = stages[6].states
-  const leftEntry = runtime.startSide !== 'right'
   return {
     id: 'narrow-multipoint',
     title: '좁은 통로 다단 수정',
@@ -431,7 +430,7 @@ function buildNarrowDrill(runtime: ScenarioRuntime): CorrectionDrill {
         '첫 후진에서 안쪽 간격이 부족해 완전히 정지했습니다.',
         '앞쪽 벽 여유 안에서 재진입각을 만들려면?',
         correction,
-        pathChoice('narrow-correction-answer', 'D로 짧게 전진하고 반대 조향으로 재진입각 만들기', '한 번에 길게 움직이지 않고 두 곡선으로 공간과 각도를 나눠 만듭니다.', correction),
+        pathChoice('narrow-correction-answer', '짧은 전진 조향으로 재진입각 만들기', '한 번에 길게 움직이지 않고 두 곡선으로 공간과 각도를 나눠 만듭니다.', correction),
         [
           { id: 'narrow-long-forward', label: '앞쪽 벽까지 한 번에 길게 전진', feedback: '앞 모서리와 벽 사이에 새 위험을 만들 수 있습니다.' },
           { id: 'narrow-reverse-now', label: '공간을 만들지 않고 바로 다시 후진', feedback: '안쪽 간격이 충분히 회복되지 않았습니다.' },
@@ -447,7 +446,7 @@ function buildNarrowDrill(runtime: ScenarioRuntime): CorrectionDrill {
         finish,
         pathChoice(
           'narrow-finish-answer',
-          `R로 바꾸고 ${leftEntry ? '왼쪽' : '오른쪽'}으로 조향해 후진한 뒤 평행해지면 핸들을 중앙으로 풀기`,
+          '재후진하며 평행해질 때 핸들 풀기',
           '평행해지는 순간 조향을 풀고 깊이만 맞춥니다.',
           finish,
         ),

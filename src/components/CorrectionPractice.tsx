@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { buildCorrectionDrills, type CorrectionDrill } from '../engine/correctionDrills'
 import {
@@ -12,11 +13,77 @@ import {
   type CorrectionAttempt,
 } from '../engine/practiceHistory'
 import type { ScenarioRuntime } from '../types/practice'
-import { JudgmentGuide, JudgmentQuiz } from './JudgmentQuiz'
+import { JudgmentCanvas, JudgmentGuide, JudgmentQuiz } from './JudgmentQuiz'
 
 type PracticeItem = {
   drill: CorrectionDrill
   step: JudgmentScenario
+}
+
+function PreviousQuestionReview({
+  attempt,
+  position,
+  total,
+  runtime,
+  onPrevious,
+  onNext,
+  onClose,
+}: {
+  attempt: CorrectionAttempt
+  position: number
+  total: number
+  runtime: ScenarioRuntime
+  onPrevious: () => void
+  onNext: () => void
+  onClose: () => void
+}) {
+  const snapshot = attempt.reviewSnapshot
+  if (!snapshot) return null
+
+  return createPortal(
+    <div className="previous-quiz-backdrop" onMouseDown={(event) => {
+      if (event.target === event.currentTarget) onClose()
+    }}>
+      <section className="previous-quiz-dialog" role="dialog" aria-modal="true" aria-labelledby="previous-quiz-title">
+        <header>
+          <div>
+            <span>이전 문제 {position + 1} / {total}</span>
+            <h2 id="previous-quiz-title">{snapshot.scenario.title}</h2>
+          </div>
+          <button type="button" onClick={onClose} aria-label="이전 문제 보기 닫기">×</button>
+        </header>
+        <div className="previous-quiz-layout">
+          <div className="previous-quiz-figure">
+            <JudgmentCanvas
+              scenario={snapshot.scenario}
+              choice={snapshot.correctChoice}
+              correct
+              runtime={runtime}
+            />
+            <small>안전한 선택의 움직임</small>
+          </div>
+          <div className="previous-quiz-copy">
+            <p>{snapshot.scenario.situation}</p>
+            <strong>{snapshot.scenario.question}</strong>
+            <dl>
+              <div><dt>내 첫 선택</dt><dd>{snapshot.firstChoice.label}</dd></div>
+              <div><dt>안전한 선택</dt><dd>{snapshot.correctChoice.label}</dd></div>
+            </dl>
+            {snapshot.correctChoice.steps?.length && (
+              <ol>{snapshot.correctChoice.steps.map((step) => <li key={step}>{step}</li>)}</ol>
+            )}
+            <p className="previous-quiz-takeaway">{snapshot.scenario.takeaway}</p>
+          </div>
+        </div>
+        <footer>
+          <button type="button" onClick={onPrevious} disabled={position === 0}>이전</button>
+          <button type="button" onClick={onNext} disabled={position === total - 1}>다음</button>
+          <button type="button" className="primary" onClick={onClose}>현재 문제로 돌아가기</button>
+        </footer>
+      </section>
+    </div>,
+    document.body,
+  )
 }
 
 function CourseIcon({ course }: { course: CorrectionDrill['id'] }) {
@@ -37,6 +104,7 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
   const [itemIndex, setItemIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [attempts, setAttempts] = useState<CorrectionAttempt[]>([])
+  const [reviewAttemptIndex, setReviewAttemptIndex] = useState<number | null>(null)
   const guide = useMemo(() => buildJudgmentGuide(runtime), [runtime])
   const drills = useMemo(() => buildCorrectionDrills(runtime), [runtime])
   const history = useMemo(() => loadPracticeHistory(), [])
@@ -76,6 +144,15 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drills, pastAttempts])
 
+  useEffect(() => {
+    if (reviewAttemptIndex === null) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setReviewAttemptIndex(null)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [reviewAttemptIndex])
+
   const start = (drill: CorrectionDrill) => {
     const chosen = drill.steps.map((step) => ({ drill, step }))
     if (!chosen.length) return
@@ -83,6 +160,7 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
     setItemIndex(0)
     setScore(0)
     setAttempts([])
+    setReviewAttemptIndex(null)
     setPhase('practice')
   }
 
@@ -207,6 +285,15 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
         <span>{itemIndex + 1} / {practiceItems.length}</span>
         <strong>{current.drill.title} · {current.step.title}</strong>
         <progress value={itemIndex + 1} max={practiceItems.length} />
+        {attempts.length > 0 && (
+          <button
+            type="button"
+            className="previous-quiz-control"
+            onClick={() => setReviewAttemptIndex(attempts.length - 1)}
+          >
+            이전 문제 보기
+          </button>
+        )}
       </div>
       <p className="page-description">{current.drill.description} 선택한 안전 동작의 결과가 다음 판단 단계로 이어집니다.</p>
       <JudgmentQuiz
@@ -217,6 +304,17 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
         total={practiceItems.length}
         onComplete={complete}
       />
+      {reviewAttemptIndex !== null && attempts[reviewAttemptIndex] && (
+        <PreviousQuestionReview
+          attempt={attempts[reviewAttemptIndex]}
+          position={reviewAttemptIndex}
+          total={attempts.length}
+          runtime={runtime}
+          onPrevious={() => setReviewAttemptIndex((index) => Math.max(0, (index ?? 0) - 1))}
+          onNext={() => setReviewAttemptIndex((index) => Math.min(attempts.length - 1, (index ?? 0) + 1))}
+          onClose={() => setReviewAttemptIndex(null)}
+        />
+      )}
     </section>
   )
 }
