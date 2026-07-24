@@ -28,7 +28,6 @@ function allItems(drills: CorrectionDrill[]): PracticeItem[] {
 export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
   const navigate = useNavigate()
   const [phase, setPhase] = useState<'select' | 'guide' | 'practice'>('select')
-  const [selectedSkills, setSelectedSkills] = useState<JudgmentSkill[]>([])
   const [practiceItems, setPracticeItems] = useState<PracticeItem[]>([])
   const [itemIndex, setItemIndex] = useState(0)
   const [score, setScore] = useState(0)
@@ -57,6 +56,14 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
     if (recent.length >= 3 && correct / recent.length >= .8) return { label: '안정적이에요', tone: 'steady' }
     return { label: '연습 완료', tone: 'complete' }
   }
+  const skillProgress = (skill: JudgmentSkill) => {
+    const recent = pastAttempts.filter((attempt) => attempt.skill === skill).slice(0, 3)
+    if (!recent.length) return null
+    return {
+      correct: recent.filter((attempt) => attempt.firstTryCorrect).length,
+      total: recent.length,
+    }
+  }
   const recommendedSkills = useMemo(() => {
     const priority = [...availableSkills].sort((left, right) => {
       const rank = (skill: JudgmentSkill) => {
@@ -79,12 +86,6 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
     setScore(0)
     setAttempts([])
     setPhase('guide')
-  }
-
-  const toggleSkill = (skill: JudgmentSkill) => {
-    setSelectedSkills((current) => current.includes(skill)
-      ? current.filter((item) => item !== skill)
-      : [...current, skill])
   }
 
   const complete = (firstTryCorrect: boolean, answer: JudgmentChoice, firstChoice: JudgmentChoice) => {
@@ -125,48 +126,42 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
       <section className="judgment-skill-picker" aria-labelledby="judgment-skill-title">
         <header>
           <div><span>판단 연습</span><h2 id="judgment-skill-title">어떤 판단을 연습할까요?</h2></div>
-          <p>추천 구성을 바로 시작하거나, 필요한 판단을 골라 다시 연습할 수 있습니다.</p>
+          <p>추천 구성을 시작하거나, 필요한 판단 하나를 골라 집중해서 연습해요.</p>
         </header>
-        <button type="button" className="recommended-practice" onClick={() => start(recommendedSkills, true)}>
-          <span>추천 연습 · 최대 6문제</span>
-          <strong>처음이거나 다시 볼 판단부터 시작</strong>
-          <small>{recommendedSkills.map((skill) => JUDGMENT_SKILL_INFO[skill].title).join(' · ')}</small>
-        </button>
-        <div className="judgment-skill-grid">
-          {availableSkills.map((skill) => {
-            const info = JUDGMENT_SKILL_INFO[skill]
-            const status = skillStatus(skill)
-            const selected = selectedSkills.includes(skill)
-            const count = items.filter((item) => item.step.skill === skill).length
-            return (
-              <button
-                key={skill}
-                type="button"
-                className={`judgment-skill-card${selected ? ' selected' : ''}`}
-                aria-pressed={selected}
-                onClick={() => toggleSkill(skill)}
-              >
-                <span className={`skill-status ${status.tone}`}>{status.label}</span>
-                <strong>{info.title}</strong>
-                <p>{info.description}</p>
-                <small>{count}문제 · {selected ? '선택됨' : '선택하기'}</small>
-              </button>
-            )
-          })}
-        </div>
-        <footer>
-          <span>{selectedSkills.length
-            ? `${selectedSkills.length}개 판단 · ${items.filter((item) => selectedSkills.includes(item.step.skill)).length}문제`
-            : '하나 이상의 판단을 선택하세요.'}</span>
-          <button
-            type="button"
-            className="primary-button"
-            disabled={!selectedSkills.length}
-            onClick={() => start(selectedSkills)}
-          >
-            선택한 판단 연습하기
+        <div className="judgment-picker-options">
+          <button type="button" className="recommended-practice" onClick={() => start(recommendedSkills, true)}>
+            <span>추천 연습 · 최대 6문제</span>
+            <strong>처음이거나 다시 볼 판단부터 시작</strong>
+            <small>{recommendedSkills.map((skill) => JUDGMENT_SKILL_INFO[skill].title).join(' · ')}</small>
+            <b>바로 시작 <span aria-hidden="true">→</span></b>
           </button>
-        </footer>
+          <section className="judgment-skill-list" aria-labelledby="judgment-skill-list-title">
+            <h3 id="judgment-skill-list-title">판단 유형별 연습</h3>
+            <div className="judgment-skill-grid">
+              {availableSkills.map((skill) => {
+                const info = JUDGMENT_SKILL_INFO[skill]
+                const status = skillStatus(skill)
+                const progress = skillProgress(skill)
+                const count = items.filter((item) => item.step.skill === skill).length
+                return (
+                  <button
+                    key={skill}
+                    type="button"
+                    className="judgment-skill-card"
+                    aria-label={`${info.title}, ${status.label}, ${count}문제 연습 시작`}
+                    onClick={() => start([skill])}
+                  >
+                    <span className={`skill-status ${status.tone}`}>{status.label}</span>
+                    <strong>{info.title}</strong>
+                    <p>{info.description}</p>
+                    <small>{progress ? `최근 ${progress.correct}/${progress.total} 정답 · ` : ''}{count}문제</small>
+                    <i aria-hidden="true">→</i>
+                  </button>
+                )
+              })}
+            </div>
+          </section>
+        </div>
       </section>
     )
   }
