@@ -1,7 +1,7 @@
 {
   "name": "Parking Coach",
   "short_name": "Parking Coach",
-  "description": "초보 운전자를 위한 단계별 후진주차 연습 웹앱",
+  "description": "판단 연습과 단계별 직접 조작으로 익히는 후진주차 연습 웹앱",
   "start_url": "/Parking-Coach/",
   "scope": "/Parking-Coach/",
   "display": "standalone",
