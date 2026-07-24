@@ -30,6 +30,12 @@ test('첫 성공 이후 출발 방향이 시드에 따라 달라진다', () => {
   assert.equal(createScenarioRuntime('both-sides', { seed: 3, firstSuccess: true }).startSide, 'right')
 })
 
+test('후방카메라 진입 차선은 직접 연습에만 적용된다', () => {
+  assert.equal(createScenarioRuntime('both-sides', { seed: 2, practiceMode: 'learning' }).initialVehicle.y, 5.2)
+  assert.equal(createScenarioRuntime('both-sides', { seed: 2, practiceMode: 'practice' }).initialVehicle.y, 4)
+  assert.equal(createScenarioRuntime('both-sides', { seed: 2 }).initialVehicle.y, 4)
+})
+
 test('벽면 옆 상황의 추가 벽은 실제 충돌 대상으로 동작한다', () => {
   const runtime = createScenarioRuntime('wall-side', { seed: 2 })
   const practiceWall = runtime.walls.find((wall) => wall.id.startsWith('practice-wall'))!

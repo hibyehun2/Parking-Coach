@@ -1,5 +1,6 @@
 import { TARGET_PARKING_BAY } from './parkingEvaluation.ts'
 import { detectCollision } from './collisionDetection.ts'
+import { parkingCameraCueCenter } from './parkingLotRenderer.ts'
 import {
   DEFAULT_VEHICLE_CONFIG,
   INITIAL_VEHICLE_STATE,
@@ -15,8 +16,9 @@ export type LessonSimulationStage = {
 
 const TIME_STEP = 0.05
 const DRIVER_SHOULDER_FROM_CENTER = 0.8
-const ENTRY_ANGLE = 25 * Math.PI / 180
+const JUDGMENT_ENTRY_ANGLE = 25 * Math.PI / 180
 const FINAL_CENTER_Y = 10.42
+const CAMERA_CUE_APPROACH_MARGIN = 1
 
 function stopped(state: VehicleState, changes: Partial<VehicleState> = {}): VehicleState {
   return { ...state, ...changes, speed: 0, braking: true }
@@ -53,25 +55,43 @@ function toStage(states: VehicleState[]): LessonSimulationStage {
 }
 
 export function buildLessonSimulation(runtime: ScenarioRuntime): LessonSimulationStage[] {
-  const entryCenterX = TARGET_PARKING_BAY.right - DRIVER_SHOULDER_FROM_CENTER
-  const initial = stopped({ ...INITIAL_VEHICLE_STATE, x: 5.5, y: 4, heading: 0, gear: 'D' })
+  const cameraCue = parkingCameraCueCenter('left')
+  const initial = stopped({
+    ...INITIAL_VEHICLE_STATE,
+    x: 5.5,
+    y: cameraCue.y,
+    heading: 0,
+    gear: 'D',
+  })
 
-  const approach = simulateUntil(initial, { steeringDirection: 0 }, (state) => state.x >= entryCenterX)
+  const approach = simulateUntil(
+    initial,
+    { steeringDirection: 0 },
+    (state) => state.x >= cameraCue.x + CAMERA_CUE_APPROACH_MARGIN,
+  )
   approach[approach.length - 1] = stopped({
     ...approach[approach.length - 1],
-    x: entryCenterX,
+    x: cameraCue.x + CAMERA_CUE_APPROACH_MARGIN,
     steeringAngle: 0,
   })
 
-  const angle = simulateUntil(
-    approach[approach.length - 1],
-    { steeringDirection: -1 },
-    (state) => state.heading <= -ENTRY_ANGLE,
+  const cameraCueStart = stopped(approach[approach.length - 1], {
+    gear: 'R',
+    steeringAngle: 0,
+  })
+  const alignCameraGuide = simulateUntil(
+    cameraCueStart,
+    { steeringDirection: 0 },
+    (state) => state.x <= cameraCue.x,
   )
-  const angleStop = stopped(angle[angle.length - 1])
+  alignCameraGuide[alignCameraGuide.length - 1] = stopped({
+    ...alignCameraGuide[alignCameraGuide.length - 1],
+    x: cameraCue.x,
+    steeringAngle: 0,
+  })
 
   const prepareReverse = [
-    stopped(angleStop, {
+    stopped(alignCameraGuide[alignCameraGuide.length - 1], {
       gear: 'R',
       steeringAngle: DEFAULT_VEHICLE_CONFIG.maxSteeringAngle,
     }),
@@ -94,6 +114,55 @@ export function buildLessonSimulation(runtime: ScenarioRuntime): LessonSimulatio
     (state) => state.y >= FINAL_CENTER_Y,
   )
 
+  const stages = [
+    toStage(approach),
+    toStage(alignCameraGuide),
+    toStage(prepareReverse),
+    toStage(curvedReverse),
+    toStage(straightReverse),
+  ]
+
+  if (runtime.startSide !== 'right') return stages
+  return stages.map((stage) => toStage(stage.states.map(mirrorState)))
+}
+
+export function buildJudgmentReferenceSimulation(runtime: ScenarioRuntime): LessonSimulationStage[] {
+  const entryCenterX = TARGET_PARKING_BAY.right - DRIVER_SHOULDER_FROM_CENTER
+  const initial = stopped({ ...INITIAL_VEHICLE_STATE, x: 5.5, y: 4, heading: 0, gear: 'D' })
+
+  const approach = simulateUntil(initial, { steeringDirection: 0 }, (state) => state.x >= entryCenterX)
+  approach[approach.length - 1] = stopped({
+    ...approach[approach.length - 1],
+    x: entryCenterX,
+    steeringAngle: 0,
+  })
+
+  const angle = simulateUntil(
+    approach[approach.length - 1],
+    { steeringDirection: -1 },
+    (state) => state.heading <= -JUDGMENT_ENTRY_ANGLE,
+  )
+  const prepareReverse = [
+    stopped(angle[angle.length - 1], {
+      gear: 'R',
+      steeringAngle: DEFAULT_VEHICLE_CONFIG.maxSteeringAngle,
+    }),
+  ]
+  const curvedReverse = simulateUntil(
+    prepareReverse[0],
+    { steeringDirection: 0 },
+    (state) => state.heading <= TARGET_PARKING_BAY.heading,
+  )
+  curvedReverse[curvedReverse.length - 1] = stopped({
+    ...curvedReverse[curvedReverse.length - 1],
+    heading: TARGET_PARKING_BAY.heading,
+  })
+  const straightStart = stopped(curvedReverse[curvedReverse.length - 1], { steeringAngle: 0, gear: 'R' })
+  const straightReverse = simulateUntil(
+    straightStart,
+    { steeringDirection: 0 },
+    (state) => state.y >= FINAL_CENTER_Y,
+  )
   const stages = [
     toStage(approach),
     toStage(angle),

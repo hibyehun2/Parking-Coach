@@ -18,11 +18,11 @@ const LEGACY_SCENARIOS: Scenario[] = [
 const LEFT_CAR: ScenarioParkedVehicle = { id: 'parked-left', kind: 'vehicle', x: 12.3, y: 9.75, heading: -Math.PI / 2, side: 'left' }
 const RIGHT_CAR: ScenarioParkedVehicle = { id: 'parked-right', kind: 'vehicle', x: 17.7, y: 9.75, heading: -Math.PI / 2, side: 'right' }
 
-function mirroredStart(side: 'left' | 'right'): VehicleState {
+function mirroredStart(side: 'left' | 'right', laneY = 4): VehicleState {
   return {
     ...INITIAL_VEHICLE_STATE,
     x: side === 'left' ? 5.5 : 24.5,
-    y: 4,
+    y: laneY,
     heading: side === 'left' ? 0 : Math.PI,
     steeringAngle: 0,
     speed: 0,
@@ -51,7 +51,7 @@ export function markFirstSuccess(scenarioId: ScenarioId, storage: Storage | null
 
 export function createScenarioRuntime(
   scenarioId: ScenarioId,
-  options: { seed?: number; firstSuccess?: boolean } = {},
+  options: { seed?: number; firstSuccess?: boolean; practiceMode?: 'learning' | 'practice' } = {},
 ): ScenarioRuntime {
   const seed = options.seed ?? Math.floor(Math.random() * 0x7fffffff)
   const randomSide: 'left' | 'right' = seed % 2 === 0 ? 'left' : 'right'
@@ -59,7 +59,8 @@ export function createScenarioRuntime(
   let variant: ScenarioRuntime['variant'] = options.firstSuccess ? randomSide : 'fixed'
   let parkedVehicles: ScenarioParkedVehicle[] = [LEFT_CAR, RIGHT_CAR]
   let walls: ScenarioWall[] = [...WALLS]
-  let initialVehicle = mirroredStart(startSide)
+  const laneY = options.practiceMode === 'learning' ? 5.2 : 4
+  let initialVehicle = mirroredStart(startSide, laneY)
 
   if (scenarioId === 'one-side') {
     const occupiedSide = randomSide

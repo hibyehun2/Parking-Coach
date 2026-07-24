@@ -60,8 +60,7 @@ export function LessonParkingCanvas({ runtime, stepIndex }: { runtime: ScenarioR
           : undefined,
       })
 
-      const referenceStep = runtime.scenarioId === 'narrow-aisle' ? 1 : 0
-      if (stepIndex !== referenceStep) return
+      if (runtime.scenarioId !== 'narrow-aisle' || stepIndex !== 1) return
       const shoulder = lessonDriverShoulder(last)
       const scale = Math.max(width, height) / 14
       const worldLeft = 15 - width / scale / 2

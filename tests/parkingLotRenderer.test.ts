@@ -2,18 +2,22 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import {
   PARKING_LINE_X,
+  PARKING_GUIDE_CORNERS,
   REVERSE_GUIDE_LEVELS,
   REVERSE_NEUTRAL_PATH_COLOR,
   REVERSE_PATH_COLOR,
   WHEEL_STOP,
   isRearWheelAtStop,
   isRedGuideAlignedWithParkingLine,
+  parkingCameraCueCenter,
   redGuideParkingLineDistance,
   reverseNeutralGuideGeometry,
   reverseTrapezoidGeometry,
 } from '../src/engine/parkingLotRenderer.ts'
-import { INITIAL_VEHICLE_STATE } from '../src/engine/vehiclePhysics.ts'
-import { TARGET_PARKING_BAY } from '../src/engine/parkingEvaluation.ts'
+import { DEFAULT_VEHICLE_CONFIG, INITIAL_VEHICLE_STATE, updateVehicle } from '../src/engine/vehiclePhysics.ts'
+import { isVehicleInsideParkingBay, TARGET_PARKING_BAY } from '../src/engine/parkingEvaluation.ts'
+import { createScenarioRuntime } from '../src/data/scenarios.ts'
+import { detectCollision } from '../src/engine/collisionDetection.ts'
 
 test('후방 거리 가이드는 50cm부터 빨강, 노랑, 노랑 순서다', () => {
   assert.deepEqual(
@@ -92,28 +96,71 @@ test('좌우 조향의 후방 가이드는 차량 중심축을 기준으로 대�
 })
 
 test('빨간 모서리와 실제 주차선 사이의 거리를 계산한다', () => {
+  const cue = parkingCameraCueCenter('left')
   const aligned = redGuideParkingLineDistance({
     ...INITIAL_VEHICLE_STATE,
-    x: TARGET_PARKING_BAY.center.x,
-    y: TARGET_PARKING_BAY.center.y,
-    heading: TARGET_PARKING_BAY.heading,
+    ...cue,
+    heading: 0,
     steeringAngle: 0,
   })
 
-  assert.ok(aligned <= 0.06)
+  const redGuide = reverseTrapezoidGeometry({
+    ...INITIAL_VEHICLE_STATE,
+    ...cue,
+    heading: 0,
+    steeringAngle: 0,
+  })[0]
+  assert.ok(Math.hypot(
+    redGuide.right.x - PARKING_GUIDE_CORNERS.right.x,
+    redGuide.right.y - PARKING_GUIDE_CORNERS.right.y,
+  ) <= 0.001)
+  assert.ok(aligned <= 0.001)
 })
 
-test('빨간 모서리가 주차선에 가까워질 때만 정렬 강조 조건이 된다', () => {
+test('빨간 모서리가 주차칸 입구 모서리에 가까워질 때만 정렬 강조 조건이 된다', () => {
+  const cue = parkingCameraCueCenter('left')
   const alignedVehicle = {
     ...INITIAL_VEHICLE_STATE,
-    x: TARGET_PARKING_BAY.center.x,
-    y: TARGET_PARKING_BAY.center.y,
-    heading: TARGET_PARKING_BAY.heading,
+    ...cue,
+    heading: 0,
     steeringAngle: 0,
   }
 
   assert.equal(isRedGuideAlignedWithParkingLine(alignedVehicle), true)
   assert.equal(isRedGuideAlignedWithParkingLine({ ...alignedVehicle, x: alignedVehicle.x + 0.5 }), false)
+})
+
+test('카메라 모서리를 맞춘 뒤 최대 조향하면 좌우 진입 모두 충돌 없이 주차칸 안에서 평행해진다', () => {
+  for (const [startSide, seed] of [['left', 2], ['right', 3]] as const) {
+    const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: startSide === 'right' })
+    const cue = parkingCameraCueCenter(startSide)
+    const steeringAngle = startSide === 'right'
+      ? -DEFAULT_VEHICLE_CONFIG.maxSteeringAngle
+      : DEFAULT_VEHICLE_CONFIG.maxSteeringAngle
+    const targetHeading = startSide === 'right' ? Math.PI * 1.5 : -Math.PI / 2
+    let vehicle = {
+      ...runtime.initialVehicle,
+      ...cue,
+      heading: startSide === 'right' ? Math.PI : 0,
+      steeringAngle,
+      speed: 0,
+      gear: 'R' as const,
+      braking: false,
+    }
+    let collision = detectCollision(vehicle, 0, runtime)
+
+    for (let index = 0; index < 5000 && !collision; index += 1) {
+      const aligned = startSide === 'right'
+        ? vehicle.heading >= targetHeading
+        : vehicle.heading <= targetHeading
+      if (aligned) break
+      vehicle = updateVehicle(vehicle, { steeringDirection: 0, braking: false }, 0.01)
+      collision = detectCollision(vehicle, 0, runtime)
+    }
+
+    assert.equal(collision, null, startSide)
+    assert.equal(isVehicleInsideParkingBay({ ...vehicle, speed: 0, braking: true }), true, startSide)
+  }
 })
 
 test('방지턱은 뒷바퀴가 닿는 위치에서만 보조 반응을 만든다', () => {

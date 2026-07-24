@@ -1,5 +1,5 @@
 import type { ScenarioRuntime } from '../types/practice.ts'
-import { buildLessonSimulation, buildNarrowAisleLessonSimulation } from './lessonSimulation.ts'
+import { buildJudgmentReferenceSimulation, buildNarrowAisleLessonSimulation } from './lessonSimulation.ts'
 import { resolveVehicleCollision } from './collisionDetection.ts'
 import type { JudgmentChoice, JudgmentMotion, JudgmentScenario } from './judgmentScenarios.ts'
 import { updateVehicle, type VehicleState } from './vehiclePhysics.ts'
@@ -110,7 +110,7 @@ function commonWrongChoices(vehicle: VehicleState, turn: number, zone: JudgmentC
 }
 
 function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
-  const stages = buildLessonSimulation(runtime)
+  const stages = buildJudgmentReferenceSimulation(runtime)
   const straight = stages[4].states
   const left = runtime.startSide !== 'right'
   const turn = left ? .52 : -.52

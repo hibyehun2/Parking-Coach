@@ -3,8 +3,9 @@ import test from 'node:test'
 import { getLearningHint } from '../src/engine/learningHints.ts'
 import { PARKED_VEHICLES } from '../src/engine/collisionDetection.ts'
 import { TARGET_PARKING_BAY } from '../src/engine/parkingEvaluation.ts'
-import { INITIAL_VEHICLE_STATE } from '../src/engine/vehiclePhysics.ts'
+import { DEFAULT_VEHICLE_CONFIG, INITIAL_VEHICLE_STATE } from '../src/engine/vehiclePhysics.ts'
 import { createScenarioRuntime } from '../src/data/scenarios.ts'
+import { parkingCameraCueCenter } from '../src/engine/parkingLotRenderer.ts'
 
 test('충돌과 장애물 근접 경고가 일반 안내보다 우선한다', () => {
   const parkedVehicle = PARKED_VEHICLES[0]
@@ -41,7 +42,7 @@ test('후진 조향 중에는 상황에 맞는 간격 화면 확인을 권장한
   assert.match(hint?.message ?? '', /벽면.*반대편/)
 })
 
-test('후진을 시작했지만 조향하지 않았으면 주차 방향 최대 조향을 안내한다', () => {
+test('평행 상태에서 직선 후진을 시작하면 먼저 카메라 모서리 기준을 안내한다', () => {
   const hint = getLearningHint({
     ...INITIAL_VEHICLE_STATE,
     x: TARGET_PARKING_BAY.center.x,
@@ -50,8 +51,8 @@ test('후진을 시작했지만 조향하지 않았으면 주차 방향 최대 �
     steeringAngle: 0,
   }, 'both-sides')
 
-  assert.equal(hint?.id, 'turn-toward-space')
-  assert.match(hint?.message ?? '', /주차 공간 방향/)
+  assert.equal(hint?.id, 'align-camera-corner')
+  assert.match(hint?.message ?? '', /직선 후진.*주차칸 입구 모서리/)
 })
 
 test('평행 정렬 후에는 후방 가이드로 직선 후진을 안내한다', () => {
@@ -68,58 +69,76 @@ test('평행 정렬 후에는 후방 가이드로 직선 후진을 안내한다'
   assert.match(hint?.message ?? '', /장애물.*거리/)
 })
 
-test('진입 위치에 도달하기 전에 조향하면 먼저 위치를 맞추도록 안내한다', () => {
+test('주차칸을 충분히 지나기 전에는 나란히 이동하도록 안내한다', () => {
   const hint = getLearningHint({
     ...INITIAL_VEHICLE_STATE,
     gear: 'D',
-    steeringAngle: -0.3,
+    steeringAngle: 0,
   }, 'both-sides')
 
-  assert.equal(hint?.id, 'turning-too-early')
-  assert.match(hint?.message ?? '', /중앙.*진입 위치/)
+  assert.equal(hint?.id, 'set-camera-approach')
+  assert.match(hint?.message ?? '', /주차칸.*지나/)
 })
 
-test('진입 구간에서만 차를 비스듬히 세우도록 안내한다', () => {
+test('주차칸을 충분히 지나면 후방카메라 기준을 맞추도록 안내한다', () => {
+  const cue = parkingCameraCueCenter('left')
   const hint = getLearningHint({
     ...INITIAL_VEHICLE_STATE,
-    x: 15.3,
-    heading: -0.12,
+    x: cue.x + 1,
+    y: cue.y,
     gear: 'D',
-    steeringAngle: -0.3,
+    steeringAngle: 0,
   }, 'both-sides')
 
-  assert.equal(hint?.id, 'make-entry-angle')
-  assert.match(hint?.message ?? '', /후진할 공간/)
+  assert.equal(hint?.id, 'camera-reverse-ready')
+  assert.match(hint?.message ?? '', /R.*직선 후진/)
 })
 
-test('충분한 진입각을 만들면 전진 대신 정지를 안내한다', () => {
+test('직선 후진 중에는 빨간 가이드 모서리를 맞추도록 안내한다', () => {
+  const cue = parkingCameraCueCenter('left')
   const hint = getLearningHint({
     ...INITIAL_VEHICLE_STATE,
-    x: 16,
-    heading: -0.6,
-    gear: 'D',
-    steeringAngle: -0.3,
+    x: cue.x + 0.5,
+    y: cue.y,
+    gear: 'R',
+    steeringAngle: 0,
   }, 'both-sides')
 
-  assert.equal(hint?.id, 'entry-angle-ready')
-  assert.match(hint?.message ?? '', /완전히 정지/)
+  assert.equal(hint?.id, 'align-camera-corner')
+  assert.match(hint?.message ?? '', /빨간 가이드 모서리/)
 })
 
-test('오른쪽 출발에서는 조향 방향을 반대로 판정한다', () => {
+test('빨간 가이드 모서리가 맞으면 정지 후 최대 조향을 안내한다', () => {
+  const cue = parkingCameraCueCenter('left')
+  const hint = getLearningHint({
+    ...INITIAL_VEHICLE_STATE,
+    ...cue,
+    gear: 'R',
+    steeringAngle: 0,
+  }, 'both-sides')
+
+  assert.equal(hint?.id, 'camera-corner-ready')
+  assert.match(hint?.message ?? '', /끝까지/)
+})
+
+test('오른쪽 출발에서도 모서리 기준과 최대 조향 방향을 반대로 안내한다', () => {
   const runtime = createScenarioRuntime('both-sides', { seed: 3, firstSuccess: true })
-  const hint = getLearningHint({
+  const cue = parkingCameraCueCenter('right')
+  const ready = getLearningHint({
     ...runtime.initialVehicle,
-    x: 14.7,
-    heading: Math.PI + 0.12,
-    gear: 'D',
-    steeringAngle: 0.3,
+    ...cue,
+    heading: Math.PI,
+    gear: 'R',
+    steeringAngle: 0,
+  }, 'both-sides', runtime)
+  const turning = getLearningHint({
+    ...runtime.initialVehicle,
+    ...cue,
+    heading: Math.PI,
+    gear: 'R',
+    steeringAngle: -DEFAULT_VEHICLE_CONFIG.maxSteeringAngle,
   }, 'both-sides', runtime)
 
-  assert.equal(hint?.id, 'make-entry-angle')
-})
-
-test('진입점 전에는 위치 기반 안내를 제공한다', () => {
-  const hint = getLearningHint(INITIAL_VEHICLE_STATE, 'both-sides')
-  assert.equal(hint?.id, 'set-entry-point')
-  assert.equal(hint?.level, 'info')
+  assert.equal(ready?.id, 'camera-corner-ready')
+  assert.equal(turning?.id, 'keep-full-steering')
 })

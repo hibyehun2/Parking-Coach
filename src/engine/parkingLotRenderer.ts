@@ -8,6 +8,17 @@ export const PARKING_LINE_X = {
   targetRight: 16.35,
 } as const
 
+export const PARKING_LINE_Y = {
+  top: 6.5,
+  bottom: 13.45,
+} as const
+
+const PARKING_GUIDE_CUE_INSET = 0.03
+export const PARKING_GUIDE_CORNERS = {
+  left: { x: PARKING_LINE_X.targetLeft + PARKING_GUIDE_CUE_INSET, y: PARKING_LINE_Y.top },
+  right: { x: PARKING_LINE_X.targetRight - PARKING_GUIDE_CUE_INSET, y: PARKING_LINE_Y.top },
+} as const
+
 import type { VehicleState } from './vehiclePhysics.ts'
 import { DEFAULT_VEHICLE_CONFIG } from './vehiclePhysics.ts'
 import {
@@ -175,8 +186,8 @@ function drawParkingLines(context: CanvasRenderingContext2D) {
   context.shadowColor = 'rgba(44, 35, 26, .3)'
   context.shadowBlur = 0.08
 
-  const bayTop = 6.5
-  const bayBottom = 13.45
+  const bayTop = PARKING_LINE_Y.top
+  const bayBottom = PARKING_LINE_Y.bottom
   for (const x of [10.95, PARKING_LINE_X.targetLeft, PARKING_LINE_X.targetRight, 19.05]) {
     context.beginPath()
     context.moveTo(x, bayTop)
@@ -419,12 +430,22 @@ export const RED_GUIDE_ALIGNMENT_THRESHOLD = 0.12
 type ReverseGuideVehicle = Pick<VehicleState, 'x' | 'y' | 'heading' | 'steeringAngle'>
 type AssistanceSide = 'left' | 'right'
 
+export function parkingCameraCueCenter(startSide: 'left' | 'right') {
+  const redGuide = REVERSE_GUIDE_LEVELS[0]
+  return {
+    x: startSide === 'right'
+      ? PARKING_GUIDE_CORNERS.left.x - VEHICLE_DIMENSIONS.length / 2 - redGuide.distance
+      : PARKING_GUIDE_CORNERS.right.x + VEHICLE_DIMENSIONS.length / 2 + redGuide.distance,
+    y: PARKING_LINE_Y.top - redGuide.halfWidth,
+  }
+}
+
 function reverseGuidePose(vehicle: ReverseGuideVehicle, distanceBehindBumper: number) {
   const targetDistance = distanceBehindBumper
   const stepSize = 0.05
   let travelled = 0
-  let x = vehicle.x - Math.cos(vehicle.heading) * VEHICLE_DIMENSIONS.length / 2
-  let y = vehicle.y - Math.sin(vehicle.heading) * VEHICLE_DIMENSIONS.length / 2
+  let x = vehicle.x
+  let y = vehicle.y
   let heading = vehicle.heading
 
   while (travelled < targetDistance) {
@@ -439,7 +460,11 @@ function reverseGuidePose(vehicle: ReverseGuideVehicle, distanceBehindBumper: nu
     travelled += step
   }
 
-  return { x, y, heading }
+  return {
+    x: x - Math.cos(heading) * VEHICLE_DIMENSIONS.length / 2,
+    y: y - Math.sin(heading) * VEHICLE_DIMENSIONS.length / 2,
+    heading,
+  }
 }
 
 export function predictedReverseGuidePoint(
@@ -466,32 +491,18 @@ export function reverseNeutralGuideGeometry(vehicle: ReverseGuideVehicle) {
   return reverseTrapezoidGeometry({ ...vehicle, steeringAngle: 0 })
 }
 
-function pointToSegmentDistance(
-  point: { x: number; y: number },
-  start: { x: number; y: number },
-  end: { x: number; y: number },
-) {
-  const segmentX = end.x - start.x
-  const segmentY = end.y - start.y
-  const lengthSquared = segmentX * segmentX + segmentY * segmentY
-  const projection = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1,
-    ((point.x - start.x) * segmentX + (point.y - start.y) * segmentY) / lengthSquared,
-  ))
-  return Math.hypot(
-    point.x - (start.x + segmentX * projection),
-    point.y - (start.y + segmentY * projection),
-  )
-}
-
 export function redGuideParkingLineDistance(vehicle: ReverseGuideVehicle) {
   const redGuide = reverseTrapezoidGeometry(vehicle)[0]
-  const lineSegments = [PARKING_LINE_X.targetLeft, PARKING_LINE_X.targetRight].map((x) => [
-    { x, y: 6.5 },
-    { x, y: 13.45 },
-  ] as const)
-  return Math.min(...[redGuide.left, redGuide.right].flatMap((corner) => (
-    lineSegments.map(([start, end]) => pointToSegmentDistance(corner, start, end))
-  )))
+  return Math.min(
+    Math.hypot(
+      redGuide.left.x - PARKING_GUIDE_CORNERS.left.x,
+      redGuide.left.y - PARKING_GUIDE_CORNERS.left.y,
+    ),
+    Math.hypot(
+      redGuide.right.x - PARKING_GUIDE_CORNERS.right.x,
+      redGuide.right.y - PARKING_GUIDE_CORNERS.right.y,
+    ),
+  )
 }
 
 export function isRedGuideAlignedWithParkingLine(vehicle: ReverseGuideVehicle) {

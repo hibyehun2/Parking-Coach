@@ -33,6 +33,7 @@ export function SimulatorPage() {
   const forceLesson = searchParams.get('lesson') === '1'
   const [runtime] = useState(() => canReuseRuntime ? retryPayload.runtime! : createScenarioRuntime(scenario.id, {
     firstSuccess: loadFirstSuccess()[scenario.id],
+    practiceMode: isPracticeMode ? 'practice' : 'learning',
   }))
   const [showLesson, setShowLesson] = useState(() => {
     if (forceLesson) return true

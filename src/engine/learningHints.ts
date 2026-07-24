@@ -1,7 +1,8 @@
 import { detectCollision } from './collisionDetection.ts'
 import { rearSensorDistance } from './driverAssistance.ts'
 import { TARGET_PARKING_BAY } from './parkingEvaluation.ts'
-import type { VehicleState } from './vehiclePhysics.ts'
+import { DEFAULT_VEHICLE_CONFIG, type VehicleState } from './vehiclePhysics.ts'
+import { isRedGuideAlignedWithParkingLine, parkingCameraCueCenter } from './parkingLotRenderer.ts'
 import type { ScenarioId, ScenarioRuntime } from '../types/practice.ts'
 
 export type HintLevel = 'info' | 'caution' | 'danger'
@@ -25,23 +26,17 @@ function mirrorPriority(scenarioId: ScenarioId) {
   return '좌우 사이드미러를 짧게 번갈아 보며 양쪽 간격을 비교하세요.'
 }
 
-function wrappedAngle(value: number) {
-  return ((value + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI
-}
-
 function expectedSteeringDirection(runtime?: ScenarioRuntime) {
   return runtime?.startSide === 'right' ? -1 : 1
 }
 
-function entryProgress(vehicle: VehicleState, runtime?: ScenarioRuntime) {
-  return runtime?.startSide === 'right'
-    ? 24.5 - vehicle.x
-    : vehicle.x - 5.5
+function wrappedAngle(value: number) {
+  return ((value + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI
 }
 
-function entryAngle(vehicle: VehicleState, runtime?: ScenarioRuntime) {
-  const startHeading = runtime?.startSide === 'right' ? Math.PI : 0
-  return Math.abs(wrappedAngle(vehicle.heading - startHeading))
+function approachAxisError(vehicle: VehicleState, runtime?: ScenarioRuntime) {
+  const approachHeading = runtime?.startSide === 'right' ? Math.PI : 0
+  return Math.abs(wrappedAngle(vehicle.heading - approachHeading))
 }
 
 export function getLearningHint(vehicle: VehicleState, scenarioId: ScenarioId, runtime?: ScenarioRuntime): LearningHint | null {
@@ -77,6 +72,41 @@ export function getLearningHint(vehicle: VehicleState, scenarioId: ScenarioId, r
   const parkingSteeringDirection = expectedSteeringDirection(runtime)
   const steeringTowardSpace = vehicle.steeringAngle * parkingSteeringDirection
 
+  if (
+    scenarioId !== 'tight-entry'
+    && vehicle.gear === 'R'
+    && approachAxisError(vehicle, runtime) <= Math.PI / 12
+    && Math.abs(vehicle.steeringAngle) < 0.06
+  ) {
+    if (isRedGuideAlignedWithParkingLine(vehicle)) {
+      return {
+        id: 'camera-corner-ready',
+        level: 'info',
+        title: '빨간 모서리가 맞았습니다',
+        message: '완전히 정지한 뒤 주차 공간 방향으로 핸들을 끝까지 돌리세요.',
+      }
+    }
+    return {
+      id: 'align-camera-corner',
+      level: 'info',
+      title: '빨간 가이드 모서리 맞추기',
+      message: '핸들을 중앙에 두고 천천히 직선 후진해 빨간 가이드 모서리를 주차칸 입구 모서리에 맞추세요.',
+    }
+  }
+
+  if (
+    scenarioId !== 'tight-entry'
+    && vehicle.gear === 'R'
+    && steeringTowardSpace >= DEFAULT_VEHICLE_CONFIG.maxSteeringAngle - 0.05
+  ) {
+    return {
+      id: 'keep-full-steering',
+      level: 'info',
+      title: '핸들을 끝까지 유지',
+      message: '좌우 간격을 번갈아 확인하며 차체가 주차선과 평행해질 때까지 천천히 후진하세요.',
+    }
+  }
+
   if (vehicle.gear === 'R' && steeringTowardSpace >= 0.18) {
     return { id: 'alternate-side-mirrors', level: 'info', title: '좌우 사이드미러 교차 확인', message: mirrorPriority(scenarioId) }
   }
@@ -94,55 +124,22 @@ export function getLearningHint(vehicle: VehicleState, scenarioId: ScenarioId, r
     }
   }
 
-  const progress = entryProgress(vehicle, runtime)
-  const angle = entryAngle(vehicle, runtime)
-  const inApproachLane = vehicle.y >= 2.2 && vehicle.y <= TARGET_PARKING_BAY.top + 0.4
-  const steeringAwayFromSpace = vehicle.steeringAngle * parkingSteeringDirection <= -0.18
-  const reachedTurningZone = progress >= 9.7
-  const passedTurningZone = progress > 11.2 || vehicle.y > TARGET_PARKING_BAY.top + 0.4
+  const cameraCue = parkingCameraCueCenter(runtime?.startSide === 'right' ? 'right' : 'left')
+  const reachedCameraApproach = runtime?.startSide === 'right'
+    ? vehicle.x <= cameraCue.x - 1
+    : vehicle.x >= cameraCue.x + 1
 
-  if (passedTurningZone || angle > Math.PI * .42) {
-    return {
-      id: 'entry-overshot',
-      level: 'caution',
-      title: '진입 위치를 다시 확인',
-      message: '후진 준비 위치를 지나쳤습니다. 완전히 정지하고 앞부분과 옆 차량의 여유를 확인한 뒤 위치를 수정하세요.',
-    }
-  }
-
-  if (steeringAwayFromSpace && (!inApproachLane || !reachedTurningZone)) {
-    return {
-      id: 'turning-too-early',
-      level: 'caution',
-      title: '조향이 너무 이릅니다',
-      message: '핸들을 중앙으로 돌리고 주차칸 앞 진입 위치를 먼저 맞추세요.',
-    }
-  }
-
-  if (steeringAwayFromSpace && angle >= Math.PI / 6) {
-    return {
-      id: 'entry-angle-ready',
-      level: 'info',
-      title: '후진 준비 위치입니다',
-      message: '완전히 정지하세요. 목표 주차칸 입구와 내 차 앞부분의 회전 여유를 확인한 뒤 R로 바꾸세요.',
-    }
-  }
-
-  if (steeringAwayFromSpace) {
-    return {
-      id: 'make-entry-angle',
-      level: 'info',
-      title: '차를 비스듬히 세우세요',
-      message: '주차칸 반대 방향으로 천천히 조향하세요. 후진할 공간이 확보되면 완전히 정지하세요.',
-    }
-  }
-
-  return {
-    id: 'set-entry-point',
-    level: 'info',
-    title: '주차칸 앞 진입 위치 맞추기',
-    message: reachedTurningZone
-      ? '완전히 정지한 뒤 주차칸 반대 방향으로 천천히 조향해 후진 공간을 만드세요.'
-      : '주차칸과 나란히 천천히 전진하세요. 목표 주차칸과 옆 차량의 간격을 함께 확인하세요.',
-  }
+  return reachedCameraApproach
+    ? {
+        id: 'camera-reverse-ready',
+        level: 'info',
+        title: '후방카메라 기준을 맞출 위치입니다',
+        message: '완전히 정지하고 R로 바꾼 뒤, 핸들을 중앙에 두고 천천히 직선 후진하세요.',
+      }
+    : {
+        id: 'set-camera-approach',
+        level: 'info',
+        title: '주차칸을 지나 나란히 이동',
+        message: '핸들을 중앙에 두고 목표 주차칸을 충분히 지나 완전히 정지하세요.',
+      }
 }
