@@ -134,6 +134,7 @@ export function SettingsPage() {
           <div><strong>연습 기록은 이 기기에 저장</strong><small>동의해 보관한 학습 사례만 로그인한 계정으로 Supabase에 공유됩니다.</small></div>
         </div>
       </section>
+      <p className="settings-credit">Parking Coach v0.1.0 · 훈이</p>
     </section>
   )
 }

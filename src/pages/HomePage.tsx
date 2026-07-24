@@ -142,7 +142,12 @@ export function HomePage() {
         }}>
           <section className="auth-sheet" role="dialog" aria-modal="true" aria-labelledby="google-login-title">
             <button type="button" className="auth-sheet-close" aria-label="Google 로그인 안내 닫기" onClick={() => setShowLogin(false)}>×</button>
-            <span className="auth-app-mark" aria-hidden="true">P</span>
+            <img
+              className="auth-app-mark"
+              src={`${import.meta.env.BASE_URL}icons/pwa-192x192.png`}
+              alt=""
+              aria-hidden="true"
+            />
             <p className="auth-kicker">PARKING COACH</p>
             <h2 id="google-login-title">로그인하고 연습을 시작하세요</h2>
             <p>보관한 학습 사례를 내 계정에 안전하게 연결할 수 있어요.</p>
