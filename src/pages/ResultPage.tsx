@@ -170,8 +170,8 @@ export function ResultPage() {
     const titleId = `history-detail-title-${session.id}`
     return <li key={session.id} id={`history-session-${session.id}`} className={isSelected ? 'selected' : undefined}>
       <div className="session-row">
-        <div><strong>{session.mode === 'practice' ? `${getScenario(session.scenarioId).title} · 수정 판단 ${session.quizScore ?? 0}/${session.quizTotal ?? 10}` : `${getScenario(session.scenarioId).title} · ${session.success ? '성공' : '미완료'}`}</strong><span>{formatCompletedAt(session.completedAt)} · {session.mode === 'learning' ? '학습 모드' : '수정 판단'}</span></div>
-        <div className="session-measures"><span>{session.mode === 'practice' ? '훈련 완료' : `충돌 ${session.collisionCount}회`}</span></div>
+        <div><strong>{session.mode === 'practice' ? `${getScenario(session.scenarioId).title} · 판단 연습 ${session.quizScore ?? 0}/${session.quizTotal ?? 10}` : `${getScenario(session.scenarioId).title} · ${session.success ? '성공' : '미완료'}`}</strong><span>{formatCompletedAt(session.completedAt)} · {session.mode === 'learning' ? '직접 연습' : '판단 연습'}</span></div>
+        <div className="session-measures"><span>{session.mode === 'practice' ? '연습 완료' : `충돌 ${session.collisionCount}회`}</span></div>
         <div className="session-buttons">
           <button type="button" className={`bookmark-button${session.bookmarked ? ' bookmarked' : ''}`} aria-label={session.bookmarked ? '보관에서 해제하기' : '이 기록 보관하기'} aria-pressed={session.bookmarked} title={session.bookmarked ? '보관에서 해제하기' : '이 기록 보관하기'} onClick={() => toggleBookmark(session)}>{session.bookmarked ? '★' : '☆'}</button>
           <button type="button" aria-expanded={isSelected} aria-controls={detailId} onClick={() => setSelectedSessionId(isSelected ? null : session.id)}>{isSelected ? '상세 닫기' : session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 보기'}</button>
@@ -181,7 +181,7 @@ export function ResultPage() {
         <header><div><span>{session.bookmarked ? '보관한 기록' : '저장된 연습'}</span><h3 id={titleId}>{formatCompletedAt(session.completedAt)} 주요 순간</h3></div><button type="button" onClick={() => setSelectedSessionId(null)}>닫기</button></header>
         {session.correctionAttempts?.length ? <CorrectionHistoryReview session={session} /> : !session.moments?.length ? <p>이 기록은 상세 장면 저장 기능이 적용되기 전 기록이거나, 표시할 주요 순간 없이 종료되었습니다.</p> : <>
           <div className="replay-moment-list">{session.moments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={session.runtime} />)}</div>
-          {session.moments.find((event) => event.type === 'collision') && <p>과거 기록은 장면 복기용으로 표시합니다. 새로운 판단 문제는 수정 판단 훈련에서 서로 다른 상황으로 연습할 수 있습니다.</p>}
+          {session.moments.find((event) => event.type === 'collision') && <p>과거 기록은 장면 복기용으로 표시합니다. 새로운 판단 문제는 판단 연습에서 서로 다른 상황으로 연습할 수 있습니다.</p>}
         </>}
         <aside className="share-case-preparation">
           <div><strong>익명 학습 사례로 공유</strong><p>보관과 공유는 별도 기능입니다. 공유에 직접 동의한 경우에만 사례별 익명 별명으로 공개될 예정입니다.</p></div>
@@ -194,7 +194,7 @@ export function ResultPage() {
   return (
     <section className={`page single-column result-page${activeTab === 'current' && collisionEvent ? ' result-has-collision' : ''}`} aria-labelledby="result-title">
       <p className="eyebrow">연습 결과</p>
-      <h1 id="result-title">{challengeComplete ? '후진주차 상황 판단 훈련 완료' : result ? (result.success ? '주차 성공' : '아직 주차가 완료되지 않았습니다') : '연습 기록'}</h1>
+      <h1 id="result-title">{challengeComplete ? '후진주차 상황 판단 연습 완료' : result ? (result.success ? '주차 성공' : '아직 주차가 완료되지 않았습니다') : '연습 기록'}</h1>
       <div className="result-tabs" role="tablist" aria-label="결과 보기">
         <button type="button" role="tab" aria-selected={activeTab === 'current'} disabled={!hasCurrentResult} onClick={() => setSearchParams({ tab: 'current' })}>이번 연습</button>
         <button type="button" role="tab" aria-selected={activeTab === 'history'} onClick={() => setSearchParams({ tab: 'history' })}>연습 기록</button>
@@ -204,7 +204,7 @@ export function ResultPage() {
       {activeTab === 'current' && challengeComplete && <section className="challenge-result-summary">
         <strong>첫 선택 기준 {state?.challengeScore ?? 0} / {state?.challengeTotal ?? 6}문제를 정확히 판단했습니다.</strong>
         <p>위험 지점 발견부터 정지·간격 회복·재확인·다시 후진·최종 주차까지 차량 상태가 이어지는 수정 주차 연습을 완료했습니다.</p>
-        <div className="result-actions"><Link className="primary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=practice`}>새 판단 훈련 시작</Link><Link className="secondary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=learning`}>직접 주차에 적용</Link></div>
+        <div className="result-actions"><Link className="primary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=practice`}>다른 판단 연습하기</Link><Link className="secondary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=learning`}>직접 연습에 적용</Link></div>
       </section>}
 
       {activeTab === 'current' && result && <section className="current-result-dashboard" aria-label="이번 연습 핵심 결과">
@@ -268,7 +268,7 @@ export function ResultPage() {
         <header className="history-heading"><div><h2 id="history-title">나의 연습 기록</h2></div>{history.sessions.length > 0 && <button type="button" className="history-reset" onClick={() => { if (window.confirm('저장된 연습 기록을 모두 초기화할까요?')) setHistory(clearPracticeHistory()) }}>기록 초기화</button>}</header>
         <aside className="correction-practice-cta">
           <div><span>수정 주차 연습</span><strong>위험을 발견하고 안전하게 다시 주차하는 판단을 익혀보세요</strong><p>{recommendation?.mode === 'practice' ? recommendation.reason : '비스듬한 자세와 차량 모서리 접근 상황에서 정지·수정·재접근을 연습합니다.'}</p></div>
-          <Link className="primary-button" to={correctionPracticePath}>수정 판단 훈련 시작 →</Link>
+          <Link className="primary-button" to={correctionPracticePath}>판단 연습 시작 →</Link>
         </aside>
         {history.sessions.length === 0 ? <div className="history-empty"><strong>아직 저장된 기록이 없습니다</strong><p>연습 기록은 {PRACTICE_HISTORY_RETENTION_DAYS}일간 저장되며, 중요한 기록은 최대 {MAX_BOOKMARKED_SESSIONS}개까지 계속 보관할 수 있습니다.</p><Link className="primary-button result-start-link" to="/practice">첫 기록 만들기</Link></div> : <>
           {recommendation && recommendation.mode !== 'practice' && <aside className="next-practice">

@@ -2,6 +2,7 @@ import type { ParkingResult } from './parkingEvaluation.ts'
 import type { ReplayEvent } from './sessionReplay.ts'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../types/practice.ts'
 import { FIRST_SUCCESS_KEY, markFirstSuccess } from '../data/scenarios.ts'
+import type { JudgmentSkill } from './judgmentScenarios.ts'
 
 export const PRACTICE_HISTORY_KEY = 'parking-coach:practice-history:v5'
 export const MAX_PRACTICE_SESSIONS = 30
@@ -20,6 +21,7 @@ export type CorrectionAttempt = {
   firstChoiceLabel: string
   correctChoiceLabel: string
   takeaway: string
+  skill?: JudgmentSkill
 }
 
 export type PracticeSession = {
@@ -287,7 +289,7 @@ export function recommendPractice(sessions: PracticeSession[]) {
     return {
       scenarioId,
       mode: 'practice' as const,
-      label: '수정 판단 훈련 시작',
+      label: '판단 연습 시작',
       reason: `${zone ? `${zone} 모서리` : '차량 모서리'} 위험이 기록됐어요. 충돌 전에 멈추고 간격을 회복하는 순서를 연습해보세요.`,
     }
   }

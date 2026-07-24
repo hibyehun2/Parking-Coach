@@ -10,6 +10,33 @@ export type JudgmentSkill =
   | 'recheck'
   | 'reentry-decision'
 
+export const JUDGMENT_SKILL_INFO: Record<JudgmentSkill, { title: string; description: string }> = {
+  'hazard-prediction': {
+    title: '위험 지점 찾기',
+    description: '가까워지는 범퍼와 좁아지는 간격을 먼저 찾습니다.',
+  },
+  'stop-timing': {
+    title: '멈출 시점 판단',
+    description: '수정 공간을 잃기 전에 안전하게 멈출 지점을 판단합니다.',
+  },
+  'correction-space': {
+    title: '수정 공간 만들기',
+    description: '짧게 전진하거나 후진해 다음 조작에 필요한 공간을 만듭니다.',
+  },
+  'first-correction': {
+    title: '차체 자세 맞추기',
+    description: '조향 방향을 바꿔 차체 각도와 가운데 위치를 맞춥니다.',
+  },
+  recheck: {
+    title: '수정 후 재확인',
+    description: '움직임 뒤 달라진 앞뒤와 양쪽 여유를 다시 확인합니다.',
+  },
+  'reentry-decision': {
+    title: '안전하게 재진입',
+    description: '확보한 공간에서 다시 후진해 평행과 깊이를 맞춥니다.',
+  },
+}
+
 export type JudgmentMotion = {
   gear: 'D' | 'R'
   steeringAngle: number

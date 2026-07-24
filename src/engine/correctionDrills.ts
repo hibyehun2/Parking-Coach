@@ -32,10 +32,11 @@ function staticStep(
   answer: JudgmentChoice,
   wrong: JudgmentChoice[],
   takeaway: string,
+  skill: JudgmentScenario['skill'] = 'hazard-prediction',
 ): JudgmentScenario {
   return {
     id,
-    skill: 'hazard-prediction',
+    skill,
     title,
     situation,
     question,
@@ -56,10 +57,11 @@ function pathStep(
   answer: JudgmentChoice,
   wrong: JudgmentChoice[],
   takeaway: string,
+  skill: JudgmentScenario['skill'] = 'first-correction',
 ): JudgmentScenario {
   return {
     id,
-    skill: 'first-correction',
+    skill,
     title,
     situation,
     question,
@@ -125,8 +127,10 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
     gear: 'R',
   })
   const crookedTurn = left ? -.5 : .5
-  const crookedAlignment = physicalPath(crookedStart, [
+  const crookedSpace = physicalPath(crookedStart, [
     { gear: 'D', steeringAngle: crookedTurn, seconds: 1 },
+  ], runtime)
+  const crookedAlignment = physicalPath(crookedSpace.at(-1)!, [
     { gear: 'R', steeringAngle: -crookedTurn, seconds: 1 },
   ], runtime)
   const crookedAligned = crookedAlignment.at(-1)!
@@ -142,9 +146,9 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
         'crooked-assess',
         '좁아지는 쪽 찾기',
         '차량이 주차칸 안으로 들어왔지만 차체가 선과 비스듬합니다.',
-        '그대로 직선 후진하면 무엇이 문제일까요?',
+        '그대로 직선 후진하면 어떤 위험이 생길까요?',
         crookedStart,
-        { id: 'angle-first', label: '한쪽 선 간격이 더 줄어드므로 각도부터 바로잡기', feedback: '깊이보다 차체 각도를 먼저 맞춰야 양쪽 간격을 회복할 수 있습니다.', focusZone: innerZone },
+        { id: 'angle-first', label: '좁은 쪽 간격이 더 줄어 주차선을 넘을 수 있습니다', feedback: '따라서 깊이를 더 맞추기 전에 차체 각도부터 바로잡아야 합니다.', focusZone: innerZone },
         [
           { id: 'depth-only', label: '각도와 관계없이 직선 후진으로 깊이만 맞추기', feedback: '비스듬한 상태가 유지되어 한쪽 선을 넘을 수 있습니다.' },
           { id: 'finish-now', label: '차량 중심이 들어왔으므로 바로 완료', feedback: '차량 전체와 차체 평행 상태를 함께 확인해야 합니다.' },
@@ -152,14 +156,29 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
         '비스듬하면 깊이보다 차체 각도와 좁은 쪽 간격을 먼저 확인하세요.',
       ),
       pathStep(
-        'crooked-align',
-        '전진 공간 확보 후 다시 후진',
+        'crooked-space',
+        '수정 공간 확보',
         '차량 전체는 주차칸 안에 있지만 한쪽 뒤 간격이 더 좁아 후진 공간이 부족합니다.',
-        '어떤 순서로 수정 공간을 만들고 차체를 평행하게 할까요?',
-        crookedAlignment,
-        pathChoice('finish-curve', `기어를 D에 놓고 핸들을 ${left ? '오른쪽' : '왼쪽'}으로 약 반 바퀴 돌려 짧게 전진 → 정지 후 기어를 R에 놓고 반대 방향으로 약 반 바퀴 돌려 천천히 후진`, '전진으로 뒤쪽 공간을 먼저 만든 뒤 반대 조향으로 돌아오면 차체가 선과 나란해집니다.', crookedAlignment),
+        '먼저 어떤 동작으로 뒤쪽 공간을 만들까요?',
+        crookedSpace,
+        pathChoice('make-space', `D로 바꾸고 핸들을 ${left ? '오른쪽' : '왼쪽'}으로 반 바퀴 돌려 짧게 전진`, '짧은 전진으로 좁았던 뒤쪽 간격을 먼저 회복하고 완전히 정지합니다.', crookedSpace),
         commonWrongChoices(crookedStart, -turn, outerZone),
-        '비스듬한 상태에서는 깊이보다 각도를 먼저 맞추고, 나란해지는 순간 멈추세요.',
+        '비스듬한 상태에서는 먼저 짧게 전진해 뒤쪽 수정 공간을 만드세요.',
+        'correction-space',
+      ),
+      pathStep(
+        'crooked-align',
+        '차체 평행 맞추기',
+        '뒤쪽 간격을 확보하고 완전히 정지했습니다.',
+        '이제 차체를 주차선과 나란하게 하려면?',
+        crookedAlignment,
+        pathChoice('finish-curve', `R로 바꾸고 핸들을 ${left ? '왼쪽' : '오른쪽'}으로 반 바퀴 돌려 천천히 후진`, '앞 단계의 마지막 위치에서 반대 조향으로 후진해 차체가 나란해지는 순간 멈춥니다.', crookedAlignment),
+        [
+          { id: 'straight-reverse', label: 'R로 바꾸고 핸들을 정면으로 한 채 후진', feedback: '차체 각도가 그대로 유지되어 좁은 쪽 간격이 다시 줄어듭니다.', motion: [{ gear: 'R', steeringAngle: 0, seconds: 1 }] },
+          { id: 'forward-more', label: '같은 조향을 유지해 계속 전진', feedback: '필요한 뒤쪽 공간은 이미 확보했으므로 차체 각도를 되돌릴 차례입니다.', motion: [{ gear: 'D', steeringAngle: crookedTurn, seconds: 1 }] },
+        ],
+        '반대 조향으로 천천히 후진하고 차체가 나란해지는 순간 멈추세요.',
+        'first-correction',
       ),
       pathStep(
         'crooked-finish',
@@ -173,6 +192,7 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
           { id: 'forward-again', label: 'D로 바꾸고 다시 크게 전진', feedback: '이미 평행하므로 큰 수정 대신 깊이만 맞추면 됩니다.', motion: [{ gear: 'D', steeringAngle: 0, seconds: 1.2 }] },
         ],
         '차체가 나란해진 뒤에는 핸들을 정면으로 하고 깊이만 조절하세요.',
+        'reentry-decision',
       ),
     ],
   }
@@ -181,8 +201,10 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
   const correctionSide = left ? '오른쪽' : '왼쪽'
   const offsetStart = stopped(parked, { x: offsetX, gear: 'D' })
   const offsetTurn = left ? .6 : -.6
-  const offsetCorrection = physicalPath(offsetStart, [
+  const offsetShift = physicalPath(offsetStart, [
     { gear: 'D', steeringAngle: offsetTurn, seconds: 2.9 },
+  ], runtime)
+  const offsetCorrection = physicalPath(offsetShift.at(-1)!, [
     { gear: 'D', steeringAngle: -offsetTurn, seconds: 2.9 },
   ], runtime)
   const offsetForward = offsetCorrection.at(-1)!
@@ -208,17 +230,32 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
         '평행하지만 치우쳤다면 먼저 전진 수정 공간을 만들고 다시 정렬하세요.',
       ),
       pathStep(
-        'off-center-forward',
-        '짧은 전진으로 이동 각도 만들기',
+        'off-center-shift',
+        '옆 이동 각도 만들기',
         `앞쪽 여유를 확인했고 차량을 ${correctionSide}으로 조금 옮겨야 합니다.`,
-        '어떻게 수정 공간을 만들까요?',
-        offsetCorrection,
-        pathChoice('offset-forward', `기어를 D에 놓고 핸들을 ${correctionSide}으로 약 반 바퀴 돌려 전진한 뒤, 반대 방향으로 약 반 바퀴 돌려 차체를 다시 나란하게 하고 정지`, '첫 조향으로 중심 쪽 이동 각도를 만들고, 반대 조향으로 차체를 다시 나란하게 맞춥니다.', offsetCorrection),
+        '차량을 주차칸 가운데 쪽으로 옮기려면 먼저 어떻게 할까요?',
+        offsetShift,
+        pathChoice('offset-shift', `D로 바꾸고 핸들을 ${correctionSide}으로 반 바퀴 돌려 짧게 전진`, '첫 번째 전진 곡선으로 주차칸 중심을 향하는 작은 이동 각도를 만듭니다.', offsetShift),
         [
           { id: 'long-swing', label: '최대 조향으로 길게 전진', feedback: '반대쪽 앞 모서리와 주변 차량에 새 위험을 만들 수 있습니다.', motion: [{ gear: 'D', steeringAngle: left ? .52 : -.52, seconds: 1.8 }] },
           { id: 'reverse-now', label: '현재 자리에서 바로 직선 후진', feedback: '좌우 치우침이 그대로 유지됩니다.', motion: [{ gear: 'R', steeringAngle: 0, seconds: 1.2 }] },
         ],
-        '가운데 맞추기는 짧게 전진해 작은 옆 이동을 만든 뒤 다시 후진합니다.',
+        '가운데 맞추기는 짧은 전진으로 먼저 작은 옆 이동 각도를 만드세요.',
+        'correction-space',
+      ),
+      pathStep(
+        'off-center-realign',
+        '차체 다시 평행하게 만들기',
+        '차량 중심이 주차칸 가운데 쪽으로 이동했지만 차체는 아직 비스듬합니다.',
+        '차체를 다시 주차선과 나란하게 하려면?',
+        offsetCorrection,
+        pathChoice('offset-forward', `핸들을 ${correctionSide === '오른쪽' ? '왼쪽' : '오른쪽'}으로 반 바퀴 돌려 조금 더 전진한 뒤 정지`, '기어는 D를 유지하고 반대 곡선으로 이어가 차체를 다시 나란하게 맞춥니다.', offsetCorrection),
+        [
+          { id: 'keep-shift', label: `핸들을 ${correctionSide}으로 유지해 계속 전진`, feedback: '차체가 더 비스듬해져 반대쪽 공간을 잃을 수 있습니다.', motion: [{ gear: 'D', steeringAngle: offsetTurn, seconds: 1.2 }] },
+          { id: 'reverse-early', label: '지금 바로 R로 바꾸고 후진', feedback: '차체가 아직 비스듬해 같은 쪽 선으로 다시 가까워집니다.', motion: [{ gear: 'R', steeringAngle: offsetTurn, seconds: 1.2 }] },
+        ],
+        '같은 기어에서 반대 조향으로 이어가 차체가 나란해지는 순간 멈추세요.',
+        'first-correction',
       ),
       pathStep(
         'off-center-finish',
@@ -232,6 +269,7 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
           { id: 'look-one-side', label: '가까웠던 한쪽 선만 보며 후진', feedback: '반대쪽 간격 변화를 놓칠 수 있습니다.' },
         ],
         '가운데에 맞춘 뒤에는 핸들을 정면으로 하고 양쪽 간격을 번갈아 보세요.',
+        'reentry-decision',
       ),
     ],
   }
@@ -303,6 +341,7 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
           { id: 'stop', label: `해당 모서리를 확인하고 즉시 완전히 정지`, feedback: '접촉 전에 멈춰야 되돌아갈 공간을 남길 수 있습니다.', focusZone: zone },
           commonWrongChoices(danger, -turn, zone),
           '간격이 빠르게 줄면 조향보다 정지가 먼저입니다.',
+          'stop-timing',
         ),
         pathStep(
           `${id}-retreat`,
@@ -319,6 +358,7 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
             { id: 'reverse-more', label: 'R을 유지해 조금 더 후진', feedback: '가까워진 모서리 쪽으로 계속 접근합니다.', motion: [{ gear: 'R', steeringAngle: danger.steeringAngle, seconds: 1.1 }], focusZone: zone },
           ],
           '먼저 이전 궤적을 짧게 되돌려 안전거리를 확보하세요.',
+          'correction-space',
         ),
         ...(id === 'outer-swing' ? [pathStep(
           `${id}-realign`,
@@ -339,6 +379,7 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
             { id: 'long-forward-realign', label: '핸들을 끝까지 돌리고 길게 전진', feedback: '반대편 모서리나 앞쪽 공간에 새로운 위험을 만들 수 있습니다.' },
           ],
           '간격 회복과 차체 재정렬을 분리하고, 각 동작 뒤에는 반드시 다시 멈춰 확인하세요.',
+          'first-correction',
         )] : []),
         staticStep(
           `${id}-recheck`,
@@ -352,6 +393,7 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
             { id: 'rear-only', label: '후방 화면 중앙만 확인', feedback: '곡선 재진입에서는 앞 모서리 휩쓸림도 함께 확인해야 합니다.' },
           ],
           '수정 뒤에는 처음 보는 장면처럼 양쪽을 다시 확인하세요.',
+          'recheck',
         ),
         pathStep(
           `${id}-reenter`,
@@ -365,6 +407,7 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
             { id: 'restart-unneeded', label: '충분한 공간이 있지만 무조건 처음부터 재접근', feedback: '현재는 안전한 재진입 공간이 있어 짧은 수정으로 마무리할 수 있습니다.' },
           ],
           '재진입 후 차체가 나란해지는 순간 멈추고 핸들을 정면으로 돌리세요.',
+          'reentry-decision',
         ),
       ],
     }
@@ -415,6 +458,7 @@ function buildNarrowDrill(runtime: ScenarioRuntime): CorrectionDrill {
           { id: 'no-reverse', label: '후진하지 않고 현재 위치에서 다시 전진', feedback: '현재 확보한 진입각을 이용해 가능한 후진 공간부터 사용해야 합니다.' },
         ],
         '좁은 통로에서는 한 번에 넣지 말고 안전 여유마다 멈추세요.',
+        'stop-timing',
       ),
       staticStep(
         'narrow-assess',
@@ -441,6 +485,7 @@ function buildNarrowDrill(runtime: ScenarioRuntime): CorrectionDrill {
           { id: 'reverse-again', label: '현재 위치에서 바로 다시 후진', feedback: '안쪽 차량과의 간격이 충분히 회복되지 않았습니다.', motion: [{ gear: 'R', steeringAngle: turn, seconds: 1.2 }], focusZone: innerZone },
         ],
         '좁은 곳에서는 짧게 움직이고 매번 다시 정지하세요.',
+        'correction-space',
       ),
       pathStep(
         'narrow-angle-reset',
@@ -454,6 +499,7 @@ function buildNarrowDrill(runtime: ScenarioRuntime): CorrectionDrill {
           { id: 'full-wall', label: '최대 조향으로 벽 가까이까지 전진', feedback: '바깥쪽 앞 모서리가 벽에 가까워질 수 있습니다.', motion: [{ gear: 'D', steeringAngle: -turn, seconds: 2 }], focusZone: outerZone },
         ],
         '한 번의 큰 수정이 아니라 남은 여유만큼 각도를 나눠 만드세요.',
+        'first-correction',
       ),
       staticStep(
         'narrow-recheck',
@@ -467,6 +513,7 @@ function buildNarrowDrill(runtime: ScenarioRuntime): CorrectionDrill {
           { id: 'rear-camera', label: '후방 화면만 보고 바로 출발', feedback: '앞 모서리와 벽의 회전 공간을 확인할 수 없습니다.' },
         ],
         '수정할 때마다 네 방향의 여유를 새로 판단하세요.',
+        'recheck',
       ),
       pathStep(
         'narrow-final',
@@ -480,6 +527,7 @@ function buildNarrowDrill(runtime: ScenarioRuntime): CorrectionDrill {
           { id: 'another-forward', label: '안전한 재진입각이지만 다시 크게 전진', feedback: '현재는 두 번째 후진으로 마무리할 공간이 확보되었습니다.' },
         ],
         '재진입 후 평행해지는 순간 핸들을 중앙으로 풀고 깊이만 맞추세요.',
+        'reentry-decision',
       ),
     ],
   }

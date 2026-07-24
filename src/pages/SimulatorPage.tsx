@@ -42,7 +42,7 @@ export function SimulatorPage() {
       <section className={`page simulator-shell${isPracticeMode ? ' correction-shell' : ''}`} aria-labelledby="simulator-title">
         <div className="simulator-heading">
           <div>
-            <p className="eyebrow">{isPracticeMode ? '수정 판단 훈련' : '학습 모드'}</p>
+            <p className="eyebrow">{isPracticeMode ? '판단 연습' : '직접 연습'}</p>
             <h1 id="simulator-title">{isPracticeMode ? '충돌 전 안전한 수정 판단' : `${scenario.title} 후진주차`}</h1>
           </div>
           <Link className="secondary-button" to="/">상황 다시 선택</Link>

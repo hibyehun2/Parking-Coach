@@ -55,6 +55,44 @@ test('정답 문구는 실제 조작 순서를 쓰고 모호한 조향 표현을
   assert.match(labels, /핸들을 정면/)
 })
 
+test('비스듬한 자세 문항은 위험 결과를 답하고 전진 공간 확보와 후진 정렬을 분리한다', () => {
+  const drills = buildCorrectionDrills(createScenarioRuntime('both-sides', { seed: 2 }))
+  const crooked = drills.find(({ id }) => id === 'crooked')!
+  const assess = crooked.steps.find(({ id }) => id === 'crooked-assess')!
+  const makeSpace = crooked.steps.find(({ id }) => id === 'crooked-space')!
+  const align = crooked.steps.find(({ id }) => id === 'crooked-align')!
+
+  assert.match(assess.question, /어떤 위험/)
+  assert.match(assess.choices.find(({ id }) => id === assess.answer)!.label, /주차선을 넘을 수/)
+  assert.equal(makeSpace.skill, 'correction-space')
+  assert.equal(align.skill, 'first-correction')
+  assert.match(makeSpace.choices.find(({ id }) => id === makeSpace.answer)!.label, /^D로 바꾸고/)
+  assert.match(align.choices.find(({ id }) => id === align.answer)!.label, /^R로 바꾸고/)
+  assert.doesNotMatch(makeSpace.choices.find(({ id }) => id === makeSpace.answer)!.label, /후진/)
+})
+
+test('가운데 맞추기는 같은 D 기어에서 두 전진 곡선으로 나누어 안내한다', () => {
+  const runtime = createScenarioRuntime('both-sides', { seed: 2 })
+  const offCenter = buildCorrectionDrills(runtime).find(({ id }) => id === 'off-center')!
+  const shift = offCenter.steps.find(({ id }) => id === 'off-center-shift')!
+  const realign = offCenter.steps.find(({ id }) => id === 'off-center-realign')!
+  const shiftEnd = simulateJudgmentChoice(shift.vehicle, shift.choices.find(({ id }) => id === shift.answer)!, runtime).states.at(-1)!
+
+  assert.equal(shiftEnd.gear, 'D')
+  assert.equal(realign.vehicle.gear, 'D')
+  assert.ok(Math.hypot(shiftEnd.x - realign.vehicle.x, shiftEnd.y - realign.vehicle.y) < .02)
+  assert.doesNotMatch(realign.choices.find(({ id }) => id === realign.answer)!.label, /기어|D로/)
+})
+
+test('수정 판단 문항은 선택 가능한 판단 유형에 고르게 분류된다', () => {
+  const skills = new Set(buildCorrectionDrills(createScenarioRuntime('both-sides', { seed: 2 }))
+    .flatMap(({ steps }) => steps.map(({ skill }) => skill)))
+
+  for (const skill of ['hazard-prediction', 'stop-timing', 'correction-space', 'first-correction', 'recheck', 'reentry-decision']) {
+    assert.equal(skills.has(skill as never), true, `${skill} 유형 문항`)
+  }
+})
+
 test('모서리 간격 회복은 재정렬과 분리되고 실제 조향 방향을 단계별로 안내한다', () => {
   for (const seed of [2, 3]) {
     const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })

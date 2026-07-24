@@ -450,6 +450,28 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .correction-practice-cta strong { font-size: 1rem; line-height: 1.4; }
 .correction-practice-cta p { margin: 0; color: var(--muted); font-size: .8rem; line-height: 1.45; }
 .correction-practice-cta .primary-button { flex: none; min-width: 190px; }
+.judgment-skill-picker { margin-top: 14px; display: grid; gap: 16px; word-break: keep-all; }
+.judgment-skill-picker > header { display: flex; align-items: end; justify-content: space-between; gap: 22px; }
+.judgment-skill-picker > header span { color: var(--brand); font-size: .73rem; font-weight: 900; }
+.judgment-skill-picker > header h2 { margin: 4px 0 0; font-size: clamp(1.45rem, 3vw, 2rem); }
+.judgment-skill-picker > header p { max-width: 470px; margin: 0; color: var(--muted); line-height: 1.55; }
+.recommended-practice { width: 100%; padding: 17px 19px; border: 1px solid #70c7a7; border-radius: 17px; display: grid; gap: 4px; text-align: left; color: var(--brand-dark); background: linear-gradient(135deg, #e9faf3, #fff); box-shadow: 0 10px 24px rgba(24,98,70,.09); cursor: pointer; }
+.recommended-practice span { color: var(--brand); font-size: .72rem; font-weight: 900; }
+.recommended-practice strong { font-size: 1.02rem; }
+.recommended-practice small { color: var(--muted); }
+.judgment-skill-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; }
+.judgment-skill-card { min-height: 155px; padding: 15px; border: 1px solid var(--border); border-radius: 15px; display: grid; align-content: start; gap: 7px; text-align: left; color: inherit; background: rgba(255,255,255,.74); cursor: pointer; }
+.judgment-skill-card.selected { border: 2px solid var(--brand); padding: 14px; background: #effaf5; box-shadow: 0 7px 18px rgba(24,98,70,.1); }
+.judgment-skill-card > strong { font-size: .95rem; }
+.judgment-skill-card > p { margin: 0; color: var(--muted); font-size: .8rem; line-height: 1.45; }
+.judgment-skill-card > small { margin-top: auto; color: var(--brand); font-weight: 800; }
+.skill-status { width: fit-content; padding: 4px 7px; border-radius: 999px; color: #52625c; background: #edf2f0; font-size: .66rem; font-weight: 900; }
+.skill-status.review { color: #974139; background: #fff0ee; }
+.skill-status.complete { color: #25634c; background: #e7f6ef; }
+.skill-status.steady { color: #155b42; background: #d8f3e7; }
+.judgment-skill-picker > footer { padding-top: 2px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.judgment-skill-picker > footer span { color: var(--muted); font-size: .82rem; font-weight: 750; }
+.judgment-skill-picker > footer .primary-button:disabled { opacity: .42; cursor: not-allowed; }
 .correction-progress { margin-top: 12px; padding: 14px 16px; border-radius: 15px; display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; background: rgba(255,255,255,.76); }
 .correction-progress span { color: var(--brand); font-weight: 900; }
 .correction-progress progress { grid-column: 1 / -1; width: 100%; accent-color: var(--brand); }
@@ -644,6 +666,10 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 
 @media (max-width: 720px) {
   .quiz-layout { grid-template-columns: minmax(0, 1fr); }
+  .judgment-skill-picker > header { align-items: start; flex-direction: column; gap: 8px; }
+  .judgment-skill-grid { grid-template-columns: minmax(0, 1fr); }
+  .judgment-skill-card { min-height: 0; }
+  .judgment-skill-picker > footer { position: sticky; bottom: 8px; padding: 11px; border-radius: 13px; background: rgba(245,248,246,.94); box-shadow: 0 7px 22px rgba(28,55,44,.14); backdrop-filter: blur(12px); }
   .site-header, .main-content, .site-footer { width: min(100% - 32px, 1180px); }
   .site-header { min-height: 68px; }
   .brand span:last-child { display: none; }
@@ -760,6 +786,14 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .simulator-shell { position: fixed; z-index: 10; inset: 0; width: 100%; height: 100vh; height: 100dvh; padding: 0; overflow: hidden; background: #f5f8f6; }
   .simulator-heading, .simulator-shell > .page-description { display: none; }
   .simulator-shell.correction-shell { position: relative; inset: auto; height: auto; min-height: 100vh; min-height: 100svh; overflow: visible; }
+  .correction-shell .judgment-skill-picker { width: min(100% - 24px, 1120px); margin: 10px auto 22px; }
+  .correction-shell .judgment-skill-picker > header h2 { font-size: 1.2rem; }
+  .correction-shell .judgment-skill-picker > header p { font-size: .76rem; }
+  .correction-shell .recommended-practice { padding: 10px 13px; }
+  .correction-shell .judgment-skill-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .correction-shell .judgment-skill-card { min-height: 112px; padding: 10px; gap: 4px; }
+  .correction-shell .judgment-skill-card.selected { padding: 9px; }
+  .correction-shell .judgment-skill-card > p { font-size: .68rem; }
   .correction-shell .correction-practice { min-height: 100vh; min-height: 100svh; padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); }
   .correction-shell .correction-progress { position: sticky; z-index: 4; top: 0; margin: 0; padding: 7px 10px; grid-template-columns: auto minmax(0, 1fr) minmax(110px, 24%); align-items: center; gap: 5px 9px; background: rgba(245,248,246,.96); box-shadow: 0 5px 16px rgba(28,55,44,.08); backdrop-filter: blur(14px); }
   .correction-shell .correction-progress strong { min-width: 0; overflow: hidden; font-size: .76rem; text-overflow: ellipsis; white-space: nowrap; }

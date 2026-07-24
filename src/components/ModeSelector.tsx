@@ -14,14 +14,14 @@ const modes: Array<{
 }> = [
   {
     id: 'practice',
-    title: '수정 판단 훈련',
-    description: '다양한 충돌 직전 상황에서 안전하게 멈추고 위치를 고치는 방법을 익혀요.',
-    features: ['단계별 수정 주차 연습', '선택 결과가 다음 단계로', '좌우 상황 연습'],
+    title: '판단 연습',
+    description: '주차 중 생길 수 있는 상황을 살펴보고 안전하게 위치를 고치는 방법을 익혀요.',
+    features: ['판단 유형 선택', '선택 결과가 다음 단계로', '완료한 판단 다시 연습'],
     recommended: true,
   },
   {
     id: 'learning',
-    title: '학습 모드',
+    title: '직접 연습',
     description: '단계별 안내를 보며 차량을 직접 조작해 후진주차를 연습해요.',
     features: ['단계별 탑뷰', '실시간 조향 안내', '위험 경고'],
   },

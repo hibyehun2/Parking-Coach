@@ -172,7 +172,7 @@ export function JudgmentQuiz({
             selected,
             scenario.choices.find((choice) => choice.id === firstSelectedId) ?? selected,
           )}>
-            {questionNumber === total ? '훈련 결과 보기' : '다음 판단 문제'}
+            {questionNumber === total ? '연습 결과 보기' : '다음 판단 문제'}
           </button>}
         </div>
       </div>
