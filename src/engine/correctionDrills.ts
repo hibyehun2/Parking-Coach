@@ -205,7 +205,7 @@ function buildEntryCorrectionCourse(
       pathStep(
         `${kind}-space`,
         'correction-space',
-        kind === 'near' ? '가뒤로 공간 만들기' : '먼앞으로 공간 만들기',
+        kind === 'near' ? '가까운 쪽 공간 만들기' : '먼 쪽 공간 만들기',
         `핸들을 중앙으로 풀었고 ${targetSide} 공간을 만들어야 합니다.`,
         `${kind === 'near' ? '가까운 쪽' : '먼 쪽'}이 좁을 때 어느 방향으로 얼마나 움직일까요?`,
         space,

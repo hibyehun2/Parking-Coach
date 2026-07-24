@@ -511,7 +511,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .judgment-example-card > i { position: absolute; right: 16px; top: 50%; color: var(--brand); font-size: 1.55rem; font-style: normal; transform: translateY(-50%); }
 .judgment-skill-list { display: grid; gap: 10px; }
 .judgment-skill-list > h3 { margin: 0; font-size: 1rem; }
-.judgment-skill-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; }
+.judgment-skill-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
 .judgment-skill-card { position: relative; min-height: 155px; padding: 15px 42px 15px 15px; border: 1px solid var(--border); border-radius: 15px; display: grid; align-content: start; gap: 7px; text-align: left; color: inherit; background: rgba(255,255,255,.74); cursor: pointer; }
 .judgment-skill-card:hover { border-color: #70c7a7; background: #f5fcf9; box-shadow: 0 7px 18px rgba(24,98,70,.08); }
 .judgment-skill-card > strong { font-size: .95rem; }
@@ -1023,6 +1023,24 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .home-hero-visual { width: min(720px, 100%); margin-top: 22px; border: 1px solid rgba(255,255,255,.85); border-radius: 28px; overflow: hidden; text-align: left; background: rgba(255,255,255,.74); box-shadow: 0 24px 65px rgba(30,54,44,.16); }
 .home-hero-visual img { width: 100%; height: clamp(210px, 32vh, 360px); display: block; object-fit: cover; }
 .home-hero-visual .preview-caption { padding: 13px 18px 15px; }
+.auth-sheet-backdrop { position: fixed; z-index: 90; inset: 0; padding: max(18px, env(safe-area-inset-top)) max(18px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(18px, env(safe-area-inset-left)); display: grid; place-items: center; background: rgba(13,22,19,.48); backdrop-filter: blur(18px) saturate(1.15); }
+.auth-sheet { position: relative; width: min(420px, 100%); max-height: 100%; padding: 30px; overflow-y: auto; border: 1px solid rgba(255,255,255,.82); border-radius: 28px; text-align: center; background: rgba(249,252,250,.96); box-shadow: 0 28px 90px rgba(8,28,20,.28), inset 0 1px rgba(255,255,255,.8); }
+.auth-sheet-close { position: absolute; top: 13px; right: 13px; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; color: #53615c; background: rgba(111,126,119,.12); font-size: 1.35rem; cursor: pointer; }
+.auth-app-mark { width: 58px; height: 58px; margin: 0 auto 15px; border-radius: 17px; display: grid; place-items: center; color: white; background: linear-gradient(145deg, #27a77b, #0d6148); box-shadow: inset 0 1px rgba(255,255,255,.35), 0 10px 25px rgba(12,93,68,.22); font-size: 1.5rem; font-weight: 900; }
+.auth-kicker { margin: 0 0 6px; color: var(--brand); font-size: .7rem; font-weight: 900; letter-spacing: .12em; }
+.auth-sheet h2 { margin: 0; color: #18251f; font-size: 1.45rem; line-height: 1.25; text-wrap: balance; }
+.auth-sheet > p:not(.auth-kicker, .auth-error) { margin: 11px auto 20px; color: var(--muted); font-size: .88rem; line-height: 1.55; word-break: keep-all; }
+.google-login-button { width: 100%; min-height: 50px; padding: 0 16px; border: 1px solid #d4dbd8; border-radius: 14px; display: grid; grid-template-columns: 28px 1fr 28px; align-items: center; color: #1c2521; background: white; box-shadow: 0 5px 16px rgba(22,40,32,.07); font-weight: 850; cursor: pointer; }
+.google-login-button span { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: #4285f4; background: #f4f7ff; font-size: 1rem; font-weight: 900; }
+.auth-sheet > small { margin-top: 13px; display: block; color: #718079; font-size: .72rem; }
+.auth-error { margin: 12px 0 0; color: #a33e35; font-size: .78rem; font-weight: 750; }
+.nickname-sheet { width: min(440px, 100%); }
+.nickname-preview { margin: 18px 0 10px; padding: 15px; border: 1px solid rgba(255,255,255,.9); border-radius: 20px; display: flex; align-items: center; justify-content: center; gap: 13px; background: linear-gradient(145deg, #eef8f3, #fff); box-shadow: 0 10px 28px rgba(23,74,55,.09); }
+.nickname-preview-avatar { width: 62px; height: 62px; border-radius: 18px; }
+.nickname-preview strong { font-size: 1.05rem; }
+.nickname-change-button { min-height: 40px; padding: 0 14px; border: 1px solid var(--border); border-radius: 12px; color: var(--brand-dark); background: white; font-weight: 800; cursor: pointer; }
+.nickname-confirm-button { width: 100%; margin-top: 12px; }
+.hero-start:disabled { opacity: .58; cursor: wait; transform: none; }
 
 .practice-setup { max-width: 1180px; margin-inline: auto; padding-block: clamp(28px, 5vh, 56px); animation: ios-page-enter 260ms cubic-bezier(.22,.8,.28,1) both; }
 .setup-header { margin-bottom: 22px; display: flex; align-items: center; gap: 14px; }
@@ -1632,7 +1650,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .correction-shell .judgment-skill-list { min-height: 0; grid-template-rows: auto minmax(0, 1fr); }
   .correction-shell .judgment-skill-grid {
     min-height: 0;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-rows: repeat(2, minmax(0, 1fr));
     gap: 5px;
   }
@@ -2982,7 +3000,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .correction-shell .judgment-example-card > span { font-size: .66rem; }
   .correction-shell .judgment-example-card > strong { font-size: .84rem; }
   .correction-shell .judgment-skill-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     grid-template-rows: repeat(2, minmax(0, 1fr));
     gap: 6px;
   }

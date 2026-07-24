@@ -2,6 +2,8 @@ import { getScenario } from '../data/scenarios.ts'
 import type { PracticeHistory, PracticeSession } from './practiceHistory.ts'
 import { updatePracticeShareState } from './practiceHistory.ts'
 import { loadPracticeAutoShareConsent, type PracticeAutoShareConsent } from './userPreferences.ts'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import { supabase } from './supabaseClient.ts'
 
 export type PublicLearningCasePayload = {
   clientShareId: string
@@ -129,13 +131,69 @@ export function createHttpPracticeSharingGateway({
   }
 }
 
+export function createSupabasePracticeSharingGateway(client: SupabaseClient): PracticeSharingGateway {
+  const requireUser = async () => {
+    const { data, error } = await client.auth.getUser()
+    if (error || !data.user) throw new Error('practice-sharing:login-required')
+    return data.user
+  }
+
+  return {
+    async publish(payload) {
+      await requireUser()
+      const { data, error } = await client
+        .from('learning_cases')
+        .upsert({
+          client_share_id: payload.clientShareId,
+          nickname: payload.nickname,
+          completed_date: payload.completedDate,
+          consent_version: payload.consent.version,
+          consent_accepted_at: payload.consent.acceptedAt,
+          scenario_id: payload.scenarioId,
+          scenario_title: payload.scenarioTitle,
+          practice_type: payload.practiceType,
+          outcome: payload.outcome,
+          collision_count: payload.collisionCount,
+          collision_zones: payload.collisionZones,
+          quiz_score: payload.quiz?.score,
+          quiz_total: payload.quiz?.total,
+          learning_points: payload.learningPoints,
+        }, { onConflict: 'owner_id,client_share_id' })
+        .select('id')
+        .single()
+      if (error || typeof data?.id !== 'string') throw new Error(`practice-sharing:supabase:${error?.code ?? 'invalid-response'}`)
+      return { publicCaseId: data.id }
+    },
+    async unpublish(clientShareId, publicCaseId) {
+      await requireUser()
+      const query = client.from('learning_cases').delete()
+      const { error } = publicCaseId
+        ? await query.eq('id', publicCaseId)
+        : await query.eq('client_share_id', clientShareId)
+      if (error) throw new Error(`practice-sharing:supabase:${error.code}`)
+    },
+    async unpublishAll() {
+      await requireUser()
+      const { error } = await client.from('learning_cases').delete().not('id', 'is', null)
+      if (error) throw new Error(`practice-sharing:supabase:${error.code}`)
+    },
+    async updateNickname(nickname) {
+      await requireUser()
+      const { error } = await client.from('learning_cases').update({ nickname: nickname.trim().slice(0, 40) }).not('id', 'is', null)
+      if (error) throw new Error(`practice-sharing:supabase:${error.code}`)
+    },
+  }
+}
+
 const configuredSharingBaseUrl = typeof import.meta.env === 'object'
   ? import.meta.env.VITE_PRACTICE_SHARING_API_URL as string | undefined
   : undefined
 
 export const configuredPracticeSharingGateway = configuredSharingBaseUrl
   ? createHttpPracticeSharingGateway({ baseUrl: configuredSharingBaseUrl })
-  : null
+  : supabase
+    ? createSupabasePracticeSharingGateway(supabase)
+    : null
 
 export async function syncPracticeSharing(
   history: PracticeHistory,

@@ -224,7 +224,7 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
             </button>
             <button type="button" className="judgment-example-card" onClick={showGuide}>
               <span>{pastAttempts.length ? '필요할 때 다시 보기' : '처음이라면 추천'}</span>
-              <strong>가뒤먼앞 원칙 보기</strong>
+              <strong>안전 수정 순서 보기</strong>
               <small>핸들 원위치부터 공간 만들기와 재진입 순서를 확인해요.</small>
               <i aria-hidden="true">›</i>
             </button>
@@ -272,7 +272,7 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
           <strong>{guide.title}</strong>
           <progress value={0} max={1} />
         </div>
-        <p className="page-description">가뒤먼앞의 전체 순서를 확인한 뒤 연습할 수정 유형을 선택합니다.</p>
+        <p className="page-description">간격을 회복하는 기본 순서를 확인한 뒤 연습할 수정 유형을 선택합니다.</p>
         <JudgmentGuide scenario={guide} runtime={runtime} onStart={() => setPhase('select')} buttonLabel="유형별 연습 고르기" />
       </section>
     )

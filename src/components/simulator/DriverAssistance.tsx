@@ -20,7 +20,7 @@ type ViewCheck = {
 const VIEW_STORAGE_KEY = 'parking-coach:view-checks'
 const VIEWS: { id: DriverView; label: string; shortcut: string }[] = [
   { id: 'left', label: '좌측 미러', shortcut: '1' },
-  { id: 'rear', label: '후방카메라', shortcut: '2' },
+  { id: 'rear', label: '후방 화면', shortcut: '2' },
   { id: 'right', label: '우측 미러', shortcut: '3' },
 ]
 
@@ -121,7 +121,7 @@ export function DriverAssistance({ vehicle }: DriverAssistanceProps) {
   }, [openView])
 
   return (
-    <div className="driver-assistance" aria-label="미러와 후방카메라">
+    <div className="driver-assistance" aria-label="간격 화면과 후방 화면">
       <div className="driver-view-list">
         {VIEWS.filter((view) => view.id !== 'rear').map((view) => (
           <button
@@ -158,8 +158,8 @@ export function DriverAssistance({ vehicle }: DriverAssistanceProps) {
       <small className="view-check-count">확인 기록 {checkCount}회</small>
 
       {vehicle.gear === 'R' && (
-        <section className="automatic-rear-view" aria-label="R 기어 자동 후방카메라">
-          <span>후방카메라 · 자동</span>
+        <section className="automatic-rear-view" aria-label="R 기어 자동 후방 화면">
+          <span>후방 화면 · 자동</span>
           <AssistanceCanvas vehicle={vehicle} view="rear" />
           <ParkingMiniMap vehicle={vehicle} />
           <strong className={sensorDistance !== null && sensorDistance < 1 ? 'sensor-close' : ''}>

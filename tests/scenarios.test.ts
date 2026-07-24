@@ -30,7 +30,7 @@ test('첫 성공 이후 출발 방향이 시드에 따라 달라진다', () => {
   assert.equal(createScenarioRuntime('both-sides', { seed: 3, firstSuccess: true }).startSide, 'right')
 })
 
-test('후방카메라 진입 차선은 직접 연습에만 적용된다', () => {
+test('후방 화면 기준 진입 차선은 직접 연습에만 적용된다', () => {
   assert.equal(createScenarioRuntime('both-sides', { seed: 2, practiceMode: 'learning' }).initialVehicle.y, 5.2)
   assert.equal(createScenarioRuntime('both-sides', { seed: 2, practiceMode: 'practice' }).initialVehicle.y, 4)
   assert.equal(createScenarioRuntime('both-sides', { seed: 2 }).initialVehicle.y, 4)

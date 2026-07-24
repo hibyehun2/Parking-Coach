@@ -115,7 +115,7 @@ export function buildJudgmentGuide(runtime: ScenarioRuntime): JudgmentScenario {
   return {
     id: 'guided-safe-recovery',
     skill: 'first-correction',
-    title: '가뒤먼앞 먼저 익히기',
+    title: '간격을 회복하는 기본 순서',
     situation: '핸들을 끝까지 돌려 후진하던 중 한쪽 간격이 부족해 완전히 정지했습니다.',
     question: '어느 쪽이 좁아도 첫 동작은 핸들을 정중앙으로 풀어 바퀴를 일자로 만드는 것입니다.',
     vehicle,
@@ -135,6 +135,6 @@ export function buildJudgmentGuide(runtime: ScenarioRuntime): JudgmentScenario {
       ],
     }],
     answer: 'guided-answer',
-    takeaway: '핸들 원위치 → 가까운 쪽은 뒤로(가뒤) · 먼 쪽은 앞으로(먼앞) → 처음 방향으로 다시 조향',
+    takeaway: '핸들 원위치 → 가까운 쪽은 짧게 후진 · 먼 쪽은 짧게 전진 → 처음 방향으로 다시 조향',
   }
 }

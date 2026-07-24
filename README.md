@@ -99,44 +99,43 @@ npm run preview
 
 ## 데이터 저장
 
-다음 정보는 서버가 아닌 현재 브라우저의 `localStorage`에 저장됩니다.
+다음 정보는 현재 브라우저의 `localStorage`에 저장됩니다.
 
 - 확인한 단계별 안내
 - 안내 자동 건너뛰기 설정
 - 상황별 첫 성공 여부
 - 최근 연습 결과와 충돌 기록
-- 공개 닉네임, 보관 시 공유 동의와 공유 동기화 상태
+- 최근 연습 결과, 보관 상태와 공유 동의
+
+Google 로그인 세션과 확정한 공개 닉네임은 Supabase Auth가 관리합니다. 보관에 동의한 학습 사례만 Supabase로 전송하며 원본 탑뷰 좌표, 기기 정보와 Google 프로필 이름·사진은 전송하지 않습니다.
 
 브라우저 데이터나 사이트 저장 공간을 삭제하면 기록도 함께 삭제됩니다.
 
-## 학습 사례 공유 백엔드 연결
+## Supabase 로그인과 학습 사례 연결
 
-`VITE_PRACTICE_SHARING_API_URL`에 HTTPS API 기본 주소를 설정하면 보관 기록의 공유 대기열이 결과 화면에서 자동 동기화됩니다. 이 값은 브라우저 번들에 공개되므로 API 비밀키, 토큰이나 비밀번호를 넣으면 안 됩니다.
+`.env.example`을 참고해 로컬 전용 `.env.local`에 Supabase Project URL과 anon public key를 설정합니다. 두 값은 브라우저 공개용이지만 service role 키와 데이터베이스 비밀번호는 절대 `VITE_` 변수나 저장소에 넣지 않습니다.
 
-공유에는 별도로 생성한 무작위 ID를 멱등 키로 사용합니다. 원본 탑뷰 좌표, 기기 정보, 이름·이메일과 같은 직접 식별 정보는 포함하지 않으며 완료 시각은 날짜 수준으로만 전송합니다. 공개 닉네임은 여러 사례를 연결하는 가명 식별자이므로 서버에서도 개인정보 처리 대상에 준해 보호해야 합니다.
-
-```bash
-VITE_PRACTICE_SHARING_API_URL=https://api.example.com npm run build
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-public-key
 ```
 
-프런트엔드는 다음 API 계약을 사용합니다.
+Supabase SQL Editor에서 [학습 사례 마이그레이션](supabase/migrations/202607250001_create_learning_cases.sql)을 실행합니다. 마이그레이션은 다음 보안 조건을 적용합니다.
 
-| 기능 | 요청 |
-| --- | --- |
-| 익명 보안 세션·CSRF 발급 | `POST /learning-cases/session` |
-| 사례 공개 | `POST /learning-cases` |
-| 사례 공개 중단 | `DELETE /learning-cases/:id` |
-| 공개 ID가 없을 때 중단 | `DELETE /learning-cases/by-client-id/:clientShareId` |
-| 사용자의 모든 공개 사례 삭제 | `DELETE /learning-cases` |
-| 공개 닉네임 반영 | `PATCH /learning-cases/profile` |
+- Google 로그인 사용자만 사례 작성 가능
+- `auth.uid()`가 일치하는 사용자만 자신의 사례 수정·삭제 가능
+- 공개 조회에서는 소유자 ID와 동의 기록 제외
+- 클라이언트 공유 ID로 중복 전송 방지
+- 닉네임, 점수, 허용 상태와 배열 길이를 데이터베이스에서도 검사
 
-익명 세션 응답은 최소 16자의 `{ "csrfToken": "..." }`, 사례 공개 응답은 `{ "id": "공개 사례 ID" }` 형식이어야 합니다. 익명 세션은 `HttpOnly`, `Secure`, 적절한 `SameSite` 속성의 쿠키로 소유권을 유지해야 하며 API는 허용한 앱 Origin에만 credential CORS를 열어야 합니다. 프런트엔드는 이후 변경 요청에 `X-CSRF-Token`을 포함합니다.
+Supabase Authentication의 URL Configuration에는 다음 Redirect URL을 허용합니다.
 
-서버는 클라이언트가 보낸 닉네임, 상태, 점수와 학습 문구를 신뢰하지 않고 형식·길이·허용값을 다시 검사해야 합니다. 모든 조회·수정·삭제에서 세션 또는 로그인 계정의 소유권을 확인하고, 공유 횟수 제한과 악성 요청 차단을 적용해야 합니다. 공유 시 전달되는 동의 버전과 동의 시각도 서버에 보관합니다.
+- 로컬: `http://localhost:5173/**`
+- GitHub Pages: `https://hibyehun2.github.io/Parking-Coach/**`
 
-로그인 도입 시 [practiceSharing.ts](src/engine/practiceSharing.ts)의 `getAccessToken` 연결부에 메모리 기반 토큰 공급 함수를 전달하면 `Authorization: Bearer` 헤더가 추가됩니다. 액세스 토큰을 `localStorage`나 README, `VITE_` 환경 변수에 저장하지 마세요.
+Google Cloud OAuth의 승인된 리디렉션 URI는 Supabase 콜백인 `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`을 사용합니다. 앱은 PKCE 코드 흐름을 사용하며, 첫 로그인 후 Google 이름 대신 무작위 동물 닉네임을 사용자 메타데이터에 저장합니다.
 
-기록 초기화는 서버의 전체 삭제가 성공한 뒤에만 로컬 기록을 지웁니다. 사용자가 브라우저 저장 공간을 직접 삭제한 경우에도 로그인 또는 익명 세션 복구 후 공개 사례를 삭제할 수 있는 서버 관리 화면을 별도로 제공해야 합니다.
+GitHub Pages 배포에는 저장소 Actions Variables `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`를 등록합니다. 기록 초기화는 서버의 전체 삭제가 성공한 뒤에만 로컬 기록을 지웁니다.
 
 ## 배포
 

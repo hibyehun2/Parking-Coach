@@ -59,7 +59,7 @@ test('가까운 쪽과 먼 쪽 모두 움직이기 전에 핸들을 정중앙으
   }
 })
 
-test('가뒤는 R, 먼앞은 D로 50cm에서 1m 사이를 직선 이동한다', () => {
+test('가까운 쪽은 R, 먼 쪽은 D로 50cm에서 1m 사이를 직선 이동한다', () => {
   for (const seed of [2, 3]) {
     const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
     const drills = buildCorrectionDrills(runtime)

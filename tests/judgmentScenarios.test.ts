@@ -3,7 +3,7 @@ import test from 'node:test'
 import { createScenarioRuntime } from '../src/data/scenarios.ts'
 import { buildJudgmentGuide, simulateJudgmentChoice } from '../src/engine/judgmentScenarios.ts'
 
-test('안내 예시는 핸들 원위치와 가뒤먼앞 순서를 먼저 보여준다', () => {
+test('안내 예시는 핸들 원위치와 간격 회복 순서를 먼저 보여준다', () => {
   for (const seed of [2, 3]) {
     const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
     const guide = buildJudgmentGuide(runtime)

@@ -20,7 +20,7 @@ test('기본 안내는 주차칸을 충분히 지나 나란히 정지한 뒤 진
   assert.equal(isRedGuideAlignedWithParkingLine(cameraCueEnd), true)
 })
 
-test('판단 연습 기준 경로는 직접 연습의 후방카메라 경로와 분리된다', () => {
+test('판단 연습 기준 경로는 직접 연습의 후방 화면 경로와 분리된다', () => {
   const runtime = createScenarioRuntime('both-sides', { seed: 2 })
   const directStages = buildLessonSimulation(runtime)
   const judgmentStages = buildJudgmentReferenceSimulation(runtime)
