@@ -21,13 +21,16 @@ type PracticeItem = {
   step: JudgmentScenario
 }
 
-const SKILL_ICONS: Record<JudgmentSkill, string> = {
-  'hazard-prediction': '◎',
-  'stop-timing': 'Ⅱ',
-  'correction-space': '↔',
-  'first-correction': '◇',
-  recheck: '✓',
-  'reentry-decision': '↩',
+function SkillIcon({ skill }: { skill: JudgmentSkill }) {
+  const paths: Record<JudgmentSkill, React.ReactNode> = {
+    'hazard-prediction': <><path d="M2.5 10s2.8-4.5 7.5-4.5 7.5 4.5 7.5 4.5-2.8 4.5-7.5 4.5S2.5 10 2.5 10Z" /><circle cx="10" cy="10" r="2.2" /></>,
+    'stop-timing': <><path d="M6 3.5h8l2.5 2.5v8L14 16.5H6L3.5 14V6Z" /><path d="M8 7v6M12 7v6" /></>,
+    'correction-space': <><path d="M3 10h14M3 10l3-3M3 10l3 3M17 10l-3-3M17 10l-3 3" /></>,
+    'first-correction': <><path d="M4 15c0-6 3-10 9-10h3" /><path d="m13 2 3 3-3 3" /><path d="M5 15h4" /></>,
+    recheck: <><circle cx="10" cy="10" r="7" /><path d="m6.5 10 2.2 2.2 4.8-5" /></>,
+    'reentry-decision': <><path d="M16 6H9a5 5 0 0 0-5 5v4" /><path d="m7 12-3 3-3-3" /><path d="M12 10h4v5h-4z" /></>,
+  }
+  return <svg viewBox="0 0 20 20" aria-hidden="true">{paths[skill]}</svg>
 }
 
 function allItems(drills: CorrectionDrill[]): PracticeItem[] {
@@ -61,8 +64,8 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
     if (!matching.length) return { label: '처음', tone: 'new' }
     const recent = matching.slice(0, 10)
     const correct = recent.filter((attempt) => attempt.firstTryCorrect).length
-    if (correct / recent.length < .7) return { label: '다시 보면 좋아요', tone: 'review' }
-    if (recent.length >= 3 && correct / recent.length >= .8) return { label: '안정적이에요', tone: 'steady' }
+    if (correct / recent.length < .7) return { label: '복습 추천', tone: 'review' }
+    if (recent.length >= 3 && correct / recent.length >= .8) return { label: '안정적', tone: 'steady' }
     return { label: '연습 완료', tone: 'complete' }
   }
   const skillProgress = (skill: JudgmentSkill) => {
@@ -115,6 +118,11 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
       correctChoiceLabel: answer.label,
       takeaway: current.step.takeaway,
       skill: current.step.skill,
+      reviewSnapshot: {
+        scenario: current.step,
+        firstChoice,
+        correctChoice: answer,
+      },
     }]
     if (itemIndex < practiceItems.length - 1) {
       setScore(nextScore)
@@ -169,16 +177,21 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
                   <button
                     key={skill}
                     type="button"
-                    className="judgment-skill-card"
+                    className={`judgment-skill-card skill-${skill}`}
                     aria-label={`${info.title}, ${status.label}, ${count}문제 연습 시작`}
                     onClick={() => start([skill])}
                   >
-                    <b className="skill-icon" aria-hidden="true">{SKILL_ICONS[skill]}</b>
-                    <span className={`skill-status ${status.tone}`}>{status.label}</span>
+                    <span className="skill-card-top">
+                      <b className="skill-icon"><SkillIcon skill={skill} /></b>
+                      <span className={`skill-status ${status.tone}`}>{status.label}</span>
+                    </span>
                     <strong>{info.title}</strong>
                     <p>{info.description}</p>
-                    <small>{progress ? `최근 ${progress.correct}/${progress.total} 정답 · ` : ''}{count}문제</small>
-                    <i aria-hidden="true">→</i>
+                    <span className="skill-card-footer">
+                      <small>{progress ? `최근 ${progress.correct}/${progress.total} 정답 · ` : ''}{count}문제</small>
+                      <span className="skill-progress" aria-hidden="true"><i style={{ width: `${progress ? progress.correct / progress.total * 100 : 0}%` }} /></span>
+                      <b aria-hidden="true">›</b>
+                    </span>
                   </button>
                 )
               })}

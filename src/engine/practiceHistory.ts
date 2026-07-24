@@ -2,7 +2,7 @@ import type { ParkingResult } from './parkingEvaluation.ts'
 import type { ReplayEvent } from './sessionReplay.ts'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../types/practice.ts'
 import { FIRST_SUCCESS_KEY, isScenarioAvailable, markFirstSuccess } from '../data/scenarios.ts'
-import type { JudgmentSkill } from './judgmentScenarios.ts'
+import type { JudgmentChoice, JudgmentScenario, JudgmentSkill } from './judgmentScenarios.ts'
 
 export const PRACTICE_HISTORY_KEY = 'parking-coach:practice-history:v5'
 export const MAX_PRACTICE_SESSIONS = 20
@@ -11,6 +11,7 @@ export const PRACTICE_HISTORY_RETENTION_DAYS = 7
 const PRACTICE_HISTORY_RETENTION_MS = PRACTICE_HISTORY_RETENTION_DAYS * 24 * 60 * 60 * 1000
 
 export type MistakeType = 'collision'
+export type PracticeShareStatus = 'private' | 'pending' | 'shared' | 'publish-failed' | 'unpublishing' | 'unpublish-failed'
 
 export type CorrectionAttempt = {
   drillId: string
@@ -22,6 +23,11 @@ export type CorrectionAttempt = {
   correctChoiceLabel: string
   takeaway: string
   skill?: JudgmentSkill
+  reviewSnapshot?: {
+    scenario: JudgmentScenario
+    firstChoice: JudgmentChoice
+    correctChoice: JudgmentChoice
+  }
 }
 
 export type PracticeSession = {
@@ -43,6 +49,11 @@ export type PracticeSession = {
   correctionAttempts?: CorrectionAttempt[]
   bookmarked: boolean
   bookmarkedAt?: string
+  shareStatus: PracticeShareStatus
+  shareClientId?: string
+  shareRequestedAt?: string
+  publicCaseId?: string
+  shareError?: string
 }
 
 export type PracticeHistory = { version: 5; sessions: PracticeSession[] }
@@ -112,9 +123,33 @@ function parseSession(value: unknown): PracticeSession | null {
           && typeof value.correctChoiceLabel === 'string'
           && typeof value.takeaway === 'string'
       })
+        .map((attempt) => {
+          const value = attempt as CorrectionAttempt & { reviewSnapshot?: unknown }
+          const snapshot = value.reviewSnapshot
+          if (!snapshot || typeof snapshot !== 'object') return value
+          const review = snapshot as Record<string, unknown>
+          const scenario = review.scenario as JudgmentScenario | undefined
+          const firstChoice = review.firstChoice as JudgmentChoice | undefined
+          const correctChoice = review.correctChoice as JudgmentChoice | undefined
+          return scenario && typeof scenario.id === 'string'
+            && scenario.vehicle && typeof scenario.vehicle === 'object'
+            && firstChoice && typeof firstChoice.id === 'string'
+            && correctChoice && typeof correctChoice.id === 'string'
+            ? { ...value, reviewSnapshot: { scenario, firstChoice, correctChoice } }
+            : { ...value, reviewSnapshot: undefined }
+        })
       : undefined,
     bookmarked: item.bookmarked === true,
     bookmarkedAt: typeof item.bookmarkedAt === 'string' && !Number.isNaN(Date.parse(item.bookmarkedAt)) ? item.bookmarkedAt : undefined,
+    shareStatus: item.shareStatus === 'pending' || item.shareStatus === 'shared' || item.shareStatus === 'publish-failed' || item.shareStatus === 'unpublishing' || item.shareStatus === 'unpublish-failed'
+      ? item.shareStatus
+      : item.shareStatus === 'failed'
+        ? item.bookmarked === true ? 'publish-failed' : 'unpublish-failed'
+        : 'private',
+    shareClientId: typeof item.shareClientId === 'string' ? item.shareClientId : undefined,
+    shareRequestedAt: typeof item.shareRequestedAt === 'string' && !Number.isNaN(Date.parse(item.shareRequestedAt)) ? item.shareRequestedAt : undefined,
+    publicCaseId: typeof item.publicCaseId === 'string' ? item.publicCaseId : undefined,
+    shareError: typeof item.shareError === 'string' ? item.shareError : undefined,
   }
 }
 
@@ -128,19 +163,32 @@ function retainSessions(sessions: PracticeSession[], now = new Date()) {
     ...session,
     bookmarked: false,
     bookmarkedAt: undefined,
+    shareStatus: 'private' as const,
+    shareClientId: undefined,
+    shareRequestedAt: undefined,
+    publicCaseId: undefined,
+    shareError: undefined,
   }))
-  const recent = [
+  const releasedAndRecent = [
     ...sessions.filter((session) => !session.bookmarked),
     ...releasedBookmarks,
   ]
+  const unpublishQueue = releasedAndRecent.filter((session) => session.shareStatus === 'unpublishing' || session.shareStatus === 'unpublish-failed')
+  const recent = releasedAndRecent
+    .filter((session) => session.shareStatus !== 'unpublishing' && session.shareStatus !== 'unpublish-failed')
     .filter((session) => Date.parse(session.completedAt) >= cutoff)
     .sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))
     .slice(0, MAX_PRACTICE_SESSIONS)
-  return [...bookmarked, ...recent].sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))
+  return [...bookmarked, ...unpublishQueue, ...recent].sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))
 }
 
 export function isPracticeSessionExpired(session: PracticeSession, now = new Date()) {
   return now.getTime() - Date.parse(session.completedAt) >= PRACTICE_HISTORY_RETENTION_MS
+}
+
+export function createPracticeShareId(randomUUID = globalThis.crypto?.randomUUID?.bind(globalThis.crypto)) {
+  if (randomUUID) return randomUUID()
+  return `share-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
 }
 
 export function loadPracticeHistory(storage: Storage | null = defaultStorage(), now = new Date()): PracticeHistory {
@@ -199,6 +247,7 @@ export function recordPracticeSession(
           : event.clip,
       })),
     bookmarked: false,
+    shareStatus: 'private',
   }
   const next = { version: 5 as const, sessions: retainSessions([session, ...history.sessions], completedAt) }
   persist(storage, next)
@@ -238,6 +287,7 @@ export function recordCorrectionSession(
     quizTotal: total,
     correctionAttempts,
     bookmarked: false,
+    shareStatus: 'private',
   }
   const next = { version: 5 as const, sessions: retainSessions([session, ...history.sessions], completedAt) }
   persist(storage, next)
@@ -248,6 +298,7 @@ export function togglePracticeBookmark(
   sessionId: string,
   storage: Storage | null = defaultStorage(),
   now = new Date(),
+  options: { shareWhenAdded?: boolean } = {},
 ) {
   const history = loadPracticeHistory(storage, now)
   const target = history.sessions.find((session) => session.id === sessionId)
@@ -255,12 +306,100 @@ export function togglePracticeBookmark(
   if (!target.bookmarked && history.sessions.filter((session) => session.bookmarked).length >= MAX_BOOKMARKED_SESSIONS) {
     return { history, status: 'limit' as const }
   }
-  const sessions = history.sessions.map((session) => session.id === sessionId
-    ? { ...session, bookmarked: !session.bookmarked, bookmarkedAt: session.bookmarked ? undefined : now.toISOString() }
-    : session)
+  const sessions = history.sessions.map((session): PracticeSession => {
+    if (session.id !== sessionId) return session
+    if (!session.bookmarked) return {
+      ...session,
+      bookmarked: true,
+      bookmarkedAt: now.toISOString(),
+      shareStatus: options.shareWhenAdded ? 'pending' : 'private',
+      shareClientId: options.shareWhenAdded ? session.shareClientId ?? createPracticeShareId() : session.shareClientId,
+      shareRequestedAt: options.shareWhenAdded ? now.toISOString() : undefined,
+      shareError: undefined,
+    }
+    return {
+      ...session,
+      bookmarked: false,
+      bookmarkedAt: undefined,
+      shareStatus: session.publicCaseId ? 'unpublishing' : 'private',
+      shareClientId: session.publicCaseId ? session.shareClientId : undefined,
+      shareRequestedAt: session.publicCaseId ? now.toISOString() : undefined,
+      shareError: undefined,
+    }
+  })
   const next = { version: 5 as const, sessions: retainSessions(sessions, now) }
   persist(storage, next)
   return { history: next, status: target.bookmarked ? 'removed' as const : 'added' as const }
+}
+
+export function queueBookmarkedSessionsForSharing(
+  storage: Storage | null = defaultStorage(),
+  now = new Date(),
+) {
+  const history = loadPracticeHistory(storage, now)
+  const sessions = history.sessions.map((session): PracticeSession => session.bookmarked && session.shareStatus === 'private'
+    ? { ...session, shareStatus: 'pending', shareClientId: session.shareClientId ?? createPracticeShareId(), shareRequestedAt: now.toISOString(), shareError: undefined }
+    : session)
+  const next = { version: 5 as const, sessions: retainSessions(sessions, now) }
+  persist(storage, next)
+  return next
+}
+
+export function updatePracticeShareState(
+  sessionId: string,
+  update: Pick<PracticeSession, 'shareStatus'> & Partial<Pick<PracticeSession, 'publicCaseId' | 'shareError'>>,
+  storage: Storage | null = defaultStorage(),
+  now = new Date(),
+) {
+  const history = loadPracticeHistory(storage, now)
+  const sessions = history.sessions.map((session): PracticeSession => session.id === sessionId
+    ? {
+      ...session,
+      ...update,
+      publicCaseId: update.shareStatus === 'private' ? undefined : update.publicCaseId ?? session.publicCaseId,
+      shareClientId: update.shareStatus === 'private' ? undefined : session.shareClientId,
+      shareError: update.shareStatus === 'publish-failed' || update.shareStatus === 'unpublish-failed' ? update.shareError : undefined,
+    }
+    : session)
+  const next = { version: 5 as const, sessions: retainSessions(sessions, now) }
+  persist(storage, next)
+  return next
+}
+
+export function retryPracticeShare(
+  sessionId: string,
+  storage: Storage | null = defaultStorage(),
+  now = new Date(),
+) {
+  const history = loadPracticeHistory(storage, now)
+  const sessions = history.sessions.map((session): PracticeSession => session.id !== sessionId
+    ? session
+    : session.shareStatus === 'publish-failed' && session.bookmarked
+      ? { ...session, shareStatus: 'pending', shareRequestedAt: now.toISOString(), shareError: undefined }
+      : session.shareStatus === 'unpublish-failed' && !session.bookmarked
+        ? { ...session, shareStatus: 'unpublishing', shareRequestedAt: now.toISOString(), shareError: undefined }
+        : session)
+  const next = { version: 5 as const, sessions: retainSessions(sessions, now) }
+  persist(storage, next)
+  return next
+}
+
+export function markAllPracticeSharesPrivate(
+  storage: Storage | null = defaultStorage(),
+  now = new Date(),
+) {
+  const history = loadPracticeHistory(storage, now)
+  const sessions = history.sessions.map((session): PracticeSession => ({
+    ...session,
+    shareStatus: 'private',
+    shareClientId: undefined,
+    shareRequestedAt: undefined,
+    publicCaseId: undefined,
+    shareError: undefined,
+  }))
+  const next = { version: 5 as const, sessions: retainSessions(sessions, now) }
+  persist(storage, next)
+  return next
 }
 
 export function countMistakes(sessions: PracticeSession[]) {

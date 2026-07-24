@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { ParkingResult } from '../src/engine/parkingEvaluation.ts'
-import { MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, PRACTICE_HISTORY_KEY, calculatePracticeTrend, clearPracticeHistory, countMistakes, loadPracticeHistory, recommendPractice, recordCorrectionSession, recordPracticeSession, todayPracticeMessage, togglePracticeBookmark } from '../src/engine/practiceHistory.ts'
+import { MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, PRACTICE_HISTORY_KEY, calculatePracticeTrend, clearPracticeHistory, countMistakes, loadPracticeHistory, queueBookmarkedSessionsForSharing, recommendPractice, recordCorrectionSession, recordPracticeSession, todayPracticeMessage, togglePracticeBookmark } from '../src/engine/practiceHistory.ts'
 import { createScenarioRuntime } from '../src/data/scenarios.ts'
 import type { ReplayEvent } from '../src/engine/sessionReplay.ts'
 import { INITIAL_VEHICLE_STATE } from '../src/engine/vehiclePhysics.ts'
+import { buildCorrectionDrills } from '../src/engine/correctionDrills.ts'
 
 class MemoryStorage implements Storage {
   private values = new Map<string, string>()
@@ -89,6 +90,33 @@ test('수정 판단 훈련 결과를 일반 주차와 구분해 저장한다', (
   assert.deepEqual(session.correctionAttempts, attempts)
 })
 
+test('판단 당시 탑뷰 복기 스냅샷을 문항 변경과 관계없이 저장한다', () => {
+  const storage = new MemoryStorage()
+  const runtime = createScenarioRuntime('both-sides', { seed: 7 })
+  const step = buildCorrectionDrills(runtime)[0].steps[0]
+  const firstChoice = step.choices.find((choice) => choice.id !== step.answer)!
+  const correctChoice = step.choices.find((choice) => choice.id === step.answer)!
+  const attempt = {
+    drillId: 'snapshot-drill',
+    drillTitle: '복기 테스트',
+    stepId: step.id,
+    stepTitle: step.title,
+    firstTryCorrect: false,
+    firstChoiceLabel: firstChoice.label,
+    correctChoiceLabel: correctChoice.label,
+    takeaway: step.takeaway,
+    skill: step.skill,
+    reviewSnapshot: { scenario: step, firstChoice, correctChoice },
+  }
+  recordCorrectionSession(0, 1, runtime, storage, new Date('2026-07-24T10:00:00Z'), [attempt])
+
+  const saved = loadPracticeHistory(storage).sessions[0].correctionAttempts?.[0].reviewSnapshot
+  assert.equal(saved?.scenario.id, step.id)
+  assert.equal(saved?.firstChoice.id, firstChoice.id)
+  assert.equal(saved?.correctChoice.id, correctChoice.id)
+  assert.deepEqual(saved?.scenario.vehicle, step.vehicle)
+})
+
 test('최근 충돌이 줄면 개선 중이며 차량 충돌은 수정 연습을 추천한다', () => {
   const storage = new MemoryStorage()
   ;[2, 2, 2, 0, 0, 0].forEach((count, index) => recordPracticeSession(result(count), 'both-sides', 'learning', storage, new Date(1_700_000_000_000 + index * 1000)))
@@ -136,6 +164,51 @@ test('기록은 최대 3개까지만 보관할 수 있다', () => {
     assert.equal(status, index < MAX_BOOKMARKED_SESSIONS ? 'added' : 'limit')
   }
   assert.equal(loadPracticeHistory(storage, new Date(base + 10_000)).sessions.filter((session) => session.bookmarked).length, MAX_BOOKMARKED_SESSIONS)
+})
+
+test('동의 후 보관한 기록은 공유 대기 상태가 되고 해제하면 공개 중단을 준비한다', () => {
+  const storage = new MemoryStorage()
+  const saved = recordPracticeSession(result(), 'both-sides', 'learning', storage)
+  const sessionId = saved.sessions[0].id
+  togglePracticeBookmark(sessionId, storage, new Date(), { shareWhenAdded: true })
+  const pending = loadPracticeHistory(storage).sessions[0]
+  assert.equal(pending.shareStatus, 'pending')
+  assert.ok(pending.shareClientId)
+  assert.notEqual(pending.shareClientId, sessionId)
+
+  const stored = JSON.parse(storage.getItem(PRACTICE_HISTORY_KEY)!) as { sessions: Array<Record<string, unknown>> }
+  stored.sessions[0].shareStatus = 'shared'
+  stored.sessions[0].publicCaseId = 'public-case-1'
+  storage.setItem(PRACTICE_HISTORY_KEY, JSON.stringify(stored))
+  togglePracticeBookmark(sessionId, storage)
+
+  assert.equal(loadPracticeHistory(storage).sessions[0].shareStatus, 'unpublishing')
+})
+
+test('기간이 지난 기록도 서버 공개 중단을 마칠 때까지 삭제 대기열에 유지한다', () => {
+  const storage = new MemoryStorage()
+  const completedAt = new Date('2026-07-01T10:00:00Z')
+  const saved = recordPracticeSession(result(), 'both-sides', 'learning', storage, completedAt)
+  togglePracticeBookmark(saved.sessions[0].id, storage, new Date('2026-07-02T10:00:00Z'), { shareWhenAdded: true })
+  const stored = JSON.parse(storage.getItem(PRACTICE_HISTORY_KEY)!) as { sessions: Array<Record<string, unknown>> }
+  stored.sessions[0].shareStatus = 'shared'
+  stored.sessions[0].publicCaseId = 'public-case-1'
+  storage.setItem(PRACTICE_HISTORY_KEY, JSON.stringify(stored))
+
+  togglePracticeBookmark(saved.sessions[0].id, storage, new Date('2026-08-01T10:00:00Z'))
+  const pendingRemoval = loadPracticeHistory(storage, new Date('2026-08-02T10:00:00Z')).sessions[0]
+  assert.equal(pendingRemoval.shareStatus, 'unpublishing')
+  assert.equal(pendingRemoval.publicCaseId, 'public-case-1')
+})
+
+test('기존 보관 기록은 동의 전 비공개이며 선택 후에만 공유 대기열로 전환한다', () => {
+  const storage = new MemoryStorage()
+  const saved = recordPracticeSession(result(), 'both-sides', 'learning', storage)
+  togglePracticeBookmark(saved.sessions[0].id, storage)
+  assert.equal(loadPracticeHistory(storage).sessions[0].shareStatus, 'private')
+
+  const queued = queueBookmarkedSessionsForSharing(storage)
+  assert.equal(queued.sessions[0].shareStatus, 'pending')
 })
 
 test('기존 보관 기록이 3개를 넘으면 초과 기록을 최근 기록으로 안전하게 전환한다', () => {

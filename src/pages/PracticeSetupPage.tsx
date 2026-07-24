@@ -30,7 +30,7 @@ export function PracticeSetupPage() {
       </header>
       <div className="setup-grid">
         <section className="setup-section" aria-labelledby="setup-scenario-title">
-          <div className="setup-section-heading"><span>1</span><h2 id="setup-scenario-title">상황 선택</h2></div>
+          <div className="setup-section-heading"><span>1</span><h2 id="setup-scenario-title">주차 환경 선택</h2></div>
           <div className="scenario-grid compact-scenario-grid">
             {scenarios.map((item) => <ScenarioCard key={item.id} scenario={item} selected={scenarioId === item.id} onSelect={setScenarioId} />)}
           </div>

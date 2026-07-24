@@ -35,3 +35,14 @@ export function createAnonymousAlias(seed: number | string) {
 }
 
 export const ANONYMOUS_ALIAS_COMBINATIONS = ANONYMOUS_ALIAS_ADJECTIVES.length * ANONYMOUS_ALIAS_ANIMALS.length
+
+export function getAliasAnimal(alias: string) {
+  return [...ANONYMOUS_ALIAS_ANIMALS]
+    .sort((left, right) => right.length - left.length)
+    .find((animal) => alias.endsWith(animal)) ?? null
+}
+
+export function getAliasAnimalIndex(alias: string) {
+  const animal = getAliasAnimal(alias)
+  return animal ? ANONYMOUS_ALIAS_ANIMALS.indexOf(animal) : 0
+}

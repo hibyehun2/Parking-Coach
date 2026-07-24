@@ -1,16 +1,20 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ReplayMomentCard } from '../components/ReplayMomentCard'
 import { ResultCollisionQuiz } from '../components/ResultCollisionQuiz'
+import { AnimalAvatar } from '../components/AnimalAvatar'
 import { JudgmentCanvas } from '../components/JudgmentQuiz'
 import { buildCorrectionDrills } from '../engine/correctionDrills'
 import type { ParkingResult } from '../engine/parkingEvaluation'
-import { clearPracticeHistory, isPracticeSessionExpired, loadPracticeHistory, MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, PRACTICE_HISTORY_RETENTION_DAYS, recommendPractice, togglePracticeBookmark, type CorrectionAttempt, type PracticeSession } from '../engine/practiceHistory'
+import { clearPracticeHistory, isPracticeSessionExpired, loadPracticeHistory, MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, PRACTICE_HISTORY_RETENTION_DAYS, recommendPractice, retryPracticeShare, togglePracticeBookmark, type CorrectionAttempt, type PracticeSession } from '../engine/practiceHistory'
 import { getScenario } from '../data/scenarios'
 import { LEARNING_CASES } from '../data/learningCases'
 import type { JudgmentScenario } from '../engine/judgmentScenarios'
 import type { ReplayEvent } from '../engine/sessionReplay'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../types/practice'
+import { acceptPracticeAutoShareConsent, hasPracticeAutoShareConsent, loadAnonymousNickname } from '../engine/userPreferences'
+import { configuredPracticeSharingGateway, syncPracticeSharing, unpublishAllPracticeCases } from '../engine/practiceSharing'
 
 function formatCompletedAt(value: string) {
   return new Intl.DateTimeFormat('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value))
@@ -68,24 +72,40 @@ function CorrectionReviewCard({
   scenario: JudgmentScenario | null
   runtime?: ScenarioRuntime
 }) {
-  const firstChoice = scenario?.choices.find((choice) => choice.label === attempt.firstChoiceLabel) ?? null
-  const correctChoice = scenario?.choices.find((choice) => choice.id === scenario.answer) ?? null
+  const [reviewView, setReviewView] = useState<'first' | 'safe'>('first')
+  const [expanded, setExpanded] = useState(false)
+  const reviewScenario = attempt.reviewSnapshot?.scenario ?? scenario
+  const firstChoice = attempt.reviewSnapshot?.firstChoice
+    ?? reviewScenario?.choices.find((choice) => choice.label === attempt.firstChoiceLabel)
+    ?? null
+  const correctChoice = attempt.reviewSnapshot?.correctChoice
+    ?? reviewScenario?.choices.find((choice) => choice.id === reviewScenario.answer)
+    ?? null
+  const hasTopView = Boolean(reviewScenario && runtime && firstChoice && correctChoice)
+  const openExpanded = (view: 'first' | 'safe') => {
+    setReviewView(view)
+    setExpanded(true)
+  }
 
   return (
     <li className="correction-review-card">
-      <header><div><span>{attempt.drillTitle}</span><strong>{attempt.stepTitle}</strong></div><small>다시 볼 문제</small></header>
-      {scenario && runtime && firstChoice && correctChoice && <div className="correction-path-comparison">
-        <figure>
-          <JudgmentCanvas scenario={scenario} choice={firstChoice} correct={false} runtime={runtime} />
-          <figcaption><i className="danger" />내 선택 결과</figcaption>
+      <header><div><span>{attempt.drillTitle}</span><strong>{attempt.stepTitle}</strong></div><small>{attempt.firstTryCorrect ? '정확한 판단' : '우선 복기'}</small></header>
+      {hasTopView && reviewScenario && runtime && firstChoice && correctChoice ? <div className={`correction-path-comparison view-${reviewView}`}>
+        <div className="review-view-selector" role="group" aria-label="복기 탑뷰 선택">
+          <button type="button" aria-pressed={reviewView === 'first'} onClick={() => setReviewView('first')}>내 선택</button>
+          <button type="button" aria-pressed={reviewView === 'safe'} onClick={() => setReviewView('safe')}>안전한 선택</button>
+        </div>
+        <figure className="first-view">
+          <JudgmentCanvas scenario={reviewScenario} choice={firstChoice} correct={attempt.firstTryCorrect} runtime={runtime} />
+          <figcaption><span><i className={attempt.firstTryCorrect ? 'safe' : 'danger'} />내 선택 결과</span><button type="button" onClick={() => openExpanded('first')}>크게 보기</button></figcaption>
         </figure>
-        <figure>
-          <JudgmentCanvas scenario={scenario} choice={correctChoice} correct runtime={runtime} />
-          <figcaption><i className="safe" />안전한 선택 결과</figcaption>
+        <figure className="safe-view">
+          <JudgmentCanvas scenario={reviewScenario} choice={correctChoice} correct runtime={runtime} />
+          <figcaption><span><i className="safe" />안전한 선택 결과</span><button type="button" onClick={() => openExpanded('safe')}>크게 보기</button></figcaption>
         </figure>
-      </div>}
+      </div> : <p className="review-topview-unavailable">이 기록은 탑뷰 저장 기능이 적용되기 전 기록입니다. 아래에서 당시 판단과 안전한 행동을 확인할 수 있습니다.</p>}
       <div className="correction-review-copy">
-        {scenario && <p><b>상황</b><span>{scenario.situation}</span></p>}
+        {reviewScenario && <p><b>상황</b><span>{reviewScenario.situation}</span></p>}
         <p><b>내 판단</b><span>{attempt.firstChoiceLabel}</span></p>
         {firstChoice?.feedback && <p><b>이렇게 되면</b><span>{firstChoice.feedback}</span></p>}
         <div className="safe-action">
@@ -97,6 +117,21 @@ function CorrectionReviewCard({
         </div>
         <p className="correction-memory"><b>기억할 기준</b><span>{attempt.takeaway}</span></p>
       </div>
+      {expanded && reviewScenario && runtime && firstChoice && correctChoice && createPortal(<div className="review-topview-backdrop" role="presentation" onMouseDown={(event) => {
+        if (event.target === event.currentTarget) setExpanded(false)
+      }}>
+        <section className="review-topview-dialog" role="dialog" aria-modal="true" aria-labelledby={`expanded-review-${attempt.drillId}-${attempt.stepId}`}>
+          <header><div><span>판단 기록 탑뷰</span><h3 id={`expanded-review-${attempt.drillId}-${attempt.stepId}`}>{attempt.stepTitle}</h3></div><button type="button" aria-label="큰 탑뷰 닫기" onClick={() => setExpanded(false)}>×</button></header>
+          <div className="review-view-selector expanded-selector" role="group" aria-label="큰 탑뷰 선택">
+            <button type="button" aria-pressed={reviewView === 'first'} onClick={() => setReviewView('first')}>내 선택</button>
+            <button type="button" aria-pressed={reviewView === 'safe'} onClick={() => setReviewView('safe')}>안전한 선택</button>
+          </div>
+          <figure>
+            <JudgmentCanvas scenario={reviewScenario} choice={reviewView === 'first' ? firstChoice : correctChoice} correct={reviewView === 'safe' || attempt.firstTryCorrect} runtime={runtime} />
+            <figcaption>{reviewView === 'first' ? '내가 선택한 동작의 결과' : '안전한 선택의 결과'}</figcaption>
+          </figure>
+        </section>
+      </div>, document.body)}
     </li>
   )
 }
@@ -120,9 +155,14 @@ function CorrectionHistoryReview({ session }: { session: PracticeSession }) {
           runtime={session.runtime}
         />)}</ol>
         : <p className="correction-perfect-review">모든 문제를 첫 선택에서 정확히 판단했습니다. 다음 연습에서도 위험한 모서리를 먼저 확인해보세요.</p>}
-      {correctAttempts.length > 0 && <details className="correct-attempts">
+      {correctAttempts.length > 0 && <details className="correct-attempts correct-attempt-reviews">
         <summary>첫 선택에서 정확했던 판단 {correctAttempts.length}개</summary>
-        <ol>{correctAttempts.map((attempt) => <li key={`${attempt.drillId}-${attempt.stepId}`}><span>{attempt.drillTitle}</span><strong>{attempt.stepTitle}</strong><small>{attempt.takeaway}</small></li>)}</ol>
+        <ol>{correctAttempts.map((attempt) => <CorrectionReviewCard
+          key={`${attempt.drillId}-${attempt.stepId}`}
+          attempt={attempt}
+          scenario={findCorrectionScenario(session, attempt)}
+          runtime={session.runtime}
+        />)}</ol>
       </details>}
     </div>
   )
@@ -158,6 +198,7 @@ export function ResultPage() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [selectedCaseAuthorId, setSelectedCaseAuthorId] = useState<string | null>(null)
   const [selectedLearningCaseId, setSelectedLearningCaseId] = useState(LEARNING_CASES[0]?.id ?? '')
+  const [pendingShareSession, setPendingShareSession] = useState<PracticeSession | null>(null)
   const effectiveSelectedSessionId = selectedSessionId ?? (isCompactLandscape && activeTab === 'history' ? history.sessions[0]?.id ?? null : null)
   const bookmarkedSessions = history.sessions.filter((session) => session.bookmarked)
   const recentSessions = history.sessions.filter((session) => !session.bookmarked)
@@ -175,7 +216,7 @@ export function ResultPage() {
           ? { label: '완전 정지부터 다시 확인', description: '차량이 주차선 안에 들어온 뒤 브레이크로 완전히 정지해야 주차가 완료됩니다.', action: 'retry' as const }
           : result.angleErrorDegrees > 5
             ? { label: '평행 맞추기 판단 연습', description: '차체 각도를 먼저 바로잡는 판단을 집중해서 익혀보세요.', action: 'judgment' as const }
-            : { label: '다른 상황 연습하기', description: '안전하게 완료했습니다. 다른 배치에서도 같은 확인 순서를 적용해보세요.', action: 'scenario' as const }
+            : { label: '다른 주차 환경 연습하기', description: '안전하게 완료했습니다. 다른 배치에서도 같은 확인 순서를 적용해보세요.', action: 'scenario' as const }
     : null
   const replayMoments = replay
     .filter((event) => event.type === 'collision' || (event.type === 'finish' && result?.success))
@@ -199,16 +240,58 @@ export function ResultPage() {
       document.getElementById(`history-session-${effectiveSelectedSessionId}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     })
   }, [effectiveSelectedSessionId])
-  const toggleBookmark = (session: PracticeSession) => {
+  useEffect(() => {
+    if (!configuredPracticeSharingGateway || !history.sessions.some((session) => session.shareStatus === 'pending' || session.shareStatus === 'unpublishing')) return
+    let cancelled = false
+    void syncPracticeSharing(history, loadAnonymousNickname(), configuredPracticeSharingGateway).then((synced) => {
+      if (!cancelled) setHistory(synced)
+    })
+    return () => { cancelled = true }
+  }, [history])
+  const applyBookmarkChange = (session: PracticeSession) => {
     const expired = isPracticeSessionExpired(session)
     if (session.bookmarked && expired && !window.confirm('보관을 해제하면 7일이 지난 이 기록은 바로 삭제됩니다. 해제할까요?')) return
-    const result = togglePracticeBookmark(session.id)
+    const result = togglePracticeBookmark(session.id, undefined, new Date(), { shareWhenAdded: !session.bookmarked })
     if (result.status === 'limit') {
       window.alert(`보관할 수 있는 기록은 최대 ${MAX_BOOKMARKED_SESSIONS}개입니다. 기존 기록을 먼저 해제해주세요.`)
       return
     }
     setHistory(result.history)
     if (result.status === 'removed' && expired) setSelectedSessionId(null)
+  }
+  const toggleBookmark = (session: PracticeSession) => {
+    if (!session.bookmarked && !hasPracticeAutoShareConsent()) {
+      setPendingShareSession(session)
+      return
+    }
+    applyBookmarkChange(session)
+  }
+  const acceptSharingAndBookmark = () => {
+    if (!pendingShareSession) return
+    acceptPracticeAutoShareConsent()
+    applyBookmarkChange(pendingShareSession)
+    setPendingShareSession(null)
+  }
+  const retrySharing = (session: PracticeSession) => {
+    setHistory(retryPracticeShare(session.id))
+  }
+  const resetHistory = async () => {
+    if (!window.confirm('저장된 연습 기록을 모두 초기화할까요? 공개한 학습 사례도 함께 삭제됩니다.')) return
+    const hasPublishedCases = history.sessions.some((session) => session.publicCaseId || session.shareStatus === 'shared' || session.shareStatus === 'unpublishing' || session.shareStatus === 'unpublish-failed')
+    if (hasPublishedCases) {
+      if (!configuredPracticeSharingGateway) {
+        window.alert('공개한 사례를 먼저 삭제할 수 없어 기록을 초기화하지 않았습니다. 서버 연결을 확인해주세요.')
+        return
+      }
+      try {
+        await unpublishAllPracticeCases(configuredPracticeSharingGateway)
+      } catch {
+        window.alert('공개 사례 삭제를 확인하지 못해 기록을 유지했습니다. 잠시 후 다시 시도해주세요.')
+        return
+      }
+    }
+    setHistory(clearPracticeHistory())
+    setSelectedSessionId(null)
   }
   const renderHistoryDetail = (session: PracticeSession, idSuffix = 'inline') => {
     const detailId = `history-detail-${idSuffix}-${session.id}`
@@ -220,8 +303,10 @@ export function ResultPage() {
         {session.moments.find((event) => event.type === 'collision') && <p>과거 기록은 장면 복기용으로 표시합니다. 새로운 판단 문제는 판단 연습에서 서로 다른 상황으로 연습할 수 있습니다.</p>}
       </>}
       <aside className="share-case-preparation">
-        <div><strong>익명 학습 사례로 공유</strong><p>보관과 공유는 별도 기능입니다. 공유에 직접 동의한 경우에만 설정에서 정한 익명 닉네임으로 공개될 예정입니다.</p></div>
-        <button type="button" disabled>공유 기능 준비 중</button>
+        <div><strong>{session.shareStatus === 'shared' ? '학습 사례 공유됨' : session.shareStatus === 'pending' ? '학습 사례 공유 대기' : session.shareStatus === 'publish-failed' ? '공유하지 못함' : session.shareStatus === 'unpublishing' ? '공개 중단 대기' : session.shareStatus === 'unpublish-failed' ? '공개 중단 확인 필요' : '비공개로 보관됨'}</strong><p>{session.shareStatus === 'private' ? '기존에 보관한 기록은 자동 공개하지 않습니다. 설정에서 공유 대상으로 전환할 수 있습니다.' : '학습에 필요한 결과만 공개 닉네임으로 공유하며, 서버에서 소유권과 동의 이력을 확인합니다.'}</p></div>
+        {session.shareStatus === 'publish-failed' || session.shareStatus === 'unpublish-failed'
+          ? <button type="button" className="share-retry-button" onClick={() => retrySharing(session)}>다시 시도</button>
+          : <span className={`share-status share-${session.shareStatus}`}>{session.shareStatus === 'shared' ? '공유됨' : session.shareStatus === 'pending' ? '전송 대기' : session.shareStatus === 'unpublishing' ? '공개 중단 중' : '비공개'}</span>}
       </aside>
     </section>
   }
@@ -235,7 +320,7 @@ export function ResultPage() {
           <span>{session.mode === 'practice' ? '판단 완료' : session.collisionCount ? `충돌 ${session.collisionCount}회` : session.success ? '안전 완료' : '미완료'}</span>
         </div>
         <div className="session-buttons">
-          <button type="button" className={`bookmark-button${session.bookmarked ? ' bookmarked' : ''}`} aria-label={session.bookmarked ? '보관에서 해제하기' : '이 기록 보관하기'} aria-pressed={session.bookmarked} title={session.bookmarked ? '보관에서 해제하기' : '이 기록 보관하기'} onClick={() => toggleBookmark(session)}><BookmarkIcon filled={session.bookmarked} /></button>
+          <button type="button" className={`bookmark-button${session.bookmarked ? ' bookmarked' : ''}`} aria-label={session.bookmarked ? '보관 및 공유 해제하기' : '이 기록 보관 및 공유하기'} aria-pressed={session.bookmarked} title={session.bookmarked ? '보관 및 공유 해제하기' : '보관하고 학습 사례로 공유하기'} onClick={() => toggleBookmark(session)}><BookmarkIcon filled={session.bookmarked} /></button>
           <button type="button" aria-expanded={isSelected} aria-controls={detailId} onClick={() => setSelectedSessionId(isCompactLandscape ? session.id : isSelected ? null : session.id)}>{isCompactLandscape && isSelected ? '선택됨' : isSelected ? '상세 닫기' : session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 보기'}</button>
         </div>
       </div>
@@ -290,12 +375,12 @@ export function ResultPage() {
               : resultRecommendation?.action === 'judgment'
                 ? <Link className="primary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=practice`}>판단 연습 시작</Link>
                 : resultRecommendation?.action === 'scenario'
-                  ? <Link className="primary-button" to="/practice">다른 상황 연습하기</Link>
+                  ? <Link className="primary-button" to="/practice">다른 주차 환경 연습하기</Link>
                   : <Link className="primary-button" to={retryPath}>같은 상황 다시 연습</Link>}
             {resultRecommendation?.action !== 'retry' && <Link className="secondary-button" to={retryPath}>같은 상황 다시 연습</Link>}
             <div className="result-more-actions">
               <Link to={`${retryPath}&lesson=1`}>단계 안내부터</Link>
-              <Link to="/practice">상황 선택</Link>
+              <Link to="/practice">환경 선택</Link>
             </div>
           </div>
         </div>
@@ -331,7 +416,7 @@ export function ResultPage() {
             }}>
               <span>{learningCase.scenario} · {learningCase.sharedLabel}</span>
               <strong>{learningCase.title}</strong>
-              <small>{learningCase.nickname}</small>
+              <small><AnimalAvatar nickname={learningCase.nickname} className="case-author-avatar" />{learningCase.nickname}</small>
             </button>)}
           </div>
           <aside className="learning-case-detail" aria-live="polite">
@@ -344,14 +429,14 @@ export function ResultPage() {
               </>
             })() : selectedLearningCase && <>
               <header><div><span>{selectedLearningCase.scenario}</span><h3>{selectedLearningCase.title}</h3></div><small>{selectedLearningCase.sharedLabel}</small></header>
-              <button type="button" className="case-author-link" onClick={() => setSelectedCaseAuthorId(selectedLearningCase.authorId)}>{selectedLearningCase.nickname}의 다른 사례 보기 →</button>
+              <button type="button" className="case-author-link" onClick={() => setSelectedCaseAuthorId(selectedLearningCase.authorId)}><AnimalAvatar nickname={selectedLearningCase.nickname} className="case-author-avatar" />{selectedLearningCase.nickname}의 다른 사례 보기 →</button>
               <p>{selectedLearningCase.summary}</p>
               <div><span>기억할 기준</span><strong>{selectedLearningCase.takeaway}</strong></div>
             </>}
           </aside>
         </div> : <div className="learning-case-grid" aria-label="학습 사례 예시">
           {LEARNING_CASES.map((learningCase) => <article key={learningCase.id} className="learning-case-card">
-            <header><button type="button" onClick={() => setSelectedCaseAuthorId(learningCase.authorId)}>{learningCase.nickname}</button><small>{learningCase.sharedLabel}</small></header>
+            <header><button type="button" onClick={() => setSelectedCaseAuthorId(learningCase.authorId)}><AnimalAvatar nickname={learningCase.nickname} className="case-author-avatar" />{learningCase.nickname}</button><small>{learningCase.sharedLabel}</small></header>
             <span>{learningCase.scenario}</span><strong>{learningCase.title}</strong><p>{learningCase.summary}</p><small>{learningCase.takeaway}</small>
           </article>)}
         </div>}
@@ -363,7 +448,7 @@ export function ResultPage() {
           }}>
             <section className="case-author-panel" role="dialog" aria-modal="true" aria-labelledby="case-author-title">
               <header>
-                <div><span>공개 학습 사례</span><h3 id="case-author-title">{nickname}</h3><small>{authorCases.length}개의 예시 사례</small></div>
+                <div><span>공개 학습 사례</span><h3 id="case-author-title"><AnimalAvatar nickname={nickname ?? ''} className="case-author-avatar" />{nickname}</h3><small>{authorCases.length}개의 예시 사례</small></div>
                 <button type="button" aria-label="사례 목록 닫기" onClick={() => setSelectedCaseAuthorId(null)}>×</button>
               </header>
               <ol>{authorCases.map((learningCase) => <li key={learningCase.id}>
@@ -378,7 +463,7 @@ export function ResultPage() {
       </section>}
 
       {activeTab === 'history' && <section className="practice-history" aria-labelledby="history-title">
-        <header className="history-heading"><div><h2 id="history-title">나의 연습 기록</h2></div>{history.sessions.length > 0 && <button type="button" className="history-reset" onClick={() => { if (window.confirm('저장된 연습 기록을 모두 초기화할까요?')) setHistory(clearPracticeHistory()) }}>기록 초기화</button>}</header>
+        <header className="history-heading"><div><h2 id="history-title">나의 연습 기록</h2></div>{history.sessions.length > 0 && <button type="button" className="history-reset" onClick={() => { void resetHistory() }}>기록 초기화</button>}</header>
         <div className={isCompactLandscape ? 'history-browser' : undefined}>
           <div className={isCompactLandscape ? 'history-master' : undefined}>
             <aside className="correction-practice-cta">
@@ -396,6 +481,21 @@ export function ResultPage() {
           </aside>}
         </div>
       </section>}
+      {pendingShareSession && <div className="share-consent-backdrop" role="presentation" onMouseDown={(event) => {
+        if (event.target === event.currentTarget) setPendingShareSession(null)
+      }}>
+        <section className="share-consent-dialog" role="dialog" aria-modal="true" aria-labelledby="share-consent-title">
+          <span>최초 1회 확인</span>
+          <h2 id="share-consent-title">보관한 기록을 학습 사례로 공유할까요?</h2>
+          <p>앞으로 책갈피로 보관한 기록은 <strong>{loadAnonymousNickname()}</strong> 닉네임으로 자동 공유됩니다.</p>
+          <ul>
+            <li>주차 상황, 결과와 학습 기준만 공유합니다.</li>
+            <li>기기 정보와 사용자를 식별하는 정보는 공유하지 않습니다.</li>
+            <li>책갈피를 해제하면 공개 중단을 요청합니다.</li>
+          </ul>
+          <div><button type="button" className="secondary-button" onClick={() => setPendingShareSession(null)}>취소</button><button type="button" className="primary-button" onClick={acceptSharingAndBookmark}>동의하고 보관</button></div>
+        </section>
+      </div>}
     </section>
   )
 }

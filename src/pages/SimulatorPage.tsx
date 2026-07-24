@@ -67,7 +67,7 @@ export function SimulatorPage() {
             <p className="eyebrow">{isPracticeMode ? '판단 연습' : '직접 연습'}</p>
             <h1 id="simulator-title">{isPracticeMode ? '충돌 전 안전한 수정 판단' : `${scenario.title} 후진주차`}</h1>
           </div>
-          <Link className="secondary-button" to="/">상황 다시 선택</Link>
+          <Link className="secondary-button" to="/practice">다른 주차 환경 선택</Link>
         </div>
         {!isPracticeMode && <p className="page-description">
           브레이크를 해제하면 선택한 기어 방향으로 천천히 움직입니다. 장애물과 충돌하면 차량이 즉시 정지합니다.
