@@ -11,6 +11,7 @@ import {
   withSteeringAngle,
   type Gear,
   type VehicleInput,
+  type VehicleSpeedProfile,
   type VehicleState,
 } from '../engine/vehiclePhysics'
 
@@ -19,7 +20,11 @@ const INITIAL_INPUT: VehicleInput = {
   braking: true,
 }
 
-export function useVehicleSimulation(initialVehicle: VehicleState = INITIAL_VEHICLE_STATE, runtime?: ScenarioRuntime) {
+export function useVehicleSimulation(
+  initialVehicle: VehicleState = INITIAL_VEHICLE_STATE,
+  runtime?: ScenarioRuntime,
+  speedProfile?: VehicleSpeedProfile,
+) {
   const startingVehicle = { ...initialVehicle, speed: 0, braking: true }
   const stateRef = useRef<VehicleState>(startingVehicle)
   const inputRef = useRef<VehicleInput>({ ...INITIAL_INPUT })
@@ -32,7 +37,7 @@ export function useVehicleSimulation(initialVehicle: VehicleState = INITIAL_VEHI
     const loop = createSimulationLoop({
       step(deltaTime) {
         const previous = stateRef.current
-        const next = updateVehicle(previous, inputRef.current, deltaTime)
+        const next = updateVehicle(previous, inputRef.current, deltaTime, undefined, speedProfile)
         const resolved = resolveVehicleCollision(previous, next, runtime)
         const wheelStop = resolved.collision
           ? { vehicle: resolved.vehicle, contacted: false }
@@ -53,7 +58,7 @@ export function useVehicleSimulation(initialVehicle: VehicleState = INITIAL_VEHI
     })
     loop.start()
     return loop.stop
-  }, [runtime])
+  }, [runtime, speedProfile])
 
   const setSteeringDirection = useCallback((direction: -1 | 0 | 1) => {
     if (controlsLockedRef.current) return

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { GearSelector } from '../controls/GearSelector'
 import { SteeringWheel } from '../controls/SteeringWheel'
@@ -10,6 +10,7 @@ import { detectCollision } from '../../engine/collisionDetection'
 import { evaluateParking } from '../../engine/parkingEvaluation'
 import { isRearWheelAtStop } from '../../engine/parkingLotRenderer'
 import { recordPracticeSession } from '../../engine/practiceHistory'
+import { directPracticeSpeedProfile } from '../../engine/directPracticeAssist'
 import { cloneVehicleState, type ReplayEvent } from '../../engine/sessionReplay'
 import { type Gear, type VehicleState } from '../../engine/vehiclePhysics'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../../types/practice'
@@ -45,6 +46,12 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
   const [parkedResult, setParkedResult] = useState<ReturnType<typeof evaluateParking> | null>(null)
   const [wheelStopActive, setWheelStopActive] = useState(false)
   const canUseFullscreen = !isIos && document.fullscreenEnabled
+  const mobileDirectAssist = learningMode
+    && window.matchMedia('(pointer: coarse), (hover: none)').matches
+  const speedProfile = useMemo(
+    () => mobileDirectAssist ? directPracticeSpeedProfile(runtime) : undefined,
+    [mobileDirectAssist, runtime],
+  )
   const {
     vehicle,
     braking,
@@ -56,7 +63,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
     centerSteering,
     setControlsLocked,
     reset,
-  } = useVehicleSimulation(initialVehicle ?? runtime.initialVehicle, runtime)
+  } = useVehicleSimulation(initialVehicle ?? runtime.initialVehicle, runtime, speedProfile)
   const danger = learningMode ? detectCollision(vehicle, 0.42, runtime) : null
   const parkingEvaluation = evaluateParking(vehicle, collisions)
 
@@ -234,7 +241,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
           )}
         </div>
       </div>
-      <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions} wheelStopActive={wheelStopActive} runtime={runtime}>
+      <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions} wheelStopActive={wheelStopActive} runtime={runtime} precisionAssist={mobileDirectAssist}>
         <CornerAssistance vehicle={vehicle} runtime={runtime} />
         {learningMode && <LearningHintPanel vehicle={vehicle} scenarioId={scenarioId} runtime={runtime} />}
         <div className="driving-console separate-console" aria-label="차량 운전 조작부">

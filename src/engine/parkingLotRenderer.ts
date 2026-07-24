@@ -590,6 +590,7 @@ export function renderParkingLot(
     danger?: Collision | null
     collisions?: Collision[]
     focus?: { x: number; y: number; span: number; heading?: number }
+    camera?: { x: number; y: number; zoom: number }
     topInsetRatio?: number
     bottomInsetRatio?: number
     highlightParkedSide?: 'left' | 'right'
@@ -610,12 +611,13 @@ export function renderParkingLot(
   const usableHeight = viewportHeight * (
     1 - (options.topInsetRatio ?? 0) - (options.bottomInsetRatio ?? 0)
   )
-  const scale = options.focus
+  const baseScale = options.focus
     ? Math.max(viewportWidth, viewportHeight) / options.focus.span
     : Math.min(
       (viewportWidth - padding * 2) / PARKING_WORLD.width,
       (usableHeight - padding * 2) / PARKING_WORLD.height,
     )
+  const scale = baseScale * (options.camera?.zoom ?? 1)
   const offsetX = (viewportWidth - PARKING_WORLD.width * scale) / 2
   const offsetY = topInset + (usableHeight - PARKING_WORLD.height * scale) / 2
 
@@ -625,6 +627,10 @@ export function renderParkingLot(
     context.rotate(-Math.PI / 2 - (options.focus.heading ?? 0))
     context.scale(scale, scale)
     context.translate(-options.focus.x, -options.focus.y)
+  } else if (options.camera) {
+    context.translate(viewportWidth / 2, topInset + usableHeight / 2)
+    context.scale(scale, scale)
+    context.translate(-options.camera.x, -options.camera.y)
   } else {
     context.translate(offsetX, offsetY)
     context.scale(scale, scale)

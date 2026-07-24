@@ -3,6 +3,7 @@ import { renderParkingLot } from '../../engine/parkingLotRenderer'
 import type { VehicleState } from '../../engine/vehiclePhysics'
 import type { Collision } from '../../engine/collisionDetection'
 import type { ScenarioRuntime } from '../../types/practice'
+import { directPracticeCamera } from '../../engine/directPracticeAssist'
 
 type ParkingLotCanvasProps = {
   vehicle: VehicleState
@@ -10,13 +11,14 @@ type ParkingLotCanvasProps = {
   collisions: Collision[]
   wheelStopActive?: boolean
   runtime: ScenarioRuntime
+  precisionAssist?: boolean
   children?: ReactNode
 }
 
-export function ParkingLotCanvas({ vehicle, danger, collisions, wheelStopActive = false, runtime, children }: ParkingLotCanvasProps) {
+export function ParkingLotCanvas({ vehicle, danger, collisions, wheelStopActive = false, runtime, precisionAssist = false, children }: ParkingLotCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const vehicleRef = useRef(vehicle)
-  const renderOptionsRef = useRef({ danger, collisions, wheelStopActive, runtime })
+  const renderOptionsRef = useRef({ danger, collisions, wheelStopActive, runtime, precisionAssist })
 
   const drawRef = useRef<() => void>(() => undefined)
 
@@ -40,6 +42,9 @@ export function ParkingLotCanvas({ vehicle, danger, collisions, wheelStopActive 
       const compactLandscape = height <= 520
       renderParkingLot(context, width, height, vehicleRef.current, {
         ...renderOptionsRef.current,
+        camera: renderOptionsRef.current.precisionAssist
+          ? directPracticeCamera(vehicleRef.current, renderOptionsRef.current.runtime)
+          : undefined,
         topInsetRatio: compactLandscape ? 0.29 : 0.2,
         bottomInsetRatio: 0.02,
       })
@@ -55,9 +60,9 @@ export function ParkingLotCanvas({ vehicle, danger, collisions, wheelStopActive 
 
   useEffect(() => {
     vehicleRef.current = vehicle
-    renderOptionsRef.current = { danger, collisions, wheelStopActive, runtime }
+    renderOptionsRef.current = { danger, collisions, wheelStopActive, runtime, precisionAssist }
     drawRef.current()
-  }, [collisions, danger, runtime, vehicle, wheelStopActive])
+  }, [collisions, danger, precisionAssist, runtime, vehicle, wheelStopActive])
 
   return (
     <div className="parking-canvas-frame">

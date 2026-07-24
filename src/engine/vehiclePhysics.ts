@@ -24,6 +24,12 @@ export type VehicleConfig = {
   creepSpeed: number
 }
 
+export type VehicleSpeedProfile = {
+  approachSpeed: number
+  alignmentSpeed: number
+  startSide: 'left' | 'right'
+}
+
 export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
   wheelbase: 2.7,
   maxSteeringAngle: degreesToRadians(35),
@@ -34,7 +40,11 @@ export const DEFAULT_VEHICLE_CONFIG: VehicleConfig = {
 export const PARKING_APPROACH_SPEED = 0.4
 export const PARKING_ALIGNMENT_SPEED = 0.28
 
-export function parkingCreepSpeed(state: VehicleState, config: VehicleConfig = DEFAULT_VEHICLE_CONFIG) {
+export function parkingCreepSpeed(
+  state: VehicleState,
+  config: VehicleConfig = DEFAULT_VEHICLE_CONFIG,
+  speedProfile?: VehicleSpeedProfile,
+) {
   const inApproachLane = state.x >= TARGET_PARKING_BAY.left - 2.5
     && state.x <= TARGET_PARKING_BAY.right + 2.5
     && state.y >= 1
@@ -44,7 +54,14 @@ export function parkingCreepSpeed(state: VehicleState, config: VehicleConfig = D
   const aligning = state.x >= TARGET_PARKING_BAY.left - 0.9
     && state.x <= TARGET_PARKING_BAY.right + 0.9
     && state.y >= TARGET_PARKING_BAY.top - 0.4
-  return aligning ? PARKING_ALIGNMENT_SPEED : PARKING_APPROACH_SPEED
+  if (!speedProfile) return aligning ? PARKING_ALIGNMENT_SPEED : PARKING_APPROACH_SPEED
+
+  const halfVehicleLength = 2.3
+  const passedEntrance = speedProfile.startSide === 'right'
+    ? state.x - halfVehicleLength <= TARGET_PARKING_BAY.right
+    : state.x + halfVehicleLength >= TARGET_PARKING_BAY.left
+  if (!passedEntrance) return PARKING_APPROACH_SPEED
+  return aligning ? speedProfile.alignmentSpeed : speedProfile.approachSpeed
 }
 
 function moveTowards(current: number, target: number, maximumChange: number) {
@@ -79,6 +96,7 @@ export function updateVehicle(
   input: VehicleInput,
   deltaTime: number,
   config: VehicleConfig = DEFAULT_VEHICLE_CONFIG,
+  speedProfile?: VehicleSpeedProfile,
 ): VehicleState {
   if (deltaTime <= 0) return state
 
@@ -88,7 +106,7 @@ export function updateVehicle(
     config.maxSteeringAngle,
   )
   const direction = state.gear === 'D' ? 1 : -1
-  const targetSpeed = parkingCreepSpeed(state, config) * direction
+  const targetSpeed = parkingCreepSpeed(state, config, speedProfile) * direction
   const speed = input.braking
     ? 0
     : moveTowards(state.speed, targetSpeed, 1.2 * deltaTime)

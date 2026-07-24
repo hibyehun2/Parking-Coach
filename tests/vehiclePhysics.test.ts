@@ -31,6 +31,21 @@ test('주차칸 접근 구역과 내부 정렬 구역에서 단계적으로 감�
   assert.ok(PARKING_APPROACH_SPEED < DEFAULT_VEHICLE_CONFIG.creepSpeed)
 })
 
+test('모바일 직접 연습 정밀 감속은 주차칸을 일부 지난 뒤에만 적용된다', () => {
+  const speedProfile = { approachSpeed: 0.34, alignmentSpeed: 0.24, startSide: 'left' as const }
+  const before = {
+    ...INITIAL_VEHICLE_STATE,
+    x: TARGET_PARKING_BAY.left - 2.31,
+    y: TARGET_PARKING_BAY.top - 1,
+  }
+  const entering = { ...before, x: TARGET_PARKING_BAY.left - 2.2 }
+  const aligning = { ...entering, x: TARGET_PARKING_BAY.center.x, y: TARGET_PARKING_BAY.top + 0.5 }
+
+  assert.equal(parkingCreepSpeed(before, DEFAULT_VEHICLE_CONFIG, speedProfile), PARKING_APPROACH_SPEED)
+  assert.equal(parkingCreepSpeed(entering, DEFAULT_VEHICLE_CONFIG, speedProfile), speedProfile.approachSpeed)
+  assert.equal(parkingCreepSpeed(aligning, DEFAULT_VEHICLE_CONFIG, speedProfile), speedProfile.alignmentSpeed)
+})
+
 function simulate(duration: number, step: number) {
   let state = withGear({ ...INITIAL_VEHICLE_STATE }, 'D')
   for (let elapsed = 0; elapsed < duration - step / 2; elapsed += step) {
