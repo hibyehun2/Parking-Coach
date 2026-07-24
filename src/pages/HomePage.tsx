@@ -24,7 +24,7 @@ export function HomePage() {
             <span>단계별 안내에 따라 후진 주차를 연습해요.</span>
           </p>
           <button className="primary-button hero-start" type="button" onClick={beginPractice}>
-            연습 방식 선택 <span aria-hidden="true">→</span>
+            연습 시작하기 <span aria-hidden="true">→</span>
           </button>
           <div className="home-hero-visual">
             <img src={heroImage} alt="후진등을 켠 초록색 차량이 두 차량 사이 주차칸으로 후진하는 모습" />

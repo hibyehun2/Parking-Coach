@@ -72,7 +72,7 @@ function CorrectionReviewCard({
   scenario: JudgmentScenario | null
   runtime?: ScenarioRuntime
 }) {
-  const [reviewView, setReviewView] = useState<'first' | 'safe'>('first')
+  const [reviewView, setReviewView] = useState<'first' | 'safe'>('safe')
   const [expanded, setExpanded] = useState(false)
   const reviewScenario = attempt.reviewSnapshot?.scenario ?? scenario
   const firstChoice = attempt.reviewSnapshot?.firstChoice
@@ -82,23 +82,16 @@ function CorrectionReviewCard({
     ?? reviewScenario?.choices.find((choice) => choice.id === reviewScenario.answer)
     ?? null
   const hasTopView = Boolean(reviewScenario && runtime && firstChoice && correctChoice)
+  const canCompareChoices = !attempt.firstTryCorrect
   const openExpanded = (view: 'first' | 'safe') => {
-    setReviewView(view)
+    setReviewView(canCompareChoices ? view : 'safe')
     setExpanded(true)
   }
 
   return (
     <li className="correction-review-card">
       <header><div><span>{attempt.drillTitle}</span><strong>{attempt.stepTitle}</strong></div><small>{attempt.firstTryCorrect ? '정확한 판단' : '우선 복기'}</small></header>
-      {hasTopView && reviewScenario && runtime && firstChoice && correctChoice ? <div className={`correction-path-comparison view-${reviewView}`}>
-        <div className="review-view-selector" role="group" aria-label="복기 탑뷰 선택">
-          <button type="button" aria-pressed={reviewView === 'first'} onClick={() => setReviewView('first')}>내 선택</button>
-          <button type="button" aria-pressed={reviewView === 'safe'} onClick={() => setReviewView('safe')}>안전한 선택</button>
-        </div>
-        <figure className="first-view">
-          <JudgmentCanvas scenario={reviewScenario} choice={firstChoice} correct={attempt.firstTryCorrect} runtime={runtime} />
-          <figcaption><span><i className={attempt.firstTryCorrect ? 'safe' : 'danger'} />내 선택 결과</span><button type="button" onClick={() => openExpanded('first')}>크게 보기</button></figcaption>
-        </figure>
+      {hasTopView && reviewScenario && runtime && firstChoice && correctChoice ? <div className="correction-path-comparison safe-preview-only">
         <figure className="safe-view">
           <JudgmentCanvas scenario={reviewScenario} choice={correctChoice} correct runtime={runtime} />
           <figcaption><span><i className="safe" />안전한 선택 결과</span><button type="button" onClick={() => openExpanded('safe')}>크게 보기</button></figcaption>
@@ -122,13 +115,13 @@ function CorrectionReviewCard({
       }}>
         <section className="review-topview-dialog" role="dialog" aria-modal="true" aria-labelledby={`expanded-review-${attempt.drillId}-${attempt.stepId}`}>
           <header><div><span>판단 기록 탑뷰</span><h3 id={`expanded-review-${attempt.drillId}-${attempt.stepId}`}>{attempt.stepTitle}</h3></div><button type="button" aria-label="큰 탑뷰 닫기" onClick={() => setExpanded(false)}>×</button></header>
-          <div className="review-view-selector expanded-selector" role="group" aria-label="큰 탑뷰 선택">
+          {canCompareChoices && <div className="review-view-selector expanded-selector" role="group" aria-label="큰 탑뷰 선택">
             <button type="button" aria-pressed={reviewView === 'first'} onClick={() => setReviewView('first')}>내 선택</button>
             <button type="button" aria-pressed={reviewView === 'safe'} onClick={() => setReviewView('safe')}>안전한 선택</button>
-          </div>
+          </div>}
           <figure>
-            <JudgmentCanvas scenario={reviewScenario} choice={reviewView === 'first' ? firstChoice : correctChoice} correct={reviewView === 'safe' || attempt.firstTryCorrect} runtime={runtime} />
-            <figcaption>{reviewView === 'first' ? '내가 선택한 동작의 결과' : '안전한 선택의 결과'}</figcaption>
+            <JudgmentCanvas scenario={reviewScenario} choice={canCompareChoices && reviewView === 'first' ? firstChoice : correctChoice} correct={!canCompareChoices || reviewView === 'safe'} runtime={runtime} />
+            <figcaption>{canCompareChoices && reviewView === 'first' ? '내가 선택한 동작의 결과' : attempt.firstTryCorrect ? '정답으로 선택한 안전한 동작의 결과' : '안전한 선택의 결과'}</figcaption>
           </figure>
           <div className="expanded-review-copy">
             <p><b>상황</b><span>{reviewScenario.situation}</span></p>
@@ -476,7 +469,7 @@ export function ResultPage() {
       </section>}
 
       {activeTab === 'history' && <section className="practice-history" aria-labelledby="history-title">
-        <header className="history-heading"><div><h2 id="history-title">나의 연습 기록</h2></div>{history.sessions.length > 0 && <button type="button" className="history-reset" onClick={() => { void resetHistory() }}>기록 초기화</button>}</header>
+        <header className="history-heading"><div><h2 id="history-title">나의 연습 기록</h2>{history.sessions.length > 0 && <small className="history-scroll-cue"><span aria-hidden="true">↕</span> 위아래로 밀어 더 보기</small>}</div>{history.sessions.length > 0 && <button type="button" className="history-reset" onClick={() => { void resetHistory() }}>기록 초기화</button>}</header>
         <div className={isCompactLandscape ? 'history-browser' : undefined}>
           <div className={isCompactLandscape ? 'history-master' : undefined}>
             <aside className="correction-practice-cta">

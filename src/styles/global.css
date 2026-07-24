@@ -626,7 +626,22 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .replay-moment-card.replay-collision { border-color: #efb5af; background: #fff8f7; }
 .practice-history { margin-top: 34px; padding-top: 30px; border-top: 1px solid var(--border); }
 .history-heading { margin-bottom: 18px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+.history-heading > div { min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 7px 10px; }
 .history-heading h2 { margin-top: 4px; font-size: 1.65rem; }
+.history-scroll-cue {
+  padding: 4px 8px;
+  border: 1px solid rgba(166,199,186,.72);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #567066;
+  background: rgba(239,248,244,.82);
+  font-size: .66rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.history-scroll-cue span { color: var(--brand); font-size: .82rem; line-height: 1; }
 .history-reset { min-height: 40px; padding: 0 13px; border: 1px solid #d8aaa5; border-radius: 10px; color: #9d3932; background: #fff8f7; font-weight: 800; cursor: pointer; }
 .history-empty { padding: 28px; border: 1px dashed #afc4bb; border-radius: 18px; display: grid; justify-items: start; gap: 8px; background: rgba(255,255,255,.55); }
 .history-empty p { margin: 0 0 8px; color: var(--muted); }
@@ -2962,6 +2977,14 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 
 .correction-path-comparison {
   overflow: hidden;
+}
+
+.correction-path-comparison.safe-preview-only {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.correction-path-comparison.safe-preview-only .safe-view {
+  width: 100%;
 }
 
 .correction-path-comparison canvas {
