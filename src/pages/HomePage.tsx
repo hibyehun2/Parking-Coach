@@ -71,13 +71,11 @@ export function HomePage() {
 
   const beginPractice = () => {
     window.dispatchEvent(new Event('parking-coach:dismiss-install-prompt'))
-    if (!isSupabaseConfigured()) {
-      navigate('/practice')
-      return
-    }
     if (!authReady) return
     if (!user) {
-      setAuthMessage('')
+      setAuthMessage(isSupabaseConfigured()
+        ? ''
+        : '로그인 설정을 불러오지 못했습니다. 앱을 새로고침한 뒤 다시 시도해주세요.')
       setShowLogin(true)
       return
     }
@@ -90,6 +88,10 @@ export function HomePage() {
 
   const startGoogleLogin = async () => {
     setAuthMessage('')
+    if (!isSupabaseConfigured()) {
+      setAuthMessage('로그인 설정을 불러오지 못했습니다. 앱을 새로고침한 뒤 다시 시도해주세요.')
+      return
+    }
     sessionStorage.setItem(CONTINUE_TO_PRACTICE_KEY, 'true')
     try {
       await signInWithGoogle()

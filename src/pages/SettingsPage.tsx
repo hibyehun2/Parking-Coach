@@ -117,8 +117,8 @@ export function SettingsPage() {
         <header><span>계정</span><h2 id="account-settings-title">로그인 및 보안</h2></header>
         <div className="settings-account-row">
           <div>
-            <strong>{!authReady ? '로그인 상태 확인 중' : user ? 'Google 로그인됨' : '로그인하지 않음'}</strong>
-            <small>{user?.email ?? (isSupabaseConfigured() ? 'Google 계정으로 연습 기록을 연결할 수 있습니다.' : 'Supabase 연결 정보가 필요합니다.')}</small>
+            <strong>{!authReady ? '로그인 상태 확인 중' : user ? 'Google 로그인됨' : 'Google 계정 연결'}</strong>
+            <small>{user?.email ?? '연습 기록을 계정에 연결할 수 있습니다.'}</small>
           </div>
           {user
             ? <button type="button" onClick={() => { void logout() }}>로그아웃</button>
