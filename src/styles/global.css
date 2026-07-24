@@ -1914,48 +1914,38 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
     height: 100%;
     margin: 0;
     padding: 10px;
-    align-items: stretch;
-    color: white;
-    background:
-      linear-gradient(90deg, transparent 0 72%, rgba(255,255,255,.045) 72% 72.7%, transparent 72.7%),
-      linear-gradient(145deg, rgba(36,85,68,.98), rgba(18,56,44,.99));
-    border-color: rgba(193,234,216,.22);
-    border-radius: 15px;
-    box-shadow: inset 0 1px rgba(255,255,255,.13), 0 12px 28px rgba(15,52,39,.22);
-    backdrop-filter: blur(16px);
-  }
-  .practice-setup .setup-mode-section .setup-action > div { align-self: flex-start; }
-  .practice-setup .setup-mode-section .setup-action span {
-    display: flex;
     align-items: center;
-    gap: 5px;
-    color: #c9e5d9;
-    font-weight: 800;
+    color: white;
+    background: rgba(20,53,42,.9);
+    border-color: rgba(255,255,255,.28);
+    border-radius: 17px;
+    box-shadow: 0 18px 45px rgba(13,45,34,.28);
+    backdrop-filter: blur(22px);
+  }
+  .practice-setup .setup-mode-section .setup-action > div {
+    min-width: 0;
+    align-self: center;
+  }
+  .practice-setup .setup-mode-section .setup-action span {
+    color: #b4cec4;
+    font-weight: 700;
   }
   .practice-setup .setup-mode-section .setup-action span i {
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    color: #184d3b;
-    background: #bfeacf;
-    font-size: .68rem;
-    box-shadow: inset 0 1px rgba(255,255,255,.65);
+    display: none;
   }
   .practice-setup .setup-mode-section .setup-action .primary-button {
-    align-self: flex-end;
+    align-self: center;
     margin-left: auto;
     min-height: 34px;
     padding-inline: 10px;
-    color: #164d3a;
-    background: linear-gradient(180deg, #f5fffa, #dff5e9);
-    box-shadow: 0 8px 20px rgba(7,36,26,.2), inset 0 1px rgba(255,255,255,.9);
+    color: white;
+    background: linear-gradient(180deg, #1c8d69, #116c50);
+    box-shadow: 0 8px 20px rgba(7,36,26,.24), inset 0 1px rgba(255,255,255,.25);
     font-size: .72rem;
   }
   .practice-setup .setup-mode-section .setup-action .primary-button:hover {
-    color: #103f30;
-    background: #fff;
+    color: white;
+    background: var(--brand-dark);
   }
 }
 
@@ -2608,11 +2598,32 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   position: relative;
   flex: none;
   border: 2px solid #b9d9c8;
-  display: inline-block;
+  display: inline-grid;
+  place-items: center;
   overflow: hidden;
   background-color: #fff8e8;
-  background-repeat: no-repeat;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.75), 0 5px 14px rgba(35,86,67,.12);
+}
+
+.animal-avatar::before {
+  content: attr(data-fallback);
+  grid-area: 1 / 1;
+  color: #527164;
+  font-size: .72em;
+  font-weight: 900;
+}
+
+.animal-avatar > img {
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  grid-area: 1 / 1;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  background: #fff8e8;
+  pointer-events: none;
+  user-select: none;
 }
 
 .settings-avatar {
