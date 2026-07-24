@@ -6,6 +6,7 @@ const navigation = [
   { to: '/', label: '홈', icon: 'home', end: true },
   { to: '/practice', label: '연습', icon: 'practice', end: false },
   { to: '/result', label: '결과', icon: 'result', end: false },
+  { to: '/settings', label: '설정', icon: 'settings', end: false },
 ]
 
 function TabIcon({ name }: { name: string }) {
@@ -15,7 +16,10 @@ function TabIcon({ name }: { name: string }) {
   if (name === 'practice') {
     return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 8.5 7 5h10l1.5 3.5M4 11h16v7.5H4zM7 18.5v2M17 18.5v2" /><circle cx="7.5" cy="14.5" r="1" /><circle cx="16.5" cy="14.5" r="1" /></svg>
   }
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14v16H5zM8.5 9.5l2 2 4-4M8.5 15.5h7" /></svg>
+  if (name === 'result') {
+    return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h14v16H5zM8.5 9.5l2 2 4-4M8.5 15.5h7" /></svg>
+  }
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" /><path d="M19 13.5v-3l-2-.7a7 7 0 0 0-.8-1.8l.9-1.9L15 4l-1.9.9a7 7 0 0 0-2.2 0L9 4 6.9 6.1 7.8 8a7 7 0 0 0-.8 1.8l-2 .7v3l2 .7a7 7 0 0 0 .8 1.8l-.9 1.9L9 20l1.9-.9a7 7 0 0 0 2.2 0l1.9.9 2.1-2.1-.9-1.9a7 7 0 0 0 .8-1.8z" /></svg>
 }
 
 export function AppLayout() {

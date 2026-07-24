@@ -7,6 +7,7 @@ import { buildCorrectionDrills } from '../engine/correctionDrills'
 import type { ParkingResult } from '../engine/parkingEvaluation'
 import { clearPracticeHistory, isPracticeSessionExpired, loadPracticeHistory, MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, PRACTICE_HISTORY_RETENTION_DAYS, recommendPractice, togglePracticeBookmark, type CorrectionAttempt, type PracticeSession } from '../engine/practiceHistory'
 import { getScenario } from '../data/scenarios'
+import { LEARNING_CASES } from '../data/learningCases'
 import type { JudgmentScenario } from '../engine/judgmentScenarios'
 import type { ReplayEvent } from '../engine/sessionReplay'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../types/practice'
@@ -135,6 +136,7 @@ export function ResultPage() {
   const collisionFeedback = collisionEvent ? collisionCoaching(collisionEvent) : null
   const [history, setHistory] = useState(loadPracticeHistory)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
+  const [selectedCaseAuthorId, setSelectedCaseAuthorId] = useState<string | null>(null)
   const bookmarkedSessions = history.sessions.filter((session) => session.bookmarked)
   const recentSessions = history.sessions.filter((session) => !session.bookmarked)
   const recommendation = recommendPractice(history.sessions)
@@ -204,7 +206,7 @@ export function ResultPage() {
           {session.moments.find((event) => event.type === 'collision') && <p>과거 기록은 장면 복기용으로 표시합니다. 새로운 판단 문제는 판단 연습에서 서로 다른 상황으로 연습할 수 있습니다.</p>}
         </>}
         <aside className="share-case-preparation">
-          <div><strong>익명 학습 사례로 공유</strong><p>보관과 공유는 별도 기능입니다. 공유에 직접 동의한 경우에만 사례별 익명 별명으로 공개될 예정입니다.</p></div>
+          <div><strong>익명 학습 사례로 공유</strong><p>보관과 공유는 별도 기능입니다. 공유에 직접 동의한 경우에만 설정에서 정한 익명 닉네임으로 공개될 예정입니다.</p></div>
           <button type="button" disabled>공유 기능 준비 중</button>
         </aside>
       </section>}
@@ -284,15 +286,42 @@ export function ResultPage() {
 
       {activeTab === 'community' && <section className="community-learning" aria-labelledby="community-learning-title">
         <header>
-          <div><span>함께 배우는 주차 사례</span><b>준비 중</b></div>
+          <div><span>함께 배우는 주차 사례</span><b>기능 예시</b></div>
           <h2 id="community-learning-title">다른 연습자의 경험을 새로운 판단 문제로 만나보세요</h2>
-          <p>공유에 동의한 기록만 개인 정보 없이 학습 사례로 제공할 예정입니다. 기록 원본이나 개인 보관 상태는 공개되지 않습니다.</p>
+          <p>아래 내용은 기능을 미리 확인하기 위한 예시입니다. 실제 기능에서는 공유에 동의한 사례만 고정된 공개 닉네임으로 표시됩니다.</p>
         </header>
-        <div className="community-learning-flow" aria-label="학습 사례 이용 순서">
-          <article><b>1</b><strong>상황 먼저 확인</strong><p>차량 배치와 위험한 모서리만 보고 스스로 판단합니다.</p></article>
-          <article><b>2</b><strong>내 선택 결정</strong><p>정답을 보기 전에 멈춤과 수정 순서를 선택합니다.</p></article>
-          <article><b>3</b><strong>경로 비교 복기</strong><p>익명 연습자의 선택과 안전한 경로를 비교합니다.</p></article>
+        <div className="learning-case-grid" aria-label="학습 사례 예시">
+          {LEARNING_CASES.map((learningCase) => <article key={learningCase.id} className="learning-case-card">
+            <header>
+              <button type="button" onClick={() => setSelectedCaseAuthorId(learningCase.authorId)}>{learningCase.nickname}</button>
+              <small>{learningCase.sharedLabel}</small>
+            </header>
+            <span>{learningCase.scenario}</span>
+            <strong>{learningCase.title}</strong>
+            <p>{learningCase.summary}</p>
+            <small>{learningCase.takeaway}</small>
+          </article>)}
         </div>
+        {selectedCaseAuthorId && (() => {
+          const authorCases = LEARNING_CASES.filter((learningCase) => learningCase.authorId === selectedCaseAuthorId)
+          const nickname = authorCases[0]?.nickname
+          return <div className="case-author-backdrop" role="presentation" onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelectedCaseAuthorId(null)
+          }}>
+            <section className="case-author-panel" role="dialog" aria-modal="true" aria-labelledby="case-author-title">
+              <header>
+                <div><span>공개 학습 사례</span><h3 id="case-author-title">{nickname}</h3><small>{authorCases.length}개의 예시 사례</small></div>
+                <button type="button" aria-label="사례 목록 닫기" onClick={() => setSelectedCaseAuthorId(null)}>×</button>
+              </header>
+              <ol>{authorCases.map((learningCase) => <li key={learningCase.id}>
+                <span>{learningCase.scenario} · {learningCase.sharedLabel}</span>
+                <strong>{learningCase.title}</strong>
+                <p>{learningCase.takeaway}</p>
+              </li>)}</ol>
+              <p>실제 서비스에서는 이 사용자가 공유에 동의한 사례만 표시됩니다.</p>
+            </section>
+          </div>
+        })()}
       </section>}
 
       {activeTab === 'history' && <section className="practice-history" aria-labelledby="history-title">
