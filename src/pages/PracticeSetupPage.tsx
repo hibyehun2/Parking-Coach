@@ -35,15 +35,15 @@ export function PracticeSetupPage() {
             {scenarios.map((item) => <ScenarioCard key={item.id} scenario={item} selected={scenarioId === item.id} onSelect={setScenarioId} />)}
           </div>
         </section>
-        <section className="setup-section" aria-labelledby="setup-mode-title">
+        <section className="setup-section setup-mode-section" aria-labelledby="setup-mode-title">
           <div className="setup-section-heading"><span>2</span><h2 id="setup-mode-title">연습 방식</h2></div>
           <ModeSelector value={mode} onChange={setMode} />
+          <footer className="setup-action">
+            <div><span>준비 완료</span><strong>{scenario?.title} · {mode === 'learning' ? '직접 연습' : '판단 연습'}</strong></div>
+            <button type="button" className="primary-button" onClick={start}>연습 시작 →</button>
+          </footer>
         </section>
       </div>
-      <footer className="setup-action">
-        <div><span>준비 완료</span><strong>{scenario?.title} · {mode === 'learning' ? '직접 연습' : '판단 연습'}</strong></div>
-        <button type="button" className="primary-button" onClick={start}>연습 시작 →</button>
-      </footer>
     </section>
   )
 }

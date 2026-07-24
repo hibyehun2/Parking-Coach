@@ -4,7 +4,6 @@ import { ReplayMomentCard } from '../components/ReplayMomentCard'
 import { ResultCollisionQuiz } from '../components/ResultCollisionQuiz'
 import { JudgmentCanvas } from '../components/JudgmentQuiz'
 import { buildCorrectionDrills } from '../engine/correctionDrills'
-import { ANONYMOUS_ALIAS_COMBINATIONS, createAnonymousAlias } from '../engine/anonymousAlias'
 import type { ParkingResult } from '../engine/parkingEvaluation'
 import { clearPracticeHistory, isPracticeSessionExpired, loadPracticeHistory, MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, PRACTICE_HISTORY_RETENTION_DAYS, recommendPractice, togglePracticeBookmark, type CorrectionAttempt, type PracticeSession } from '../engine/practiceHistory'
 import { getScenario } from '../data/scenarios'
@@ -190,7 +189,9 @@ export function ResultPage() {
     return <li key={session.id} id={`history-session-${session.id}`} className={isSelected ? 'selected' : undefined}>
       <div className="session-row">
         <div><strong>{session.mode === 'practice' ? `${getScenario(session.scenarioId).title} · 판단 연습 ${session.quizScore ?? 0}/${session.quizTotal ?? 10}` : `${getScenario(session.scenarioId).title} · ${session.success ? '성공' : '미완료'}`}</strong><span>{formatCompletedAt(session.completedAt)} · {session.mode === 'learning' ? '직접 연습' : '판단 연습'}</span></div>
-        <div className="session-measures"><span>{session.mode === 'practice' ? '연습 완료' : `충돌 ${session.collisionCount}회`}</span></div>
+        <div className={`session-measures${session.mode === 'practice' || session.success && !session.collisionCount ? ' session-complete' : ' session-review'}`}>
+          <span>{session.mode === 'practice' ? '판단 완료' : session.collisionCount ? `충돌 ${session.collisionCount}회` : session.success ? '안전 완료' : '미완료'}</span>
+        </div>
         <div className="session-buttons">
           <button type="button" className={`bookmark-button${session.bookmarked ? ' bookmarked' : ''}`} aria-label={session.bookmarked ? '보관에서 해제하기' : '이 기록 보관하기'} aria-pressed={session.bookmarked} title={session.bookmarked ? '보관에서 해제하기' : '이 기록 보관하기'} onClick={() => toggleBookmark(session)}><BookmarkIcon filled={session.bookmarked} /></button>
           <button type="button" aria-expanded={isSelected} aria-controls={detailId} onClick={() => setSelectedSessionId(isSelected ? null : session.id)}>{isSelected ? '상세 닫기' : session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 보기'}</button>
@@ -283,7 +284,7 @@ export function ResultPage() {
 
       {activeTab === 'community' && <section className="community-learning" aria-labelledby="community-learning-title">
         <header>
-          <span>함께 배우는 주차 사례</span>
+          <div><span>함께 배우는 주차 사례</span><b>준비 중</b></div>
           <h2 id="community-learning-title">다른 연습자의 경험을 새로운 판단 문제로 만나보세요</h2>
           <p>공유에 동의한 기록만 개인 정보 없이 학습 사례로 제공할 예정입니다. 기록 원본이나 개인 보관 상태는 공개되지 않습니다.</p>
         </header>
@@ -292,10 +293,6 @@ export function ResultPage() {
           <article><b>2</b><strong>내 선택 결정</strong><p>정답을 보기 전에 멈춤과 수정 순서를 선택합니다.</p></article>
           <article><b>3</b><strong>경로 비교 복기</strong><p>익명 연습자의 선택과 안전한 경로를 비교합니다.</p></article>
         </div>
-        <aside className="anonymous-case-preview">
-          <div><span>익명 별명 예시 · {ANONYMOUS_ALIAS_COMBINATIONS.toLocaleString('ko-KR')}가지 조합</span><div className="anonymous-alias-examples">{[7, 289, 731, 1219].map((seed) => <strong key={seed}>{createAnonymousAlias(seed)}</strong>)}</div><p>공유 사례마다 귀여운 형용사와 동물을 조합합니다. 같은 사례에서는 같은 별명을 유지하지만 계정이나 다른 사례와는 연결하지 않습니다.</p></div>
-          <button type="button" disabled>로그인·사례 공유 기능 준비 중</button>
-        </aside>
       </section>}
 
       {activeTab === 'history' && <section className="practice-history" aria-labelledby="history-title">
