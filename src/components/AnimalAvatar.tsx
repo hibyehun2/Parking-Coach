@@ -2,7 +2,7 @@ import { getAliasAnimal, getAliasAnimalIndex } from '../engine/anonymousAlias'
 
 const ATLAS_COLUMNS = 6
 const ATLAS_ROWS = 8
-const AVATAR_ATLAS_URL = `${import.meta.env.BASE_URL}images/animal-avatar-atlas-v1.jpg`
+const AVATAR_ATLAS_URL = `${import.meta.env.BASE_URL}images/animal-avatar-atlas-v2.jpg`
 
 export function AnimalAvatar({
   nickname,

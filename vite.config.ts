@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'prompt',
-      includeAssets: ['icons/*.png', 'images/animal-avatar-atlas-v1.jpg'],
+      includeAssets: ['icons/*.png', 'images/animal-avatar-atlas-v2.jpg'],
       manifest: {
         name: 'Parking Coach',
         short_name: 'Parking Coach',
