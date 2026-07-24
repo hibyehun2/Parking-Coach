@@ -16,6 +16,22 @@ function formatCompletedAt(value: string) {
   return new Intl.DateTimeFormat('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value))
 }
 
+function useCompactLandscape() {
+  const query = '(orientation: landscape) and (max-height: 600px)'
+  const [matches, setMatches] = useState(() => typeof window !== 'undefined' && window.matchMedia?.(query).matches === true)
+
+  useEffect(() => {
+    const media = window.matchMedia?.(query)
+    if (!media) return
+    const update = () => setMatches(media.matches)
+    update()
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+
+  return matches
+}
+
 function BookmarkIcon({ filled }: { filled: boolean }) {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -116,7 +132,7 @@ export function ResultPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
-  const state = location.state as {
+  type ResultLocationState = {
     result?: ParkingResult
     scenarioId?: ScenarioId
     mode?: PracticeMode
@@ -125,7 +141,11 @@ export function ResultPage() {
     challengeComplete?: boolean
     challengeScore?: number
     challengeTotal?: number
-  } | null
+  }
+  const incomingState = location.state as ResultLocationState | null
+  const [initialState] = useState<ResultLocationState | null>(incomingState)
+  const state = incomingState ?? initialState
+  const isCompactLandscape = useCompactLandscape()
   const result = state?.result
   const challengeComplete = state?.challengeComplete === true
   const hasCurrentResult = Boolean(result || challengeComplete)
@@ -137,6 +157,8 @@ export function ResultPage() {
   const [history, setHistory] = useState(loadPracticeHistory)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [selectedCaseAuthorId, setSelectedCaseAuthorId] = useState<string | null>(null)
+  const [selectedLearningCaseId, setSelectedLearningCaseId] = useState(LEARNING_CASES[0]?.id ?? '')
+  const effectiveSelectedSessionId = selectedSessionId ?? (isCompactLandscape && activeTab === 'history' ? history.sessions[0]?.id ?? null : null)
   const bookmarkedSessions = history.sessions.filter((session) => session.bookmarked)
   const recentSessions = history.sessions.filter((session) => !session.bookmarked)
   const recommendation = recommendPractice(history.sessions)
@@ -158,6 +180,10 @@ export function ResultPage() {
   const replayMoments = replay
     .filter((event) => event.type === 'collision' || (event.type === 'finish' && result?.success))
     .slice(-3)
+  const selectedLearningCase = LEARNING_CASES.find((learningCase) => learningCase.id === selectedLearningCaseId) ?? LEARNING_CASES[0]
+  const changeResultTab = (tab: 'current' | 'history' | 'community') => {
+    setSearchParams({ tab }, { state: state ?? undefined })
+  }
 
   const retryAtEvent = (event: ReplayEvent) => navigate(retryPath, {
     state: { retryVehicle: { ...event.vehicle, braking: true, speed: 0 }, runtime: state?.runtime },
@@ -168,11 +194,11 @@ export function ResultPage() {
     window.setTimeout(() => document.getElementById('result-collision-quiz-title')?.focus({ preventScroll: true }), 350)
   }
   useEffect(() => {
-    if (!selectedSessionId) return
+    if (!effectiveSelectedSessionId) return
     window.requestAnimationFrame(() => {
-      document.getElementById(`history-session-${selectedSessionId}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      document.getElementById(`history-session-${effectiveSelectedSessionId}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     })
-  }, [selectedSessionId])
+  }, [effectiveSelectedSessionId])
   const toggleBookmark = (session: PracticeSession) => {
     const expired = isPracticeSessionExpired(session)
     if (session.bookmarked && expired && !window.confirm('보관을 해제하면 7일이 지난 이 기록은 바로 삭제됩니다. 해제할까요?')) return
@@ -184,10 +210,24 @@ export function ResultPage() {
     setHistory(result.history)
     if (result.status === 'removed' && expired) setSelectedSessionId(null)
   }
+  const renderHistoryDetail = (session: PracticeSession, idSuffix = 'inline') => {
+    const detailId = `history-detail-${idSuffix}-${session.id}`
+    const titleId = `history-detail-title-${idSuffix}-${session.id}`
+    return <section id={detailId} className="history-detail" aria-labelledby={titleId}>
+      <header><div><span>{session.bookmarked ? '보관한 기록' : '저장된 연습'}</span><h3 id={titleId}>{formatCompletedAt(session.completedAt)} 주요 순간</h3></div><button type="button" onClick={() => setSelectedSessionId(null)}>닫기</button></header>
+      {session.correctionAttempts?.length ? <CorrectionHistoryReview session={session} /> : !session.moments?.length ? <p>이 기록은 상세 장면 저장 기능이 적용되기 전 기록이거나, 표시할 주요 순간 없이 종료되었습니다.</p> : <>
+        <div className="replay-moment-list">{session.moments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={session.runtime} />)}</div>
+        {session.moments.find((event) => event.type === 'collision') && <p>과거 기록은 장면 복기용으로 표시합니다. 새로운 판단 문제는 판단 연습에서 서로 다른 상황으로 연습할 수 있습니다.</p>}
+      </>}
+      <aside className="share-case-preparation">
+        <div><strong>익명 학습 사례로 공유</strong><p>보관과 공유는 별도 기능입니다. 공유에 직접 동의한 경우에만 설정에서 정한 익명 닉네임으로 공개될 예정입니다.</p></div>
+        <button type="button" disabled>공유 기능 준비 중</button>
+      </aside>
+    </section>
+  }
   const renderHistorySession = (session: PracticeSession) => {
-    const isSelected = session.id === selectedSessionId
-    const detailId = `history-detail-${session.id}`
-    const titleId = `history-detail-title-${session.id}`
+    const isSelected = session.id === effectiveSelectedSessionId
+    const detailId = isCompactLandscape ? `history-detail-landscape-${session.id}` : `history-detail-inline-${session.id}`
     return <li key={session.id} id={`history-session-${session.id}`} className={isSelected ? 'selected' : undefined}>
       <div className="session-row">
         <div><strong>{session.mode === 'practice' ? `${getScenario(session.scenarioId).title} · 판단 연습 ${session.quizScore ?? 0}/${session.quizTotal ?? 10}` : `${getScenario(session.scenarioId).title} · ${session.success ? '성공' : '미완료'}`}</strong><span>{formatCompletedAt(session.completedAt)} · {session.mode === 'learning' ? '직접 연습' : '판단 연습'}</span></div>
@@ -196,31 +236,26 @@ export function ResultPage() {
         </div>
         <div className="session-buttons">
           <button type="button" className={`bookmark-button${session.bookmarked ? ' bookmarked' : ''}`} aria-label={session.bookmarked ? '보관에서 해제하기' : '이 기록 보관하기'} aria-pressed={session.bookmarked} title={session.bookmarked ? '보관에서 해제하기' : '이 기록 보관하기'} onClick={() => toggleBookmark(session)}><BookmarkIcon filled={session.bookmarked} /></button>
-          <button type="button" aria-expanded={isSelected} aria-controls={detailId} onClick={() => setSelectedSessionId(isSelected ? null : session.id)}>{isSelected ? '상세 닫기' : session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 보기'}</button>
+          <button type="button" aria-expanded={isSelected} aria-controls={detailId} onClick={() => setSelectedSessionId(isCompactLandscape ? session.id : isSelected ? null : session.id)}>{isCompactLandscape && isSelected ? '선택됨' : isSelected ? '상세 닫기' : session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 보기'}</button>
         </div>
       </div>
-      {isSelected && <section id={detailId} className="history-detail" aria-labelledby={titleId}>
-        <header><div><span>{session.bookmarked ? '보관한 기록' : '저장된 연습'}</span><h3 id={titleId}>{formatCompletedAt(session.completedAt)} 주요 순간</h3></div><button type="button" onClick={() => setSelectedSessionId(null)}>닫기</button></header>
-        {session.correctionAttempts?.length ? <CorrectionHistoryReview session={session} /> : !session.moments?.length ? <p>이 기록은 상세 장면 저장 기능이 적용되기 전 기록이거나, 표시할 주요 순간 없이 종료되었습니다.</p> : <>
-          <div className="replay-moment-list">{session.moments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={session.runtime} />)}</div>
-          {session.moments.find((event) => event.type === 'collision') && <p>과거 기록은 장면 복기용으로 표시합니다. 새로운 판단 문제는 판단 연습에서 서로 다른 상황으로 연습할 수 있습니다.</p>}
-        </>}
-        <aside className="share-case-preparation">
-          <div><strong>익명 학습 사례로 공유</strong><p>보관과 공유는 별도 기능입니다. 공유에 직접 동의한 경우에만 설정에서 정한 익명 닉네임으로 공개될 예정입니다.</p></div>
-          <button type="button" disabled>공유 기능 준비 중</button>
-        </aside>
-      </section>}
+      {isSelected && !isCompactLandscape && renderHistoryDetail(session)}
     </li>
   }
+  const renderReplayTimeline = (compact = false) => replayMoments.length > 0 && <section className={`replay-timeline${compact ? ' compact-replay-timeline' : ''}`} aria-labelledby={compact ? 'compact-replay-title' : 'replay-title'}>
+    <header><div><span>실제 주행 탑뷰</span><h2 id={compact ? 'compact-replay-title' : 'replay-title'}>이번 연습의 주요 순간</h2></div><small>충돌과 최종 자세를 우선 표시합니다</small></header>
+    <div className="replay-moment-list">{replayMoments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={state?.runtime} onRetry={event.type === 'collision' ? () => retryAtEvent(event) : undefined} />)}</div>
+  </section>
+  const selectedHistorySession = history.sessions.find((session) => session.id === effectiveSelectedSessionId) ?? null
 
   return (
     <section className={`page single-column result-page${activeTab === 'current' && collisionEvent ? ' result-has-collision' : ''}`} aria-labelledby="result-title">
       <p className="eyebrow">연습 결과</p>
       <h1 id="result-title">{challengeComplete ? '후진주차 상황 판단 연습 완료' : result ? (result.success ? '주차 성공' : '아직 주차가 완료되지 않았습니다') : '연습 기록'}</h1>
       <div className="result-tabs" role="tablist" aria-label="결과 보기">
-        <button type="button" role="tab" aria-selected={activeTab === 'current'} disabled={!hasCurrentResult} onClick={() => setSearchParams({ tab: 'current' })}>이번 연습</button>
-        <button type="button" role="tab" aria-selected={activeTab === 'history'} onClick={() => setSearchParams({ tab: 'history' })}>연습 기록</button>
-        <button type="button" role="tab" aria-selected={activeTab === 'community'} onClick={() => setSearchParams({ tab: 'community' })}>학습 사례</button>
+        <button type="button" role="tab" aria-selected={activeTab === 'current'} disabled={!hasCurrentResult} onClick={() => changeResultTab('current')}>이번 연습</button>
+        <button type="button" role="tab" aria-selected={activeTab === 'history'} onClick={() => changeResultTab('history')}>연습 기록</button>
+        <button type="button" role="tab" aria-selected={activeTab === 'community'} onClick={() => changeResultTab('community')}>학습 사례</button>
       </div>
 
       {activeTab === 'current' && challengeComplete && <section className="challenge-result-summary">
@@ -229,7 +264,7 @@ export function ResultPage() {
         <div className="result-actions"><Link className="primary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=practice`}>다른 판단 연습하기</Link><Link className="secondary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=learning`}>직접 연습에 적용</Link></div>
       </section>}
 
-      {activeTab === 'current' && result && <section className={`current-result-dashboard${collisionEvent ? ' result-has-detail' : ''}`} aria-label="이번 연습 핵심 결과">
+      {activeTab === 'current' && result && <section className={`current-result-dashboard${collisionEvent ? ' result-has-detail' : ''}${isCompactLandscape && !collisionEvent && replayMoments.length === 0 ? ' result-single-pane' : ''}`} aria-label="이번 연습 핵심 결과">
         <div className="result-overview-column">
           <article className={`result-card result-overview-card ${result.success && !result.collisionCount ? 'good' : 'needs-work'}`}>
             <span>실제 결과</span>
@@ -276,13 +311,11 @@ export function ResultPage() {
             <p>새 학습 연습부터 실제 차량 위치와 장애물 배치를 이용한 충돌 판단 퀴즈가 제공됩니다.</p>
             <button type="button" className="primary-button" onClick={() => retryAtEvent(collisionEvent)}>충돌 직전부터 다시 연습</button>
           </section>}
+          {isCompactLandscape && renderReplayTimeline(true)}
         </div>
       </section>}
 
-      {activeTab === 'current' && replayMoments.length > 0 && <section className="replay-timeline" aria-labelledby="replay-title">
-        <header><div><span>실제 주행 탑뷰</span><h2 id="replay-title">이번 연습의 주요 순간</h2></div><small>충돌과 최종 자세를 우선 표시합니다</small></header>
-        <div className="replay-moment-list">{replayMoments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={state?.runtime} onRetry={event.type === 'collision' ? () => retryAtEvent(event) : undefined} />)}</div>
-      </section>}
+      {activeTab === 'current' && !isCompactLandscape && renderReplayTimeline()}
 
       {activeTab === 'community' && <section className="community-learning" aria-labelledby="community-learning-title">
         <header>
@@ -290,19 +323,39 @@ export function ResultPage() {
           <h2 id="community-learning-title">다른 연습자의 경험을 새로운 판단 문제로 만나보세요</h2>
           <p>아래 내용은 기능을 미리 확인하기 위한 예시입니다. 실제 기능에서는 공유에 동의한 사례만 고정된 공개 닉네임으로 표시됩니다.</p>
         </header>
-        <div className="learning-case-grid" aria-label="학습 사례 예시">
+        {isCompactLandscape ? <div className="learning-case-browser">
+          <div className="learning-case-master" aria-label="학습 사례 예시">
+            {LEARNING_CASES.map((learningCase) => <button key={learningCase.id} type="button" className={learningCase.id === selectedLearningCase?.id && !selectedCaseAuthorId ? 'selected' : undefined} onClick={() => {
+              setSelectedCaseAuthorId(null)
+              setSelectedLearningCaseId(learningCase.id)
+            }}>
+              <span>{learningCase.scenario} · {learningCase.sharedLabel}</span>
+              <strong>{learningCase.title}</strong>
+              <small>{learningCase.nickname}</small>
+            </button>)}
+          </div>
+          <aside className="learning-case-detail" aria-live="polite">
+            {selectedCaseAuthorId ? (() => {
+              const authorCases = LEARNING_CASES.filter((learningCase) => learningCase.authorId === selectedCaseAuthorId)
+              const nickname = authorCases[0]?.nickname
+              return <>
+                <header><div><span>공개 학습 사례</span><h3>{nickname}</h3><small>{authorCases.length}개의 예시 사례</small></div><button type="button" onClick={() => setSelectedCaseAuthorId(null)}>선택한 사례로 돌아가기</button></header>
+                <ol>{authorCases.map((learningCase) => <li key={learningCase.id}><span>{learningCase.scenario} · {learningCase.sharedLabel}</span><strong>{learningCase.title}</strong><p>{learningCase.takeaway}</p></li>)}</ol>
+              </>
+            })() : selectedLearningCase && <>
+              <header><div><span>{selectedLearningCase.scenario}</span><h3>{selectedLearningCase.title}</h3></div><small>{selectedLearningCase.sharedLabel}</small></header>
+              <button type="button" className="case-author-link" onClick={() => setSelectedCaseAuthorId(selectedLearningCase.authorId)}>{selectedLearningCase.nickname}의 다른 사례 보기 →</button>
+              <p>{selectedLearningCase.summary}</p>
+              <div><span>기억할 기준</span><strong>{selectedLearningCase.takeaway}</strong></div>
+            </>}
+          </aside>
+        </div> : <div className="learning-case-grid" aria-label="학습 사례 예시">
           {LEARNING_CASES.map((learningCase) => <article key={learningCase.id} className="learning-case-card">
-            <header>
-              <button type="button" onClick={() => setSelectedCaseAuthorId(learningCase.authorId)}>{learningCase.nickname}</button>
-              <small>{learningCase.sharedLabel}</small>
-            </header>
-            <span>{learningCase.scenario}</span>
-            <strong>{learningCase.title}</strong>
-            <p>{learningCase.summary}</p>
-            <small>{learningCase.takeaway}</small>
+            <header><button type="button" onClick={() => setSelectedCaseAuthorId(learningCase.authorId)}>{learningCase.nickname}</button><small>{learningCase.sharedLabel}</small></header>
+            <span>{learningCase.scenario}</span><strong>{learningCase.title}</strong><p>{learningCase.summary}</p><small>{learningCase.takeaway}</small>
           </article>)}
-        </div>
-        {selectedCaseAuthorId && (() => {
+        </div>}
+        {!isCompactLandscape && selectedCaseAuthorId && (() => {
           const authorCases = LEARNING_CASES.filter((learningCase) => learningCase.authorId === selectedCaseAuthorId)
           const nickname = authorCases[0]?.nickname
           return <div className="case-author-backdrop" role="presentation" onMouseDown={(event) => {
@@ -326,18 +379,22 @@ export function ResultPage() {
 
       {activeTab === 'history' && <section className="practice-history" aria-labelledby="history-title">
         <header className="history-heading"><div><h2 id="history-title">나의 연습 기록</h2></div>{history.sessions.length > 0 && <button type="button" className="history-reset" onClick={() => { if (window.confirm('저장된 연습 기록을 모두 초기화할까요?')) setHistory(clearPracticeHistory()) }}>기록 초기화</button>}</header>
-        <aside className="correction-practice-cta">
-          <div><span>수정 주차 연습</span><strong>위험을 발견하고 안전하게 다시 주차하는 판단을 익혀보세요</strong><p>{recommendation?.mode === 'practice' ? recommendation.reason : '비스듬한 자세와 차량 모서리 접근 상황에서 정지·수정·재접근을 연습합니다.'}</p></div>
-          <Link className="primary-button" to={correctionPracticePath}>판단 연습 시작 →</Link>
-        </aside>
-        {history.sessions.length === 0 ? <div className="history-empty"><strong>아직 저장된 기록이 없습니다</strong><p>연습 기록은 {PRACTICE_HISTORY_RETENTION_DAYS}일간 저장되며, 중요한 기록은 최대 {MAX_BOOKMARKED_SESSIONS}개까지 계속 보관할 수 있습니다.</p><Link className="primary-button result-start-link" to="/practice">첫 기록 만들기</Link></div> : <>
-          {recommendation && recommendation.mode !== 'practice' && <aside className="next-practice">
-            <div><span>다음 연습</span><p>{recommendation.reason}</p></div>
-            <Link to={`/simulator?scenario=${recommendation.scenarioId}&mode=${recommendation.mode}`}>{recommendation.label} →</Link>
+        <div className={isCompactLandscape ? 'history-browser' : undefined}>
+          <div className={isCompactLandscape ? 'history-master' : undefined}>
+            <aside className="correction-practice-cta">
+              <div><span>수정 주차 연습</span><strong>위험을 발견하고 안전하게 다시 주차하는 판단을 익혀보세요</strong><p>{recommendation?.mode === 'practice' ? recommendation.reason : '비스듬한 자세와 차량 모서리 접근 상황에서 정지·수정·재접근을 연습합니다.'}</p></div>
+              <Link className="primary-button" to={correctionPracticePath}>판단 연습 시작 →</Link>
+            </aside>
+            {history.sessions.length === 0 ? <div className="history-empty"><strong>아직 저장된 기록이 없습니다</strong><p>연습 기록은 {PRACTICE_HISTORY_RETENTION_DAYS}일간 저장되며, 중요한 기록은 최대 {MAX_BOOKMARKED_SESSIONS}개까지 계속 보관할 수 있습니다.</p><Link className="primary-button result-start-link" to="/practice">첫 기록 만들기</Link></div> : <>
+              {recommendation && recommendation.mode !== 'practice' && <aside className="next-practice"><div><span>다음 연습</span><p>{recommendation.reason}</p></div><Link to={`/simulator?scenario=${recommendation.scenarioId}&mode=${recommendation.mode}`}>{recommendation.label} →</Link></aside>}
+              {bookmarkedSessions.length > 0 && <div className="recent-practice bookmarked-practice"><h3>보관한 기록 <small>{bookmarkedSessions.length} / {MAX_BOOKMARKED_SESSIONS} · 직접 해제하기 전까지 보관</small></h3><ol>{bookmarkedSessions.map(renderHistorySession)}</ol></div>}
+              <div className="recent-practice"><h3>최근 {PRACTICE_HISTORY_RETENTION_DAYS}일 기록 <small>최대 {MAX_PRACTICE_SESSIONS}개</small></h3>{recentSessions.length > 0 ? <ol>{recentSessions.map(renderHistorySession)}</ol> : <p className="recent-history-empty">최근 {PRACTICE_HISTORY_RETENTION_DAYS}일 동안 저장된 기록이 없습니다.</p>}</div>
+            </>}
+          </div>
+          {isCompactLandscape && <aside className="history-master-detail">
+            {selectedHistorySession ? renderHistoryDetail(selectedHistorySession, 'landscape') : <div className="history-detail-empty"><strong>확인할 기록을 선택하세요</strong><p>왼쪽 목록에서 기록을 선택하면 주요 순간과 판단 내용을 볼 수 있습니다.</p></div>}
           </aside>}
-          {bookmarkedSessions.length > 0 && <div className="recent-practice bookmarked-practice"><h3>보관한 기록 <small>{bookmarkedSessions.length} / {MAX_BOOKMARKED_SESSIONS} · 직접 해제하기 전까지 보관</small></h3><ol>{bookmarkedSessions.map(renderHistorySession)}</ol></div>}
-          <div className="recent-practice"><h3>최근 {PRACTICE_HISTORY_RETENTION_DAYS}일 기록 <small>최대 {MAX_PRACTICE_SESSIONS}개</small></h3>{recentSessions.length > 0 ? <ol>{recentSessions.map(renderHistorySession)}</ol> : <p className="recent-history-empty">최근 {PRACTICE_HISTORY_RETENTION_DAYS}일 동안 저장된 기록이 없습니다.</p>}</div>
-        </>}
+        </div>
       </section>}
     </section>
   )
