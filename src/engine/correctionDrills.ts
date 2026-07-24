@@ -161,7 +161,7 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
         '차량 전체는 주차칸 안에 있지만 한쪽 뒤 간격이 더 좁아 후진 공간이 부족합니다.',
         '먼저 어떤 동작으로 뒤쪽 공간을 만들까요?',
         crookedSpace,
-        pathChoice('make-space', `D로 바꾸고 핸들을 ${left ? '오른쪽' : '왼쪽'}으로 반 바퀴 돌려 짧게 전진`, '짧은 전진으로 좁았던 뒤쪽 간격을 먼저 회복하고 완전히 정지합니다.', crookedSpace),
+        pathChoice('make-space', `D로 바꾸고 핸들을 ${steeringDirection(crookedTurn)}으로 반 바퀴 돌려 짧게 전진`, '짧은 전진으로 좁았던 뒤쪽 간격을 먼저 회복하고 완전히 정지합니다.', crookedSpace),
         commonWrongChoices(crookedStart, -turn, outerZone),
         '비스듬한 상태에서는 먼저 짧게 전진해 뒤쪽 수정 공간을 만드세요.',
         'correction-space',
@@ -317,13 +317,8 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
       ]
     const reentry = physicalPath(stopped(safe, { gear: 'R' }), reentryMotions, runtime)
     const nearSide = zone.includes('right') ? '오른쪽' : '왼쪽'
-    const retreatLabel = `${nearSide} ${id === 'inner-clearance' ? '뒤' : '앞'} 범퍼의 간격부터 회복하기`
-    const retreatSteps = [
-      '완전히 정지한 상태를 확인',
-      '기어를 D에 놓기',
-      `핸들을 ${steeringDirection(clearanceMotion.steeringAngle)}으로 약 반 바퀴 유지해 천천히 전진`,
-      '범퍼와 옆 차 사이에 다시 간격이 보이면 정지',
-    ]
+    const nearCorner = `${nearSide} ${id === 'inner-clearance' ? '뒤' : '앞'} 범퍼`
+    const steeringLabel = steeringDirection(clearanceMotion.steeringAngle)
     const reentryLabel = id === 'inner-clearance'
       ? `기어를 R에 놓고 핸들을 ${steeringDirection(-.495 * direction)}으로 약 반 바퀴 돌려 천천히 후진한 뒤, 반대 방향으로 풀어 차체를 나란하게 만들기`
       : `기어를 R에 놓고 ${nearSide} 앞 범퍼 간격을 보며 천천히 후진하고, 필요하면 다시 정지해 각도를 바로잡기`
@@ -343,16 +338,31 @@ function buildBothSidesDrills(runtime: ScenarioRuntime): CorrectionDrill[] {
           '간격이 빠르게 줄면 조향보다 정지가 먼저입니다.',
           'stop-timing',
         ),
+        staticStep(
+          `${id}-prepare`,
+          '전진 수정 준비',
+          `충돌 전에 완전히 정지했고 ${nearCorner}의 간격을 회복해야 합니다.`,
+          '움직이기 전에 어떤 조작을 준비해야 할까요?',
+          danger,
+          {
+            id: 'prepare-retrace',
+            label: `브레이크를 유지한 채 D로 바꾸고 핸들을 ${steeringLabel}으로 약 반 바퀴 유지`,
+            feedback: '방금 지나온 안전 경로를 되돌아가려면 움직이기 전에 기어와 조향 방향부터 정확히 준비해야 합니다.',
+          },
+          [
+            { id: 'prepare-center', label: 'D로 바꾸고 핸들을 무조건 정면으로 돌리기', feedback: '원래 곡선과 다른 방향으로 움직여 반대편에 새로운 위험을 만들 수 있습니다.' },
+            { id: 'prepare-reverse', label: 'R을 유지하고 같은 방향으로 더 조향하기', feedback: '가까워진 모서리 쪽으로 계속 접근하게 됩니다.', focusZone: zone },
+          ],
+          '브레이크를 유지한 상태에서 D와 되돌아갈 조향 방향을 먼저 확인하세요.',
+          'correction-space',
+        ),
         pathStep(
           `${id}-retreat`,
           '방금 경로 되돌아가기',
-          '충돌 전에 정지했고 방금 지나온 전방 경로에는 여유가 있습니다.',
-          '가까워진 모서리의 간격을 회복하려면?',
+          `D와 ${steeringLabel} 조향을 확인했고 방금 지나온 전방 경로에는 여유가 있습니다.`,
+          `${nearCorner}의 간격을 회복하려면?`,
           clearance,
-          {
-            ...pathChoice('retrace', retreatLabel, '핸들을 유지한 채 천천히 전진하면 가까워졌던 범퍼가 옆 차에서 떨어집니다. 사이드미러에 다시 간격이 보이는 순간 멈추세요.', clearance),
-            steps: retreatSteps,
-          },
+          pathChoice('retrace', '현재 핸들 방향을 유지해 천천히 짧게 전진하고 간격이 보이면 정지', '핸들을 유지한 채 천천히 전진하면 가까워졌던 범퍼가 옆 차에서 떨어집니다. 사이드미러에 다시 간격이 보이는 순간 멈추세요.', clearance),
           [
             { id: 'center-forward', label: '핸들을 무조건 중앙으로 하고 길게 전진', feedback: '원래 궤적에서 벗어나 반대편에 새 위험을 만들 수 있습니다.', motion: [{ gear: 'D', steeringAngle: 0, seconds: 1.6 }] },
             { id: 'reverse-more', label: 'R을 유지해 조금 더 후진', feedback: '가까워진 모서리 쪽으로 계속 접근합니다.', motion: [{ gear: 'R', steeringAngle: danger.steeringAngle, seconds: 1.1 }], focusZone: zone },
