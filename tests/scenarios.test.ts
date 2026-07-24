@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { createScenarioRuntime, scenarios } from '../src/data/scenarios.ts'
+import { createScenarioRuntime, isScenarioAvailable, scenarios } from '../src/data/scenarios.ts'
 import { detectCollision } from '../src/engine/collisionDetection.ts'
 
 test('모든 추가 상황을 공통 런타임 데이터로 생성한다', () => {
   assert.deepEqual(scenarios.map(({ id }) => id), ['both-sides', 'narrow-aisle'])
-  assert.deepEqual(scenarios.filter(({ available }) => available).map(({ id }) => id), ['both-sides', 'narrow-aisle'])
+  assert.deepEqual(scenarios.filter(({ available }) => available).map(({ id }) => id), ['both-sides'])
+  assert.equal(isScenarioAvailable('narrow-aisle'), false)
   for (const scenario of scenarios) {
     const runtime = createScenarioRuntime(scenario.id, { seed: 2, firstSuccess: false })
     assert.equal(runtime.scenarioId, scenario.id)

@@ -13,13 +13,11 @@ export function AppInstallPrompt() {
   const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean }
   const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent)
     || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
-  const isAndroid = /Android/.test(navigator.userAgent)
-  const isMobile = isIos || isAndroid
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     || navigatorWithStandalone.standalone === true
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [visible, setVisible] = useState(() => (
-    isMobile && !isStandalone && sessionStorage.getItem(DISMISSED_KEY) !== 'true'
+    isIos && !isStandalone && sessionStorage.getItem(DISMISSED_KEY) !== 'true'
   ))
   const [showGuide, setShowGuide] = useState(false)
 
@@ -27,6 +25,7 @@ export function AppInstallPrompt() {
     const capturePrompt = (event: Event) => {
       event.preventDefault()
       setInstallPrompt(event as BeforeInstallPromptEvent)
+      if (sessionStorage.getItem(DISMISSED_KEY) !== 'true') setVisible(true)
     }
     const markInstalled = () => {
       setVisible(false)

@@ -1,7 +1,7 @@
 import type { ParkingResult } from './parkingEvaluation.ts'
 import type { ReplayEvent } from './sessionReplay.ts'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../types/practice.ts'
-import { FIRST_SUCCESS_KEY, markFirstSuccess } from '../data/scenarios.ts'
+import { FIRST_SUCCESS_KEY, isScenarioAvailable, markFirstSuccess } from '../data/scenarios.ts'
 import type { JudgmentSkill } from './judgmentScenarios.ts'
 
 export const PRACTICE_HISTORY_KEY = 'parking-coach:practice-history:v5'
@@ -284,7 +284,8 @@ export function recommendPractice(sessions: PracticeSession[]) {
   const recent = sessions.slice(0, 6)
   const collision = recent.find((item) => item.collisionCount > 0)
   if (collision) {
-    const scenarioId = collision.scenarioId === 'narrow-aisle' ? 'narrow-aisle' as const : 'both-sides' as const
+    const collisionScenario = collision.scenarioId === 'narrow-aisle' ? 'narrow-aisle' as const : 'both-sides' as const
+    const scenarioId = isScenarioAvailable(collisionScenario) ? collisionScenario : 'both-sides'
     const zone = collision.collisionZones[0]?.replace('front', '앞').replace('rear', '뒤').replace('left', '왼쪽').replace('right', '오른쪽')
     return {
       scenarioId,
@@ -294,11 +295,13 @@ export function recommendPractice(sessions: PracticeSession[]) {
     }
   }
   const hasBothSidesSuccess = recent.some((item) => item.scenarioId === 'both-sides' && item.success)
+  const narrowAisleAvailable = isScenarioAvailable('narrow-aisle')
+  const recommendNarrowAisle = hasBothSidesSuccess && narrowAisleAvailable
   return {
-    scenarioId: hasBothSidesSuccess ? 'narrow-aisle' as const : 'both-sides' as const,
+    scenarioId: recommendNarrowAisle ? 'narrow-aisle' as const : 'both-sides' as const,
     mode: 'learning' as const,
-    label: hasBothSidesSuccess ? '좁은 통로 주차 시작' : '같은 상황 다시 연습',
-    reason: hasBothSidesSuccess
+    label: recommendNarrowAisle ? '좁은 통로 주차 시작' : '같은 상황 다시 연습',
+    reason: recommendNarrowAisle
       ? '양옆 차량 주차를 안정적으로 마쳤어요. 앞쪽 회전 공간이 좁은 상황에 도전해보세요.'
       : '같은 상황을 반복해 진입 위치와 좌우 간격 확인을 익혀보세요.',
   }

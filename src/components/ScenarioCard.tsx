@@ -38,7 +38,7 @@ export function ScenarioCard({ scenario, selected, onSelect }: ScenarioCardProps
       <span className="scenario-card-copy">
         <span className="scenario-card-heading">
           <strong>{scenario.title}</strong>
-          <span>{scenario.difficulty}</span>
+          {scenario.available && <span>{scenario.difficulty}</span>}
         </span>
         <span className="scenario-description">{scenario.description}</span>
       </span>

@@ -15,8 +15,14 @@ export function HomePage() {
       <section className="home-hero compact-home-hero" aria-labelledby="home-title">
         <div className="hero-copy">
           <p className="eyebrow">PARKING COACH</p>
-          <h1 id="home-title"><span>후진주차,</span> <span>판단부터 조작까지 익혀보세요.</span></h1>
-          <p className="page-description"><span>위험한 순간의 수정 방법을 먼저 판단하고,</span> <span>단계별 안내와 탑뷰를 보며 직접 연습할 수 있어요.</span></p>
+          <h1 id="home-title">
+            <span>후진 주차,</span>{' '}
+            <span>판단하고 연습해요.</span>
+          </h1>
+          <p className="page-description">
+            <span>안전한 수정 방법을 익히고,</span>{' '}
+            <span>단계별 안내에 따라 후진 주차를 연습해요.</span>
+          </p>
           <button className="primary-button hero-start" type="button" onClick={beginPractice}>
             연습 방식 선택 <span aria-hidden="true">→</span>
           </button>

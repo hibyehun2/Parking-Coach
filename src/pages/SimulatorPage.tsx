@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import {
   ALWAYS_SKIP_LESSONS_KEY,
@@ -11,18 +11,27 @@ import { CorrectionPractice } from '../components/CorrectionPractice'
 import { scenarios } from '../data/scenarios'
 import { createScenarioRuntime, loadFirstSuccess } from '../data/scenarios'
 import { getLesson } from '../data/lessons'
+import {
+  releaseDirectPracticeOrientation,
+  requestDirectPracticeLandscape,
+} from '../engine/screenOrientation'
 import type { VehicleState } from '../engine/vehiclePhysics'
 import type { ScenarioRuntime } from '../types/practice'
 
 export function SimulatorPage() {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
   const retryPayload = location.state as { retryVehicle?: VehicleState; runtime?: ScenarioRuntime } | null
-  const retryState = retryPayload?.retryVehicle
-  const scenario = scenarios.find((item) => item.id === searchParams.get('scenario')) ?? scenarios[0]
+  const requestedScenarioId = searchParams.get('scenario')
+  const requestedScenario = scenarios.find((item) => item.id === requestedScenarioId)
+  const scenario = requestedScenario?.available
+    ? requestedScenario
+    : scenarios.find((item) => item.available) ?? scenarios[0]
+  const canReuseRuntime = retryPayload?.runtime?.scenarioId === scenario.id
+  const retryState = canReuseRuntime ? retryPayload?.retryVehicle : undefined
   const isPracticeMode = searchParams.get('mode') === 'practice'
   const forceLesson = searchParams.get('lesson') === '1'
-  const [runtime] = useState(() => retryPayload?.runtime ?? createScenarioRuntime(scenario.id, {
+  const [runtime] = useState(() => canReuseRuntime ? retryPayload.runtime! : createScenarioRuntime(scenario.id, {
     firstSuccess: loadFirstSuccess()[scenario.id],
   }))
   const [showLesson, setShowLesson] = useState(() => {
@@ -35,6 +44,19 @@ export function SimulatorPage() {
       return true
     }
   })
+
+  useEffect(() => {
+    if (requestedScenarioId === scenario.id) return
+    const next = new URLSearchParams(searchParams)
+    next.set('scenario', scenario.id)
+    setSearchParams(next, { replace: true })
+  }, [requestedScenarioId, scenario.id, searchParams, setSearchParams])
+
+  useEffect(() => {
+    if (isPracticeMode) return
+    void requestDirectPracticeLandscape()
+    return () => releaseDirectPracticeOrientation()
+  }, [isPracticeMode])
 
   return (
     <>

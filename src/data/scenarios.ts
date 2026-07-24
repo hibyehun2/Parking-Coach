@@ -6,7 +6,7 @@ export const FIRST_SUCCESS_KEY = 'parking-coach:first-success:v1'
 
 export const scenarios: Scenario[] = [
   { id: 'both-sides', title: '양옆 차량', description: '양쪽 차량 사이의 간격을 번갈아 확인해요.', difficulty: '첫 번째 연습', visual: 'cars-both', available: true },
-  { id: 'narrow-aisle', title: '좁은 통로 주차', description: '앞쪽 공간이 부족할 때 짧게 위치를 수정해요.', difficulty: '수정 연습', visual: 'narrow-aisle', available: true },
+  { id: 'narrow-aisle', title: '좁은 통로 주차', description: '앞쪽 공간이 부족한 주차 상황을 더 안정적으로 연습할 수 있도록 보완하고 있어요.', difficulty: '준비 중', visual: 'narrow-aisle', available: false },
 ]
 
 const LEGACY_SCENARIOS: Scenario[] = [
@@ -112,4 +112,8 @@ export function getScenario(id: string | null) {
   return scenarios.find((scenario) => scenario.id === migrated)
     ?? LEGACY_SCENARIOS.find((scenario) => scenario.id === migrated)
     ?? scenarios[0]
+}
+
+export function isScenarioAvailable(id: ScenarioId) {
+  return scenarios.some((scenario) => scenario.id === id && scenario.available)
 }

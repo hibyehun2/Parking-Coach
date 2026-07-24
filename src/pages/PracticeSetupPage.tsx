@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ModeSelector } from '../components/ModeSelector'
 import { ScenarioCard } from '../components/ScenarioCard'
 import { scenarios } from '../data/scenarios'
+import { requestDirectPracticeLandscape } from '../engine/screenOrientation'
 import type { PracticeMode, ScenarioId } from '../types/practice'
 
 function validScenario(value: string | null): ScenarioId | null {
@@ -17,6 +18,7 @@ export function PracticeSetupPage() {
   const scenario = scenarios.find((item) => item.id === scenarioId)
 
   const start = () => {
+    if (mode === 'learning') void requestDirectPracticeLandscape()
     navigate(`/simulator?scenario=${scenarioId}&mode=${mode}`)
   }
 

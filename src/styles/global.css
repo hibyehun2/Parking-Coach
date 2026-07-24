@@ -35,6 +35,7 @@ button { color: inherit; }
 .primary-nav { display: flex; align-items: center; gap: 8px; }
 .primary-nav a { padding: 9px 14px; border-radius: 999px; color: var(--muted); font-weight: 700; }
 .primary-nav a:hover, .primary-nav a.active { color: var(--brand-dark); background: var(--brand-soft); }
+.mobile-tab-bar { display: none; }
 
 .main-content { min-width: 0; flex: 1; display: flex; }
 .page { width: 100%; padding: clamp(46px, 7vw, 88px) 0; }
@@ -114,6 +115,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .mode-copy { display: flex; flex-direction: column; gap: 7px; }
 .mode-copy strong { font-size: 1.12rem; }
 .mode-copy > span { color: var(--muted); }
+.mode-compact-label { display: none; color: var(--muted); font-size: .72rem; font-weight: 700; line-height: 1.25; word-break: keep-all; }
 .mode-features { margin-top: 7px; display: flex; flex-wrap: wrap; gap: 7px; }
 .mode-features small { padding: 5px 8px; border-radius: 7px; color: var(--brand-dark); background: var(--brand-soft); font-weight: 700; }
 .start-panel { padding: 24px 28px; border-radius: 20px; display: flex; align-items: center; justify-content: space-between; gap: 24px; color: white; background: #183e32; }
@@ -125,6 +127,12 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .app-install-banner span { color: var(--muted); font-size: .76rem; }
 .app-install-banner > button:not(.install-dismiss) { min-height: 40px; padding: 0 13px; border: 0; border-radius: 9px; color: white; background: var(--brand); font-weight: 800; white-space: nowrap; }
 .app-install-banner .install-dismiss { position: absolute; top: 6px; right: 8px; width: 32px; height: 32px; border: 0; color: #64736d; background: transparent; font-size: 1.3rem; }
+.pwa-update-banner { position: fixed; z-index: 46; left: 16px; bottom: 16px; width: min(420px, calc(100% - 32px)); padding: 14px 48px 14px 16px; border: 1px solid #90cbb4; border-radius: 16px; display: flex; align-items: center; gap: 12px; color: #173127; background: #f1fbf7; box-shadow: 0 16px 44px rgba(13,50,38,.2); }
+.pwa-update-banner div { min-width: 0; flex: 1; display: grid; gap: 3px; }
+.pwa-update-banner span { color: var(--muted); font-size: .76rem; }
+.pwa-update-banner > button:not(.pwa-update-dismiss) { min-height: 40px; padding: 0 13px; border: 0; border-radius: 9px; color: white; background: var(--brand); font-weight: 800; white-space: nowrap; }
+.pwa-update-banner .pwa-update-dismiss { position: absolute; top: 6px; right: 8px; width: 32px; height: 32px; border: 0; color: #64736d; background: transparent; font-size: 1.3rem; }
+.app-shell:has(.pwa-update-banner) .app-install-banner { bottom: 112px; }
 
 .simulator-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .parking-canvas-frame { position: relative; width: 100%; height: clamp(540px, 64vw, 800px); border: 1px solid #cbd7d1; border-radius: 22px; overflow: hidden; background: #303936; box-shadow: var(--shadow); }
@@ -1040,7 +1048,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .compact-home-hero .hero-copy h1 { font-size: clamp(2rem, 9.5vw, 2.8rem); line-height: 1.06; }
   .compact-home-hero .hero-copy h1 > span { display: block; }
   .compact-home-hero .page-description { max-width: 33rem; margin: 9px 0 12px; font-size: clamp(.82rem, 3.7vw, .94rem); line-height: 1.45; }
-  .compact-home-hero .page-description > span { white-space: normal; }
+  .compact-home-hero .page-description > span { display: block; white-space: normal; }
   .compact-home-hero .hero-start { min-height: 46px; }
   .home-hero-visual { margin-top: 12px; }
   .home-hero-visual img { max-height: 31dvh; }
@@ -1268,4 +1276,148 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .current-result-dashboard { grid-template-columns: minmax(170px, .52fr) minmax(360px, 1.48fr); }
   .current-result-dashboard .result-card > p { display: none; }
   .current-result-dashboard .result-primary-actions a { min-height: 34px; }
+}
+
+/* Mobile navigation and compact practice setup */
+@media (max-width: 720px), (orientation: landscape) and (max-height: 600px) {
+  :root { --mobile-tab-height: 58px; }
+
+  body:has(.mobile-tab-bar) .site-header,
+  body:has(.mobile-tab-bar) .site-footer { display: none; }
+
+  body:has(.mobile-tab-bar) .main-content {
+    width: min(100% - 24px, 1180px);
+    padding-bottom: calc(var(--mobile-tab-height) + env(safe-area-inset-bottom));
+  }
+
+  .mobile-tab-bar {
+    position: fixed;
+    z-index: 40;
+    right: max(10px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    left: max(10px, env(safe-area-inset-left));
+    min-height: var(--mobile-tab-height);
+    padding: 4px;
+    border: 1px solid rgba(255,255,255,.82);
+    border-radius: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    background: rgba(250,252,251,.88);
+    box-shadow: 0 12px 38px rgba(24,49,40,.2);
+    backdrop-filter: blur(24px) saturate(1.45);
+  }
+
+  .mobile-tab-bar a {
+    min-width: 0;
+    min-height: 48px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 1px;
+    color: #75817c;
+    font-size: .67rem;
+    font-weight: 800;
+  }
+
+  .mobile-tab-bar a.active {
+    color: var(--brand-dark);
+    background: rgba(225,242,235,.92);
+  }
+
+  .mobile-tab-bar svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .mobile-tab-bar a:focus-visible {
+    outline: 3px solid #83d0b5;
+    outline-offset: -2px;
+  }
+
+  body:has(.mobile-tab-bar) .app-install-banner,
+  body:has(.mobile-tab-bar) .pwa-update-banner {
+    bottom: calc(var(--mobile-tab-height) + env(safe-area-inset-bottom) + 16px);
+  }
+
+  body:has(.mobile-tab-bar) .app-shell:has(.pwa-update-banner) .app-install-banner {
+    bottom: calc(var(--mobile-tab-height) + env(safe-area-inset-bottom) + 112px);
+  }
+
+  .practice-setup .mode-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .practice-setup .mode-card {
+    min-height: 84px;
+    padding: 11px;
+    align-items: center;
+  }
+
+  .practice-setup .mode-card.selected { padding: 10px; }
+  .practice-setup .mode-radio { width: 18px; height: 18px; }
+  .practice-setup .mode-copy { min-width: 0; gap: 4px; }
+  .practice-setup .mode-copy strong { font-size: .86rem; line-height: 1.25; }
+  .practice-setup .mode-description,
+  .practice-setup .mode-features { display: none; }
+  .practice-setup .mode-compact-label { display: block; }
+
+  .practice-setup .setup-action {
+    position: static;
+    margin-top: 10px;
+    bottom: auto;
+  }
+}
+
+@media (max-width: 720px) and (orientation: portrait) {
+  body:has(.mobile-tab-bar) .home-page { padding-bottom: 0; }
+  body:has(.mobile-tab-bar) .compact-home-hero { min-height: calc(100dvh - var(--mobile-tab-height) - env(safe-area-inset-bottom) - 16px); }
+
+  .practice-setup { padding-bottom: 10px; }
+
+  .practice-setup .setup-action {
+    padding: 10px;
+    align-items: center;
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .practice-setup .setup-action > div {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .practice-setup .setup-action strong {
+    overflow: hidden;
+    font-size: .82rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .practice-setup .setup-action .primary-button {
+    flex: none;
+    width: auto;
+    min-height: 44px;
+    padding-inline: 15px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  body:has(.mobile-tab-bar) .main-content { width: calc(100% - 16px); }
+  body:has(.mobile-tab-bar) .home-page,
+  body:has(.mobile-tab-bar) .practice-setup {
+    height: calc(100dvh - var(--mobile-tab-height) - env(safe-area-inset-bottom) - 10px);
+  }
+
+  body:has(.mobile-tab-bar) .compact-home-hero { min-height: 100%; }
+  .practice-setup .mode-card { min-height: 0; }
+  .practice-setup .setup-action { margin-top: 6px; }
+  .result-page { padding-bottom: 10px; }
 }

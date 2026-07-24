@@ -98,13 +98,13 @@ test('최근 충돌이 줄면 개선 중이며 차량 충돌은 수정 연습을
   assert.equal(recommendPractice(sessions)?.mode, 'practice')
 })
 
-test('기록이 부족하면 추천을 숨기고 충돌 없는 기본 성공 뒤에는 좁은 통로를 추천한다', () => {
+test('기록이 부족하면 추천을 숨기고 준비 중인 좁은 통로는 추천하지 않는다', () => {
   const storage = new MemoryStorage()
   recordPracticeSession(result(), 'both-sides', 'learning', storage)
   assert.equal(recommendPractice(loadPracticeHistory(storage).sessions), null)
   recordPracticeSession(result(), 'both-sides', 'learning', storage, new Date(Date.now() + 1000))
   const recommendation = recommendPractice(loadPracticeHistory(storage).sessions)
-  assert.equal(recommendation?.scenarioId, 'narrow-aisle')
+  assert.equal(recommendation?.scenarioId, 'both-sides')
   assert.equal(recommendation?.mode, 'learning')
 })
 
