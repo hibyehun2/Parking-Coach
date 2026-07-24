@@ -309,7 +309,7 @@ export function ResultPage() {
         {session.moments.find((event) => event.type === 'collision') && <p>과거 기록은 장면 복기용으로 표시합니다. 새로운 판단 문제는 판단 연습에서 서로 다른 상황으로 연습할 수 있습니다.</p>}
       </>}
       <aside className="share-case-preparation">
-        <div><strong>{session.shareStatus === 'shared' ? '학습 사례 공유됨' : session.shareStatus === 'pending' ? '학습 사례 공유 대기' : session.shareStatus === 'publish-failed' ? '공유하지 못함' : session.shareStatus === 'unpublishing' ? '공개 중단 대기' : session.shareStatus === 'unpublish-failed' ? '공개 중단 확인 필요' : '비공개로 보관됨'}</strong><p>{session.shareStatus === 'private' ? '기존에 보관한 기록은 자동 공개하지 않습니다. 설정에서 공유 대상으로 전환할 수 있습니다.' : '학습에 필요한 결과만 공개 닉네임으로 공유하며, 서버에서 소유권과 동의 이력을 확인합니다.'}</p></div>
+        <div><strong>{session.shareStatus === 'shared' ? '학습 사례 공유됨' : session.shareStatus === 'pending' ? '학습 사례 공유 대기' : session.shareStatus === 'publish-failed' ? '공유하지 못함' : session.shareStatus === 'unpublishing' ? '공개 중단 대기' : session.shareStatus === 'unpublish-failed' ? '공개 중단 확인 필요' : '비공개로 보관됨'}</strong><p>{session.shareStatus === 'private' ? '공유 동의 전에 보관한 기존 기록은 비공개 상태로 유지됩니다.' : '학습에 필요한 결과만 공개 닉네임으로 공유하며, 서버에서 소유권과 동의 이력을 확인합니다.'}</p></div>
         {session.shareStatus === 'publish-failed' || session.shareStatus === 'unpublish-failed'
           ? <button type="button" className="share-retry-button" onClick={() => retrySharing(session)}>다시 시도</button>
           : <span className={`share-status share-${session.shareStatus}`}>{session.shareStatus === 'shared' ? '공유됨' : session.shareStatus === 'pending' ? '전송 대기' : session.shareStatus === 'unpublishing' ? '공개 중단 중' : '비공개'}</span>}

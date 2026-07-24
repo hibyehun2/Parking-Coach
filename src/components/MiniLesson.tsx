@@ -58,7 +58,7 @@ export function MiniLessonView({ lesson, runtime, onFinish }: MiniLessonProps) {
             <span>{lesson.steps.length}단계 · 약 {lessonDuration(lesson)}초</span>
             <strong id="lesson-title">{lesson.title}</strong>
           </div>
-          <button type="button" className="lesson-skip" onClick={finish}>건너뛰고 시작</button>
+          <button type="button" className="lesson-skip" aria-label="단계별 안내 건너뛰고 연습 시작" onClick={finish}>바로 연습</button>
         </header>
 
         <div className={`lesson-animation lesson-scene-${lesson.scenarioId} lesson-obstacle-${sceneObstacleSide} lesson-stage-${stepIndex}`} aria-hidden="true">

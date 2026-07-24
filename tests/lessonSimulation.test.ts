@@ -6,7 +6,7 @@ import { buildJudgmentReferenceSimulation, buildLessonSimulation, buildNarrowAis
 import { isVehicleInsideParkingBay } from '../src/engine/parkingEvaluation.ts'
 import { isRedGuideAlignedWithParkingLine, parkingCameraCueCenter } from '../src/engine/parkingLotRenderer.ts'
 
-test('기본 안내는 주차칸을 충분히 지나 나란히 정지한 뒤 카메라 기준을 맞춘다', () => {
+test('기본 안내는 주차칸을 충분히 지나 나란히 정지한 뒤 진입 위치를 맞춘다', () => {
   const runtime = createScenarioRuntime('both-sides', { seed: 2 })
   const stages = buildLessonSimulation(runtime)
   const cue = parkingCameraCueCenter('left')
@@ -54,7 +54,7 @@ test('기본 상황의 전체 안내 경로는 충돌 없이 목표 주차칸 �
   }
 })
 
-test('오른쪽 출발 경로도 카메라 기준과 최종 주차 위치가 좌우 대칭이다', () => {
+test('오른쪽 출발 경로도 진입 기준과 최종 주차 위치가 좌우 대칭이다', () => {
   const runtime = createScenarioRuntime('both-sides', { seed: 3, firstSuccess: true })
   const stages = buildLessonSimulation(runtime)
   const cameraCueEnd = stages[1].states.at(-1)!

@@ -82,15 +82,15 @@ export function getLearningHint(vehicle: VehicleState, scenarioId: ScenarioId, r
       return {
         id: 'camera-corner-ready',
         level: 'info',
-        title: '빨간 모서리가 맞았습니다',
-        message: '완전히 정지한 뒤 주차 공간 방향으로 핸들을 끝까지 돌리세요.',
+        title: '후진 진입 위치에 도착했습니다',
+        message: '양쪽 간격을 확인하고 완전히 정지한 뒤, 주차 공간 방향으로 핸들을 끝까지 돌리세요.',
       }
     }
     return {
       id: 'align-camera-corner',
       level: 'info',
-      title: '빨간 가이드 모서리 맞추기',
-      message: '핸들을 중앙에 두고 천천히 직선 후진해 빨간 가이드 모서리를 주차칸 입구 모서리에 맞추세요.',
+      title: '후진 진입 위치 맞추기',
+      message: '핸들을 중앙에 두고 짧게 직선 후진하세요. 후방 가이드는 참고하고 양쪽 간격과 주차칸 입구를 함께 확인하세요.',
     }
   }
 
@@ -133,8 +133,8 @@ export function getLearningHint(vehicle: VehicleState, scenarioId: ScenarioId, r
     ? {
         id: 'camera-reverse-ready',
         level: 'info',
-        title: '후방카메라 기준을 맞출 위치입니다',
-        message: '완전히 정지하고 R로 바꾼 뒤, 핸들을 중앙에 두고 천천히 직선 후진하세요.',
+        title: '후진 진입 위치를 맞출 차례입니다',
+        message: '완전히 정지하고 R로 바꾼 뒤, 탑뷰와 양쪽 간격을 보며 핸들을 중앙에 두고 짧게 직선 후진하세요.',
       }
     : {
         id: 'set-camera-approach',

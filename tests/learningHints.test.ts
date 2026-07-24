@@ -42,7 +42,7 @@ test('후진 조향 중에는 상황에 맞는 간격 화면 확인을 권장한
   assert.match(hint?.message ?? '', /벽면.*반대편/)
 })
 
-test('평행 상태에서 직선 후진을 시작하면 먼저 카메라 모서리 기준을 안내한다', () => {
+test('평행 상태에서 직선 후진을 시작하면 진입 위치와 양쪽 간격을 안내한다', () => {
   const hint = getLearningHint({
     ...INITIAL_VEHICLE_STATE,
     x: TARGET_PARKING_BAY.center.x,
@@ -52,7 +52,7 @@ test('평행 상태에서 직선 후진을 시작하면 먼저 카메라 모서�
   }, 'both-sides')
 
   assert.equal(hint?.id, 'align-camera-corner')
-  assert.match(hint?.message ?? '', /직선 후진.*주차칸 입구 모서리/)
+  assert.match(hint?.message ?? '', /직선 후진.*양쪽 간격.*주차칸 입구/)
 })
 
 test('평행 정렬 후에는 후방 가이드로 직선 후진을 안내한다', () => {
@@ -80,7 +80,7 @@ test('주차칸을 충분히 지나기 전에는 나란히 이동하도록 안�
   assert.match(hint?.message ?? '', /주차칸.*지나/)
 })
 
-test('주차칸을 충분히 지나면 후방카메라 기준을 맞추도록 안내한다', () => {
+test('주차칸을 충분히 지나면 탑뷰와 간격을 보며 후진 위치를 맞추도록 안내한다', () => {
   const cue = parkingCameraCueCenter('left')
   const hint = getLearningHint({
     ...INITIAL_VEHICLE_STATE,
@@ -91,10 +91,10 @@ test('주차칸을 충분히 지나면 후방카메라 기준을 맞추도록 �
   }, 'both-sides')
 
   assert.equal(hint?.id, 'camera-reverse-ready')
-  assert.match(hint?.message ?? '', /R.*직선 후진/)
+  assert.match(hint?.message ?? '', /R.*탑뷰.*간격.*직선 후진/)
 })
 
-test('직선 후진 중에는 빨간 가이드 모서리를 맞추도록 안내한다', () => {
+test('직선 후진 중에는 후방 가이드와 양쪽 간격을 함께 확인하도록 안내한다', () => {
   const cue = parkingCameraCueCenter('left')
   const hint = getLearningHint({
     ...INITIAL_VEHICLE_STATE,
@@ -105,10 +105,10 @@ test('직선 후진 중에는 빨간 가이드 모서리를 맞추도록 안내�
   }, 'both-sides')
 
   assert.equal(hint?.id, 'align-camera-corner')
-  assert.match(hint?.message ?? '', /빨간 가이드 모서리/)
+  assert.match(hint?.message ?? '', /후방 가이드.*양쪽 간격/)
 })
 
-test('빨간 가이드 모서리가 맞으면 정지 후 최대 조향을 안내한다', () => {
+test('후진 진입 위치에 도착하면 간격 확인 후 최대 조향을 안내한다', () => {
   const cue = parkingCameraCueCenter('left')
   const hint = getLearningHint({
     ...INITIAL_VEHICLE_STATE,
@@ -118,7 +118,7 @@ test('빨간 가이드 모서리가 맞으면 정지 후 최대 조향을 안내
   }, 'both-sides')
 
   assert.equal(hint?.id, 'camera-corner-ready')
-  assert.match(hint?.message ?? '', /끝까지/)
+  assert.match(hint?.message ?? '', /양쪽 간격.*정지.*끝까지/)
 })
 
 test('오른쪽 출발에서도 모서리 기준과 최대 조향 방향을 반대로 안내한다', () => {

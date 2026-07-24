@@ -330,7 +330,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
               <li><b>1</b><span><strong>브레이크로 완전히 정지</strong><small>기어를 바꾸기 전 속도가 0인지 확인해요.</small></span></li>
               <li><b>2</b><span><strong>D 또는 R 선택</strong><small>D는 전진, R은 후진이에요.</small></span></li>
               <li><b>3</b><span><strong>핸들을 돌리고 브레이크 해제</strong><small>핸들은 원을 그리듯 돌리고, 차는 천천히 움직여요.</small></span></li>
-              <li><b>4</b><span><strong>거울·후방 화면을 번갈아 확인</strong><small>간격이 불안하면 즉시 브레이크를 눌러 멈춰요.</small></span></li>
+              <li><b>4</b><span><strong>간격뷰와 후방 화면을 나눠 확인</strong><small>좌우 간격은 간격뷰로, 뒤쪽 깊이는 후방 화면으로 확인해요. 불안하면 바로 멈춰요.</small></span></li>
             </ol>
             <button type="button" className="control-help-start" onClick={closeControlHelp}>확인하고 연습하기</button>
           </section>

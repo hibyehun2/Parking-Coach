@@ -24,7 +24,9 @@ test('기본 상황은 5단계, 좁은 통로는 7단계 미니 레슨이 있다
     } else {
       assert.deepEqual(lesson.steps.map((step) => step.gear), ['D', 'R', 'R', 'R', 'R'])
       assert.deepEqual(lesson.steps.map((step) => step.steering), ['중앙', '중앙', '우측 끝까지', '우측 끝까지', '중앙'])
-      assert.match(lesson.steps.map((step) => step.description).join(' '), /빨간 가이드 모서리.*끝까지.*평행/)
+      const copy = lesson.steps.map((step) => `${step.title} ${step.description} ${step.cue}`).join(' ')
+      assert.match(copy, /후진 진입 위치.*끝까지.*평행/)
+      assert.match(copy, /후방 가이드.*간격뷰/)
     }
     assert.ok(lesson.steps.every((step) => step.check), `${lesson.scenarioId}: 확인 지점이 필요합니다.`)
   }
@@ -38,7 +40,7 @@ test('기본 레슨은 60초, 좁은 통로 레슨은 75초 이내다', () => {
   }
 })
 
-test('기본 안내는 직선 카메라 기준 뒤에 실제 최소 회전반경으로 90도 후진한다', () => {
+test('기본 안내는 직선 진입 위치 조정 뒤에 실제 최소 회전반경으로 90도 후진한다', () => {
   const geometry = LESSON_TRAJECTORY_GEOMETRY
   const radiusMeters = geometry.turnRadiusPixels / geometry.pixelsPerMeter
   const minimumVehicleRadius = DEFAULT_VEHICLE_CONFIG.wheelbase
