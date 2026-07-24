@@ -411,7 +411,20 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .current-result-dashboard .result-actions { margin-top: 0; }
 .current-result-dashboard .result-detail-column:empty { display: none; }
 .result-primary-actions { align-items: stretch; }
-.result-primary-actions a { flex: 1 1 150px; text-align: center; }
+.result-primary-actions a,
+.result-primary-actions button { flex: 1 1 150px; text-align: center; }
+.result-overview-card { gap: 14px; }
+.result-overview-card > strong { font-size: clamp(1.1rem, 2.4vw, 1.35rem); line-height: 1.4; text-wrap: balance; }
+.result-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.result-metrics > div { min-width: 0; padding: 11px 8px; border-radius: 12px; display: grid; justify-items: center; gap: 4px; text-align: center; background: rgba(255,255,255,.7); }
+.result-metrics small { color: var(--muted); font-size: .68rem; font-weight: 750; }
+.result-metrics b { font-size: .9rem; }
+.result-recommendation-copy { flex: 1 0 100%; min-width: 0; padding: 13px 14px; border-radius: 14px; display: grid; gap: 3px; background: rgba(229,243,237,.82); }
+.result-recommendation-copy span { color: var(--brand); font-size: .7rem; font-weight: 900; }
+.result-recommendation-copy strong { font-size: .94rem; }
+.result-recommendation-copy p { margin: 0; color: var(--muted); font-size: .76rem; line-height: 1.4; }
+.result-more-actions { flex: 1 0 100%; display: flex; justify-content: center; gap: 18px; }
+.result-more-actions a { flex: none; min-height: 32px; display: inline-flex; align-items: center; color: var(--muted); font-size: .73rem; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
 .recent-practice .session-buttons button, .history-detail header button { min-height: 34px; padding: 0 10px; border: 1px solid var(--border); border-radius: 8px; color: var(--brand-dark); background: white; font-weight: 800; cursor: pointer; }
 .history-detail { margin-top: 20px; padding: 18px; border: 1px solid var(--border); border-radius: 18px; background: rgba(255,255,255,.76); }
 .history-detail > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -464,12 +477,19 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .judgment-skill-picker > header h2 { margin: 4px 0 0; font-size: clamp(1.45rem, 3vw, 2rem); }
 .judgment-skill-picker > header p { max-width: 470px; margin: 0; color: var(--muted); line-height: 1.55; }
 .judgment-picker-options { display: grid; gap: 16px; }
+.judgment-picker-lead { min-width: 0; display: grid; gap: 10px; }
 .recommended-practice { position: relative; width: 100%; min-height: 130px; padding: 17px 150px 17px 19px; border: 1px solid #70c7a7; border-radius: 17px; display: grid; align-content: center; gap: 4px; text-align: left; color: var(--brand-dark); background: linear-gradient(135deg, #e9faf3, #fff); box-shadow: 0 10px 24px rgba(24,98,70,.09); cursor: pointer; }
 .recommended-practice span { color: var(--brand); font-size: .72rem; font-weight: 900; }
 .recommended-practice strong { font-size: 1.02rem; }
 .recommended-practice small { color: var(--muted); }
 .recommended-practice > b { position: absolute; right: 19px; bottom: 17px; padding: 9px 12px; border-radius: 10px; color: white; background: var(--brand); font-size: .78rem; }
 .recommended-practice > b span { color: inherit; font-size: inherit; }
+.judgment-example-card { position: relative; min-height: 88px; padding: 14px 42px 14px 16px; border: 1px solid rgba(255,255,255,.88); border-radius: 17px; display: grid; align-content: center; gap: 3px; text-align: left; color: inherit; background: rgba(255,255,255,.68); box-shadow: 0 8px 24px rgba(32,58,47,.07); cursor: pointer; backdrop-filter: blur(18px); }
+.judgment-example-card:hover { border-color: #91d2ba; background: rgba(248,255,252,.9); }
+.judgment-example-card > span { color: var(--brand); font-size: .68rem; font-weight: 900; }
+.judgment-example-card > strong { font-size: .9rem; }
+.judgment-example-card > small { color: var(--muted); font-size: .72rem; line-height: 1.35; }
+.judgment-example-card > i { position: absolute; right: 16px; top: 50%; color: var(--brand); font-size: 1.55rem; font-style: normal; transform: translateY(-50%); }
 .judgment-skill-list { display: grid; gap: 10px; }
 .judgment-skill-list > h3 { margin: 0; font-size: 1rem; }
 .judgment-skill-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 11px; }
@@ -479,6 +499,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .judgment-skill-card > p { margin: 0; color: var(--muted); font-size: .8rem; line-height: 1.45; }
 .judgment-skill-card > small { margin-top: auto; color: var(--brand); font-weight: 800; }
 .judgment-skill-card > i { position: absolute; right: 15px; bottom: 15px; color: var(--brand); font-size: 1.05rem; font-style: normal; font-weight: 900; }
+.judgment-skill-card .skill-icon { position: absolute; top: 13px; right: 13px; width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; color: var(--brand); background: var(--brand-soft); font-size: .9rem; line-height: 1; }
 .skill-status { width: fit-content; padding: 4px 7px; border-radius: 999px; color: #52625c; background: #edf2f0; font-size: .66rem; font-weight: 900; }
 .skill-status.review { color: #974139; background: #fff0ee; }
 .skill-status.complete { color: #25634c; background: #e7f6ef; }
@@ -633,7 +654,8 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .recent-practice .session-row > div:first-child { display: grid; gap: 3px; }
 .recent-practice .session-row > div:first-child span { color: var(--muted); font-size: .69rem; }
 .session-buttons { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
-.recent-practice .session-buttons .bookmark-button { width: 36px; padding: 0; color: #8b9691; font-size: 1.15rem; line-height: 1; }
+.recent-practice .session-buttons .bookmark-button { width: 44px; min-height: 44px; padding: 0; color: #8b9691; font-size: 1.15rem; line-height: 1; }
+.recent-practice .session-buttons .bookmark-button svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
 .recent-practice .session-buttons .bookmark-button.bookmarked { border-color: #e2b95e; color: #c7890b; background: #fff8df; }
 .recent-practice > ol > li.selected .session-row { border-bottom: 1px solid rgba(108,197,164,.45); }
 .recent-practice .history-detail { margin: 0; border: 0; border-radius: 0; background: rgba(255,255,255,.7); }
@@ -1420,4 +1442,182 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .practice-setup .mode-card { min-height: 0; }
   .practice-setup .setup-action { margin-top: 6px; }
   .result-page { padding-bottom: 10px; }
+}
+
+/* Judgment picker uses the tab bar only before a session starts. */
+@media (max-width: 720px), (orientation: landscape) and (max-height: 600px) {
+  body:has(.correction-practice) .mobile-tab-bar,
+  body:has(.simulator-shell:not(.correction-shell)) .mobile-tab-bar { display: none; }
+
+  body:has(.correction-practice) .main-content,
+  body:has(.simulator-shell:not(.correction-shell)) .main-content { padding-bottom: 0; }
+
+  .judgment-skill-picker {
+    padding-bottom: 8px;
+  }
+
+  .judgment-skill-picker > header p {
+    font-size: .8rem;
+    line-height: 1.4;
+  }
+
+  .judgment-picker-lead { gap: 8px; }
+  .recommended-practice { border-radius: 20px; }
+  .judgment-example-card { border-radius: 18px; }
+  .judgment-skill-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+
+  .judgment-skill-card {
+    min-height: 126px;
+    padding: 12px 34px 12px 12px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    align-items: start;
+    gap: 5px;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(32,58,47,.07);
+  }
+
+  .judgment-skill-card > strong { font-size: .84rem; line-height: 1.3; }
+  .judgment-skill-card > p { display: none; }
+  .judgment-skill-card > small {
+    grid-column: auto;
+    margin-top: auto;
+    font-size: .66rem;
+    line-height: 1.25;
+  }
+  .judgment-skill-card > i { right: 12px; bottom: 10px; transform: none; }
+  .judgment-skill-card .skill-icon { top: 10px; right: 10px; width: 27px; height: 27px; border-radius: 8px; font-size: .78rem; }
+  .judgment-skill-card .skill-status { max-width: calc(100% - 22px); padding: 3px 6px; font-size: .58rem; }
+}
+
+@media (max-width: 720px) and (orientation: portrait) {
+  .correction-shell:has(.judgment-skill-picker) {
+    padding: 12px 0 4px;
+  }
+
+  .correction-shell .judgment-skill-picker {
+    width: 100%;
+    margin: 0;
+    gap: 12px;
+  }
+
+  .judgment-skill-picker > header { gap: 5px; }
+  .judgment-skill-picker > header h2 { font-size: 1.45rem; }
+  .recommended-practice { min-height: 116px; padding: 15px 108px 15px 15px; }
+  .recommended-practice > b { right: 13px; bottom: 13px; padding: 8px 10px; }
+  .judgment-example-card { min-height: 76px; }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .correction-shell:has(.judgment-skill-picker) {
+    height: calc(100dvh - var(--mobile-tab-height) - env(safe-area-inset-bottom) - 10px);
+    min-height: 0;
+    padding: 4px 0;
+    overflow: hidden;
+  }
+
+  .correction-shell .judgment-skill-picker {
+    width: min(100% - 12px, 1120px);
+    height: 100%;
+    margin: 0 auto;
+    gap: 6px;
+  }
+
+  .correction-shell .judgment-skill-picker > header {
+    min-height: 38px;
+    gap: 16px;
+  }
+
+  .correction-shell .judgment-skill-picker > header h2 { font-size: clamp(1.05rem, 4vh, 1.35rem); }
+  .correction-shell .judgment-skill-picker > header p { max-width: 420px; font-size: clamp(.66rem, 2.2vh, .76rem); }
+  .correction-shell .judgment-picker-options {
+    min-height: 0;
+    flex: 1;
+    grid-template-columns: minmax(210px, .72fr) minmax(420px, 1.28fr);
+    gap: 8px;
+  }
+
+  .correction-shell .judgment-picker-lead {
+    min-height: 0;
+    grid-template-rows: minmax(0, 1.35fr) minmax(0, .65fr);
+    gap: 6px;
+  }
+
+  .correction-shell .recommended-practice {
+    min-height: 0;
+    padding: 10px 92px 10px 11px;
+    border-radius: 16px;
+  }
+
+  .correction-shell .recommended-practice strong { font-size: .83rem; }
+  .correction-shell .recommended-practice small { overflow: hidden; font-size: .64rem; text-overflow: ellipsis; white-space: nowrap; }
+  .correction-shell .recommended-practice > b { right: 9px; bottom: 9px; padding: 7px 9px; font-size: .68rem; }
+  .correction-shell .judgment-example-card { min-height: 0; padding: 8px 30px 8px 10px; border-radius: 14px; }
+  .correction-shell .judgment-example-card > span { font-size: .58rem; }
+  .correction-shell .judgment-example-card > strong { font-size: .75rem; }
+  .correction-shell .judgment-example-card > small { display: none; }
+  .correction-shell .judgment-example-card > i { right: 11px; }
+
+  .correction-shell .judgment-skill-list { min-height: 0; grid-template-rows: auto minmax(0, 1fr); }
+  .correction-shell .judgment-skill-grid {
+    min-height: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .correction-shell .judgment-skill-card {
+    min-height: 0;
+    padding: 7px 28px 7px 8px;
+    gap: 3px;
+    border-radius: 13px;
+  }
+
+  .correction-shell .judgment-skill-card > strong { font-size: .7rem; }
+  .correction-shell .judgment-skill-card > small { overflow: hidden; font-size: .57rem; text-overflow: ellipsis; white-space: nowrap; }
+  .correction-shell .judgment-skill-card > i { right: 9px; bottom: 7px; font-size: .78rem; }
+  .correction-shell .judgment-skill-card .skill-icon { top: 6px; right: 6px; width: 22px; height: 22px; font-size: .65rem; }
+  .correction-shell .judgment-skill-card .skill-status { max-width: calc(100% - 17px); padding: 2px 4px; font-size: .5rem; }
+}
+
+@media (max-width: 720px) {
+  .result-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .result-overview-card { padding: 17px; border-radius: 20px; }
+  .result-recommendation-copy { padding: 11px 12px; }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .current-result-dashboard:not(.result-has-detail) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .current-result-dashboard:not(.result-has-detail) .result-overview-column {
+    position: static;
+    width: min(760px, 100%);
+    margin-inline: auto;
+    grid-template-columns: minmax(0, 1.2fr) minmax(220px, .8fr);
+    align-items: stretch;
+  }
+
+  .current-result-dashboard:not(.result-has-detail) .result-overview-card {
+    grid-row: 1;
+  }
+
+  .current-result-dashboard:not(.result-has-detail) .result-primary-actions {
+    grid-row: 1;
+  }
+
+  .current-result-dashboard .result-overview-card { padding: 10px 11px; }
+  .current-result-dashboard .result-overview-card > strong { font-size: .9rem; line-height: 1.3; }
+  .current-result-dashboard .result-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+  .current-result-dashboard .result-metrics > div { padding: 6px 5px; border-radius: 9px; gap: 1px; }
+  .current-result-dashboard .result-metrics small { font-size: .57rem; }
+  .current-result-dashboard .result-metrics b { font-size: .72rem; }
+  .current-result-dashboard .result-recommendation-copy { padding: 7px 8px; border-radius: 10px; }
+  .current-result-dashboard .result-recommendation-copy strong { font-size: .74rem; }
+  .current-result-dashboard .result-recommendation-copy p { font-size: .62rem; line-height: 1.25; }
+  .current-result-dashboard .result-more-actions { gap: 10px; }
+  .current-result-dashboard .result-more-actions a { min-height: 24px; padding: 0; font-size: .62rem; }
+  .recent-practice .session-buttons .bookmark-button { width: 44px; min-height: 44px; }
 }

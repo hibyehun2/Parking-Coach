@@ -20,7 +20,6 @@ function TabIcon({ name }: { name: string }) {
 
 export function AppLayout() {
   const { pathname } = useLocation()
-  const showMobileTabs = pathname !== '/simulator'
 
   return (
     <div className="app-shell">
@@ -50,21 +49,19 @@ export function AppLayout() {
       <footer className="site-footer">
         <small>안전한 후진주차를 위한 단계별 연습</small>
       </footer>
-      {showMobileTabs && (
-        <nav className="mobile-tab-bar" aria-label="하단 메뉴">
-          {navigation.map(({ to, label, icon, end }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) => isActive ? 'active' : undefined}
-            >
-              <TabIcon name={icon} />
-              <span>{label}</span>
-            </NavLink>
-          ))}
-        </nav>
-      )}
+      <nav className="mobile-tab-bar" aria-label="하단 메뉴">
+        {navigation.map(({ to, label, icon, end }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            className={({ isActive }) => isActive || (to === '/practice' && pathname === '/simulator') ? 'active' : undefined}
+          >
+            <TabIcon name={icon} />
+            <span>{label}</span>
+          </NavLink>
+        ))}
+      </nav>
     </div>
   )
 }

@@ -10,14 +10,23 @@ const DISMISSED_KEY = 'parking-coach:install-prompt-dismissed'
 
 export function AppInstallPrompt() {
   const { pathname } = useLocation()
+  const userAgent = navigator.userAgent
   const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean }
-  const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent)
+  const isIos = /iPhone|iPad|iPod/.test(userAgent)
     || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  const isAndroid = /Android/i.test(userAgent)
+  const isSamsungBrowser = /SamsungBrowser/i.test(userAgent)
+  const isChrome = isAndroid
+    && /Chrome/i.test(userAgent)
+    && !/SamsungBrowser|EdgA|OPR|Opera|Firefox|FxiOS/i.test(userAgent)
+  const hasAndroidInstallGuide = isSamsungBrowser || isChrome
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches
     || navigatorWithStandalone.standalone === true
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [visible, setVisible] = useState(() => (
-    isIos && !isStandalone && sessionStorage.getItem(DISMISSED_KEY) !== 'true'
+    (isIos || hasAndroidInstallGuide)
+    && !isStandalone
+    && sessionStorage.getItem(DISMISSED_KEY) !== 'true'
   ))
   const [showGuide, setShowGuide] = useState(false)
 
@@ -58,22 +67,42 @@ export function AppInstallPrompt() {
     if (choice.outcome === 'accepted') setVisible(false)
     setInstallPrompt(null)
   }
+  const guideTitle = isIos
+    ? '홈 화면에 추가하기'
+    : isSamsungBrowser
+      ? '삼성 인터넷에서 설치하기'
+      : 'Chrome에서 설치하기'
+  const guideSteps = isIos
+    ? [
+        <>브라우저의 공유 버튼 <b>□↑</b>을 여세요.</>,
+        <><b>홈 화면에 추가</b>를 선택하세요.</>,
+        <>홈 화면의 Parking Coach 아이콘으로 실행하세요.</>,
+      ]
+    : isSamsungBrowser
+      ? [
+          <>주소창의 <b>설치 아이콘</b>을 누르세요.</>,
+          <>아이콘이 없다면 브라우저 메뉴에서 <b>홈 화면에 추가</b>를 선택하세요.</>,
+          <>설치를 확인한 뒤 앱스 화면의 Parking Coach 아이콘으로 실행하세요.</>,
+        ]
+      : [
+          <>오른쪽 위 <b>⋮</b> 메뉴를 여세요.</>,
+          <><b>앱 설치</b> 또는 <b>홈 화면에 추가</b>를 선택하세요.</>,
+          <>설치를 확인한 뒤 Parking Coach 아이콘으로 실행하세요.</>,
+        ]
 
   return (
     <>
       <aside className="app-install-banner" aria-label="홈 화면 앱 설치 안내">
         <div><strong>Parking Coach를 앱처럼 사용하세요</strong><span>홈 화면에 추가하면 바로 연습할 수 있어요.</span></div>
-        <button type="button" onClick={() => void install()}>{isIos ? '추가 방법' : '앱 설치'}</button>
+        <button type="button" onClick={() => void install()}>{installPrompt ? '앱 설치' : '설치 방법'}</button>
         <button type="button" className="install-dismiss" aria-label="설치 안내 닫기" onClick={dismiss}>×</button>
       </aside>
       {showGuide && (
         <div className="install-guide-backdrop" role="presentation">
           <section className="install-guide" role="dialog" aria-modal="true" aria-labelledby="install-guide-title">
-            <strong id="install-guide-title">홈 화면에 추가하기</strong>
+            <strong id="install-guide-title">{guideTitle}</strong>
             <ol>
-              <li>{isIos ? '브라우저의 공유 버튼 □↑을 여세요.' : '브라우저 메뉴 ⋮를 여세요.'}</li>
-              <li><b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 선택하세요.</li>
-              <li>홈 화면의 Parking Coach 아이콘으로 실행하세요.</li>
+              {guideSteps.map((step, index) => <li key={index}>{step}</li>)}
             </ol>
             <button type="button" onClick={() => setShowGuide(false)}>확인</button>
           </section>

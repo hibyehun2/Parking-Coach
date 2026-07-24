@@ -5,8 +5,8 @@ import { FIRST_SUCCESS_KEY, isScenarioAvailable, markFirstSuccess } from '../dat
 import type { JudgmentSkill } from './judgmentScenarios.ts'
 
 export const PRACTICE_HISTORY_KEY = 'parking-coach:practice-history:v5'
-export const MAX_PRACTICE_SESSIONS = 30
-export const MAX_BOOKMARKED_SESSIONS = 5
+export const MAX_PRACTICE_SESSIONS = 20
+export const MAX_BOOKMARKED_SESSIONS = 3
 export const PRACTICE_HISTORY_RETENTION_DAYS = 7
 const PRACTICE_HISTORY_RETENTION_MS = PRACTICE_HISTORY_RETENTION_DAYS * 24 * 60 * 60 * 1000
 
@@ -120,12 +120,20 @@ function parseSession(value: unknown): PracticeSession | null {
 
 function retainSessions(sessions: PracticeSession[], now = new Date()) {
   const cutoff = now.getTime() - PRACTICE_HISTORY_RETENTION_MS
-  const bookmarked = sessions
+  const sortedBookmarks = sessions
     .filter((session) => session.bookmarked)
     .sort((left, right) => Date.parse(right.bookmarkedAt ?? right.completedAt) - Date.parse(left.bookmarkedAt ?? left.completedAt))
-    .slice(0, MAX_BOOKMARKED_SESSIONS)
-  const recent = sessions
-    .filter((session) => !session.bookmarked && Date.parse(session.completedAt) >= cutoff)
+  const bookmarked = sortedBookmarks.slice(0, MAX_BOOKMARKED_SESSIONS)
+  const releasedBookmarks = sortedBookmarks.slice(MAX_BOOKMARKED_SESSIONS).map((session) => ({
+    ...session,
+    bookmarked: false,
+    bookmarkedAt: undefined,
+  }))
+  const recent = [
+    ...sessions.filter((session) => !session.bookmarked),
+    ...releasedBookmarks,
+  ]
+    .filter((session) => Date.parse(session.completedAt) >= cutoff)
     .sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))
     .slice(0, MAX_PRACTICE_SESSIONS)
   return [...bookmarked, ...recent].sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))

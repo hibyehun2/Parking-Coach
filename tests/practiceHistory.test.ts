@@ -30,7 +30,7 @@ test('저장한 충돌 중심 연습 기록은 다시 불러와도 유지된다'
   assert.equal('angleErrorDegrees' in session, false)
 })
 
-test('최근 기록은 최신순 30개까지만 저장한다', () => {
+test('최근 기록은 최신순 20개까지만 저장한다', () => {
   const storage = new MemoryStorage()
   for (let index = 0; index < 33; index += 1) recordPracticeSession(result(index % 2), 'both-sides', 'practice', storage, new Date(1_700_000_000_000 + index * 1000))
   const history = loadPracticeHistory(storage, new Date(1_700_000_040_000))
@@ -126,7 +126,7 @@ test('일반 기록은 7일 뒤 정리되고 보관한 기록은 유지된다', 
   assert.equal(loadPracticeHistory(storage, new Date('2026-08-01T10:00:01Z')).sessions.length, 0)
 })
 
-test('기록은 최대 5개까지만 보관할 수 있다', () => {
+test('기록은 최대 3개까지만 보관할 수 있다', () => {
   const storage = new MemoryStorage()
   const base = Date.parse('2026-07-20T10:00:00Z')
   for (let index = 0; index < MAX_BOOKMARKED_SESSIONS + 1; index += 1) {
@@ -136,4 +136,30 @@ test('기록은 최대 5개까지만 보관할 수 있다', () => {
     assert.equal(status, index < MAX_BOOKMARKED_SESSIONS ? 'added' : 'limit')
   }
   assert.equal(loadPracticeHistory(storage, new Date(base + 10_000)).sessions.filter((session) => session.bookmarked).length, MAX_BOOKMARKED_SESSIONS)
+})
+
+test('기존 보관 기록이 3개를 넘으면 초과 기록을 최근 기록으로 안전하게 전환한다', () => {
+  const storage = new MemoryStorage()
+  const base = Date.parse('2026-07-20T10:00:00Z')
+  for (let index = 0; index < 5; index += 1) {
+    recordPracticeSession(result(), 'both-sides', 'learning', storage, new Date(base + index * 1000))
+  }
+  const stored = JSON.parse(storage.getItem(PRACTICE_HISTORY_KEY)!) as {
+    sessions: Array<{ completedAt: string; bookmarked: boolean; bookmarkedAt?: string }>
+  }
+  stored.sessions = stored.sessions.map((session) => ({
+    ...session,
+    bookmarked: true,
+    bookmarkedAt: session.completedAt,
+  }))
+  storage.setItem(PRACTICE_HISTORY_KEY, JSON.stringify(stored))
+
+  const migrated = loadPracticeHistory(storage, new Date(base + 10_000))
+  assert.equal(migrated.sessions.length, 5)
+  assert.equal(migrated.sessions.filter((session) => session.bookmarked).length, MAX_BOOKMARKED_SESSIONS)
+  assert.equal(migrated.sessions.filter((session) => !session.bookmarked).length, 2)
+
+  const expired = loadPracticeHistory(storage, new Date('2026-08-01T10:00:00Z'))
+  assert.equal(expired.sessions.length, MAX_BOOKMARKED_SESSIONS)
+  assert.ok(expired.sessions.every((session) => session.bookmarked))
 })

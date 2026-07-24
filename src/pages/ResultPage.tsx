@@ -16,6 +16,14 @@ function formatCompletedAt(value: string) {
   return new Intl.DateTimeFormat('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value))
 }
 
+function BookmarkIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M6.5 4.5A1.5 1.5 0 0 1 8 3h8a1.5 1.5 0 0 1 1.5 1.5v16L12 17l-5.5 3.5z" fill={filled ? 'currentColor' : 'none'} />
+    </svg>
+  )
+}
+
 function collisionCoaching(event: ReplayEvent) {
   const zone = event.collision?.contactZone ?? ''
   const side = zone.includes('left') ? '왼쪽' : zone.includes('right') ? '오른쪽' : '가까운'
@@ -135,6 +143,17 @@ export function ResultPage() {
   const correctionPracticePath = recommendation?.mode === 'practice'
     ? `/simulator?scenario=${recommendation.scenarioId}&mode=practice`
     : '/simulator?scenario=both-sides&mode=practice'
+  const resultRecommendation = result
+    ? result.collisionCount
+      ? { label: '충돌 판단 확인하기', description: '충돌 직전 위험 지점과 안전한 수정 경로를 먼저 확인해보세요.', action: 'quiz' as const }
+      : !result.fullyInside
+        ? { label: '같은 상황 다시 연습', description: '차량 전체가 주차선 안에 들어오도록 진입 깊이와 차체 위치를 다시 맞춰보세요.', action: 'retry' as const }
+        : !result.stopped
+          ? { label: '완전 정지부터 다시 확인', description: '차량이 주차선 안에 들어온 뒤 브레이크로 완전히 정지해야 주차가 완료됩니다.', action: 'retry' as const }
+          : result.angleErrorDegrees > 5
+            ? { label: '평행 맞추기 판단 연습', description: '차체 각도를 먼저 바로잡는 판단을 집중해서 익혀보세요.', action: 'judgment' as const }
+            : { label: '다른 상황 연습하기', description: '안전하게 완료했습니다. 다른 배치에서도 같은 확인 순서를 적용해보세요.', action: 'scenario' as const }
+    : null
   const replayMoments = replay
     .filter((event) => event.type === 'collision' || (event.type === 'finish' && result?.success))
     .slice(-3)
@@ -173,7 +192,7 @@ export function ResultPage() {
         <div><strong>{session.mode === 'practice' ? `${getScenario(session.scenarioId).title} · 판단 연습 ${session.quizScore ?? 0}/${session.quizTotal ?? 10}` : `${getScenario(session.scenarioId).title} · ${session.success ? '성공' : '미완료'}`}</strong><span>{formatCompletedAt(session.completedAt)} · {session.mode === 'learning' ? '직접 연습' : '판단 연습'}</span></div>
         <div className="session-measures"><span>{session.mode === 'practice' ? '연습 완료' : `충돌 ${session.collisionCount}회`}</span></div>
         <div className="session-buttons">
-          <button type="button" className={`bookmark-button${session.bookmarked ? ' bookmarked' : ''}`} aria-label={session.bookmarked ? '보관에서 해제하기' : '이 기록 보관하기'} aria-pressed={session.bookmarked} title={session.bookmarked ? '보관에서 해제하기' : '이 기록 보관하기'} onClick={() => toggleBookmark(session)}>{session.bookmarked ? '★' : '☆'}</button>
+          <button type="button" className={`bookmark-button${session.bookmarked ? ' bookmarked' : ''}`} aria-label={session.bookmarked ? '보관에서 해제하기' : '이 기록 보관하기'} aria-pressed={session.bookmarked} title={session.bookmarked ? '보관에서 해제하기' : '이 기록 보관하기'} onClick={() => toggleBookmark(session)}><BookmarkIcon filled={session.bookmarked} /></button>
           <button type="button" aria-expanded={isSelected} aria-controls={detailId} onClick={() => setSelectedSessionId(isSelected ? null : session.id)}>{isSelected ? '상세 닫기' : session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 보기'}</button>
         </div>
       </div>
@@ -207,24 +226,39 @@ export function ResultPage() {
         <div className="result-actions"><Link className="primary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=practice`}>다른 판단 연습하기</Link><Link className="secondary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=learning`}>직접 연습에 적용</Link></div>
       </section>}
 
-      {activeTab === 'current' && result && <section className="current-result-dashboard" aria-label="이번 연습 핵심 결과">
+      {activeTab === 'current' && result && <section className={`current-result-dashboard${collisionEvent ? ' result-has-detail' : ''}`} aria-label="이번 연습 핵심 결과">
         <div className="result-overview-column">
-          <div className="result-summary-grid collision-only-summary">
-            <article className={`result-card collision-result ${result.collisionCount ? 'needs-work' : 'good'}`}>
-              <span>핵심 결과</span>
-              <strong>{result.collisionCount ? `${result.collisionCount}회 충돌` : '충돌 없이 완료'}</strong>
-              <p>{result.collisionCount ? '오른쪽에서 충돌 원인과 안전한 다음 행동을 바로 확인하세요.' : '장애물과 안전거리를 유지했습니다.'}</p>
-              {collisionEvent && state?.runtime && <button type="button" className="collision-quiz-jump" onClick={openCollisionQuiz}>충돌 직전 판단 확인 →</button>}
-            </article>
-            {!result.success && <article className="result-card needs-work"><span>완료 상태</span><strong>{result.fullyInside ? '브레이크 확인 필요' : '차량 전체 진입 필요'}</strong><p>차량을 주차선 안에 넣고 완전히 정지해야 완료됩니다.</p></article>}
-          </div>
-
-          {!collisionEvent && <section className="no-collision-feedback"><strong>다음 연습</strong><p>같은 상황을 반복해 안정적인 주차 순서를 익혀보세요.</p></section>}
+          <article className={`result-card result-overview-card ${result.success && !result.collisionCount ? 'good' : 'needs-work'}`}>
+            <span>실제 결과</span>
+            <strong>{result.success
+              ? result.collisionCount ? '주차는 완료했지만 충돌이 있었습니다' : '안전하게 주차를 완료했습니다'
+              : result.fullyInside ? '주차선 안에서 완전히 정지해야 합니다' : '차량 전체가 아직 주차선 안에 들어오지 않았습니다'}</strong>
+            <div className="result-metrics" aria-label="주차 결과 세부 수치">
+              <div><small>주차선 안</small><b>{result.fullyInside ? '완료' : '미완료'}</b></div>
+              <div><small>충돌</small><b>{result.collisionCount}회</b></div>
+              <div><small>차체 각도</small><b>{result.angleErrorDegrees.toFixed(1)}°</b></div>
+              <div><small>중앙 오차</small><b>{Math.round(result.centerError * 100)}cm</b></div>
+            </div>
+          </article>
 
           <div className="result-actions result-primary-actions">
-            <Link className="primary-button" to={retryPath}>같은 상황 다시 연습</Link>
-            <Link className="secondary-button" to={`${retryPath}&lesson=1`}>단계 안내부터 다시</Link>
-            <Link className="secondary-button" to="/practice">상황 선택</Link>
+            <div className="result-recommendation-copy">
+              <span>추천 행동</span>
+              <strong>{resultRecommendation?.label}</strong>
+              <p>{resultRecommendation?.description}</p>
+            </div>
+            {resultRecommendation?.action === 'quiz'
+              ? <button type="button" className="primary-button" onClick={openCollisionQuiz}>충돌 판단 확인하기</button>
+              : resultRecommendation?.action === 'judgment'
+                ? <Link className="primary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=practice`}>판단 연습 시작</Link>
+                : resultRecommendation?.action === 'scenario'
+                  ? <Link className="primary-button" to="/practice">다른 상황 연습하기</Link>
+                  : <Link className="primary-button" to={retryPath}>같은 상황 다시 연습</Link>}
+            {resultRecommendation?.action !== 'retry' && <Link className="secondary-button" to={retryPath}>같은 상황 다시 연습</Link>}
+            <div className="result-more-actions">
+              <Link to={`${retryPath}&lesson=1`}>단계 안내부터</Link>
+              <Link to="/practice">상황 선택</Link>
+            </div>
           </div>
         </div>
 

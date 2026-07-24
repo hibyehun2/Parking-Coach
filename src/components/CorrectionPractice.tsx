@@ -21,6 +21,15 @@ type PracticeItem = {
   step: JudgmentScenario
 }
 
+const SKILL_ICONS: Record<JudgmentSkill, string> = {
+  'hazard-prediction': '◎',
+  'stop-timing': 'Ⅱ',
+  'correction-space': '↔',
+  'first-correction': '◇',
+  recheck: '✓',
+  'reentry-decision': '↩',
+}
+
 function allItems(drills: CorrectionDrill[]): PracticeItem[] {
   return drills.flatMap((drill) => drill.steps.map((step) => ({ drill, step })))
 }
@@ -85,6 +94,11 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
     setItemIndex(0)
     setScore(0)
     setAttempts([])
+    setPhase('practice')
+  }
+
+  const showGuide = () => {
+    setPracticeItems([])
     setPhase('guide')
   }
 
@@ -129,12 +143,20 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
           <p>추천 구성을 시작하거나, 필요한 판단 하나를 골라 집중해서 연습해요.</p>
         </header>
         <div className="judgment-picker-options">
-          <button type="button" className="recommended-practice" onClick={() => start(recommendedSkills, true)}>
-            <span>추천 연습 · 최대 6문제</span>
-            <strong>처음이거나 다시 볼 판단부터 시작</strong>
-            <small>{recommendedSkills.map((skill) => JUDGMENT_SKILL_INFO[skill].title).join(' · ')}</small>
-            <b>바로 시작 <span aria-hidden="true">→</span></b>
-          </button>
+          <div className="judgment-picker-lead">
+            <button type="button" className="recommended-practice" onClick={() => start(recommendedSkills, true)}>
+              <span>오늘의 추천 · 최대 6문제</span>
+              <strong>필요한 판단부터 이어서 연습해요</strong>
+              <small>{recommendedSkills.map((skill) => JUDGMENT_SKILL_INFO[skill].title).join(' · ')}</small>
+              <b>바로 시작 <span aria-hidden="true">→</span></b>
+            </button>
+            <button type="button" className="judgment-example-card" onClick={showGuide}>
+              <span>{pastAttempts.length ? '필요할 때 다시 보기' : '처음이라면 추천'}</span>
+              <strong>안전 수정 예시 보기</strong>
+              <small>위험할 때 멈추고 공간을 회복하는 과정을 확인해요.</small>
+              <i aria-hidden="true">›</i>
+            </button>
+          </div>
           <section className="judgment-skill-list" aria-labelledby="judgment-skill-list-title">
             <h3 id="judgment-skill-list-title">판단 유형별 연습</h3>
             <div className="judgment-skill-grid">
@@ -151,6 +173,7 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
                     aria-label={`${info.title}, ${status.label}, ${count}문제 연습 시작`}
                     onClick={() => start([skill])}
                   >
+                    <b className="skill-icon" aria-hidden="true">{SKILL_ICONS[skill]}</b>
                     <span className={`skill-status ${status.tone}`}>{status.label}</span>
                     <strong>{info.title}</strong>
                     <p>{info.description}</p>
@@ -172,10 +195,10 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
         <div className="correction-progress">
           <span>예시</span>
           <strong>{guide.title}</strong>
-          <progress value={0} max={practiceItems.length} />
+          <progress value={0} max={1} />
         </div>
-        <p className="page-description">안전하게 자세를 바로잡는 예시를 먼저 본 뒤 선택한 판단 연습을 시작합니다.</p>
-        <JudgmentGuide scenario={guide} runtime={runtime} onStart={() => setPhase('practice')} />
+        <p className="page-description">안전하게 자세를 바로잡는 과정을 확인한 뒤 연습할 판단 유형을 선택합니다.</p>
+        <JudgmentGuide scenario={guide} runtime={runtime} onStart={() => setPhase('select')} buttonLabel="판단 유형 고르기" />
       </section>
     )
   }

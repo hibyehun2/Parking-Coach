@@ -74,10 +74,12 @@ export function JudgmentGuide({
   scenario,
   runtime,
   onStart,
+  buttonLabel = '수정 주차 연습 시작',
 }: {
   scenario: JudgmentScenario
   runtime: ScenarioRuntime
   onStart: () => void
+  buttonLabel?: string
 }) {
   const answer = scenario.choices[0]
   return (
@@ -96,7 +98,7 @@ export function JudgmentGuide({
             {answer.steps && <ol>{answer.steps.map((step) => <li key={step}>{step}</li>)}</ol>}
             <p>{answer.feedback}</p>
           </div>
-          <button type="button" className="quiz-next" onClick={onStart}>수정 주차 연습 시작</button>
+          <button type="button" className="quiz-next" onClick={onStart}>{buttonLabel}</button>
         </div>
       </div>
     </section>
