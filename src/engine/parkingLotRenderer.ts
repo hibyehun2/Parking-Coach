@@ -576,9 +576,16 @@ function drawDistanceTrapezoid(context: CanvasRenderingContext2D, vehicle: Vehic
   context.restore()
 }
 
-function drawReverseGuide(context: CanvasRenderingContext2D, vehicle: VehicleState) {
+function drawReverseGuide(
+  context: CanvasRenderingContext2D,
+  vehicle: VehicleState,
+  opacity = 1,
+) {
   if (vehicle.gear !== 'R') return
+  context.save()
+  context.globalAlpha *= Math.min(1, Math.max(0, opacity))
   drawDistanceTrapezoid(context, vehicle)
+  context.restore()
 }
 
 export function renderParkingLot(
@@ -600,6 +607,7 @@ export function renderParkingLot(
     candidatePaths?: { points: { x: number; y: number }[]; color: string; dashed?: boolean }[]
     ghostVehicles?: { vehicle: VehicleState; color: string }[]
     highlightContactZone?: Collision['contactZone']
+    reverseGuideOpacity?: number
   } = {},
 ) {
   context.clearRect(0, 0, viewportWidth, viewportHeight)
@@ -641,7 +649,7 @@ export function renderParkingLot(
   drawStructure(context, options.runtime?.walls)
   drawParkingLines(context)
   drawWheelStop(context, Boolean(options.wheelStopActive))
-  drawReverseGuide(context, vehicle)
+  drawReverseGuide(context, vehicle, options.reverseGuideOpacity)
   for (const path of options.candidatePaths ?? []) {
     if (path.points.length < 2) continue
     context.save()

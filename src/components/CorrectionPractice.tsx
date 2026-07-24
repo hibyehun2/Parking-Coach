@@ -2,11 +2,9 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { buildCorrectionDrills, type CorrectionDrill } from '../engine/correctionDrills'
 import {
-  JUDGMENT_SKILL_INFO,
   buildJudgmentGuide,
   type JudgmentChoice,
   type JudgmentScenario,
-  type JudgmentSkill,
 } from '../engine/judgmentScenarios'
 import {
   loadPracticeHistory,
@@ -21,20 +19,15 @@ type PracticeItem = {
   step: JudgmentScenario
 }
 
-function SkillIcon({ skill }: { skill: JudgmentSkill }) {
-  const paths: Record<JudgmentSkill, React.ReactNode> = {
-    'hazard-prediction': <><path d="M2.5 10s2.8-4.5 7.5-4.5 7.5 4.5 7.5 4.5-2.8 4.5-7.5 4.5S2.5 10 2.5 10Z" /><circle cx="10" cy="10" r="2.2" /></>,
-    'stop-timing': <><path d="M6 3.5h8l2.5 2.5v8L14 16.5H6L3.5 14V6Z" /><path d="M8 7v6M12 7v6" /></>,
-    'correction-space': <><path d="M3 10h14M3 10l3-3M3 10l3 3M17 10l-3-3M17 10l-3 3" /></>,
-    'first-correction': <><path d="M4 15c0-6 3-10 9-10h3" /><path d="m13 2 3 3-3 3" /><path d="M5 15h4" /></>,
-    recheck: <><circle cx="10" cy="10" r="7" /><path d="m6.5 10 2.2 2.2 4.8-5" /></>,
-    'reentry-decision': <><path d="M16 6H9a5 5 0 0 0-5 5v4" /><path d="m7 12-3 3-3-3" /><path d="M12 10h4v5h-4z" /></>,
+function CourseIcon({ course }: { course: CorrectionDrill['id'] }) {
+  const paths: Record<CorrectionDrill['id'], React.ReactNode> = {
+    'near-side': <><path d="M4 4v12M8 10h9" /><path d="m13 6 4 4-4 4" /></>,
+    'far-side': <><path d="M16 4v12M12 10H3" /><path d="m7 6-4 4 4 4" /></>,
+    'off-center': <><path d="M3 4v12M17 4v12M7 10h6" /><path d="m10 7 3 3-3 3" /></>,
+    crooked: <><path d="M4 4v12M16 4v12" /><path d="m7 14 6-8" /></>,
+    'narrow-multipoint': <><path d="M3 5h14M3 15h14" /><path d="m7 12 3-3 3 3" /></>,
   }
-  return <svg viewBox="0 0 20 20" aria-hidden="true">{paths[skill]}</svg>
-}
-
-function allItems(drills: CorrectionDrill[]): PracticeItem[] {
-  return drills.flatMap((drill) => drill.steps.map((step) => ({ drill, step })))
+  return <svg viewBox="0 0 20 20" aria-hidden="true">{paths[course]}</svg>
 }
 
 export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
@@ -46,21 +39,15 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
   const [attempts, setAttempts] = useState<CorrectionAttempt[]>([])
   const guide = useMemo(() => buildJudgmentGuide(runtime), [runtime])
   const drills = useMemo(() => buildCorrectionDrills(runtime), [runtime])
-  const items = useMemo(() => allItems(drills), [drills])
   const history = useMemo(() => loadPracticeHistory(), [])
-  const availableSkills = useMemo(
-    () => Object.keys(JUDGMENT_SKILL_INFO)
-      .filter((skill): skill is JudgmentSkill => items.some((item) => item.step.skill === skill)),
-    [items],
-  )
   const pastAttempts = useMemo(
     () => history.sessions
       .filter((session) => session.mode === 'practice' && session.scenarioId === runtime.scenarioId)
       .flatMap((session) => session.correctionAttempts ?? []),
     [history.sessions, runtime.scenarioId],
   )
-  const skillStatus = (skill: JudgmentSkill) => {
-    const matching = pastAttempts.filter((attempt) => attempt.skill === skill)
+  const courseStatus = (drill: CorrectionDrill) => {
+    const matching = pastAttempts.filter((attempt) => attempt.drillId === drill.id)
     if (!matching.length) return { label: '처음', tone: 'new' }
     const recent = matching.slice(0, 10)
     const correct = recent.filter((attempt) => attempt.firstTryCorrect).length
@@ -68,30 +55,29 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
     if (recent.length >= 3 && correct / recent.length >= .8) return { label: '안정적', tone: 'steady' }
     return { label: '연습 완료', tone: 'complete' }
   }
-  const skillProgress = (skill: JudgmentSkill) => {
-    const recent = pastAttempts.filter((attempt) => attempt.skill === skill).slice(0, 3)
+  const courseProgress = (drill: CorrectionDrill) => {
+    const recent = pastAttempts.filter((attempt) => attempt.drillId === drill.id).slice(0, drill.steps.length * 3)
     if (!recent.length) return null
     return {
       correct: recent.filter((attempt) => attempt.firstTryCorrect).length,
       total: recent.length,
     }
   }
-  const recommendedSkills = useMemo(() => {
-    const priority = [...availableSkills].sort((left, right) => {
-      const rank = (skill: JudgmentSkill) => {
-        const status = skillStatus(skill).tone
+  const recommendedCourse = useMemo(() => {
+    const priority = [...drills].sort((left, right) => {
+      const rank = (drill: CorrectionDrill) => {
+        const status = courseStatus(drill).tone
         return status === 'review' ? 0 : status === 'new' ? 1 : status === 'complete' ? 2 : 3
       }
       return rank(left) - rank(right)
     })
-    return priority.slice(0, Math.min(3, priority.length))
+    return priority[0]
   // pastAttempts is intentionally part of the recommendation input.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [availableSkills, pastAttempts])
+  }, [drills, pastAttempts])
 
-  const start = (skills: JudgmentSkill[], recommended = false) => {
-    const matching = items.filter((item) => skills.includes(item.step.skill))
-    const chosen = recommended ? matching.slice(0, 6) : matching
+  const start = (drill: CorrectionDrill) => {
+    const chosen = drill.steps.map((step) => ({ drill, step }))
     if (!chosen.length) return
     setPracticeItems(chosen)
     setItemIndex(0)
@@ -147,48 +133,46 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
     return (
       <section className="judgment-skill-picker" aria-labelledby="judgment-skill-title">
         <header>
-          <div><span>판단 연습</span><h2 id="judgment-skill-title">어떤 판단을 연습할까요?</h2></div>
-          <p>추천 구성을 시작하거나, 필요한 판단 하나를 골라 집중해서 연습해요.</p>
+          <div><span>판단 연습</span><h2 id="judgment-skill-title">어떤 수정 과정을 연습할까요?</h2></div>
+          <p>한 상황의 판단과 움직임을 처음부터 끝까지 이어서 연습해요.</p>
         </header>
         <div className="judgment-picker-options">
           <div className="judgment-picker-lead">
-            <button type="button" className="recommended-practice" onClick={() => start(recommendedSkills, true)}>
-              <span>오늘의 추천 · 최대 6문제</span>
-              <strong>필요한 판단부터 이어서 연습해요</strong>
-              <small>{recommendedSkills.map((skill) => JUDGMENT_SKILL_INFO[skill].title).join(' · ')}</small>
+            <button type="button" className="recommended-practice" onClick={() => recommendedCourse && start(recommendedCourse)}>
+              <span>오늘의 추천 · 연속 수정</span>
+              <strong>{recommendedCourse?.title ?? '수정 과정을 이어서 연습해요'}</strong>
+              <small>{recommendedCourse ? `${recommendedCourse.steps.length}단계를 한 차량 상태로 이어서 연습해요` : '추천 코스를 준비하고 있어요'}</small>
               <b>바로 시작 <span aria-hidden="true">→</span></b>
             </button>
             <button type="button" className="judgment-example-card" onClick={showGuide}>
               <span>{pastAttempts.length ? '필요할 때 다시 보기' : '처음이라면 추천'}</span>
-              <strong>안전 수정 예시 보기</strong>
-              <small>위험할 때 멈추고 공간을 회복하는 과정을 확인해요.</small>
+              <strong>가뒤먼앞 원칙 보기</strong>
+              <small>핸들 원위치부터 공간 만들기와 재진입 순서를 확인해요.</small>
               <i aria-hidden="true">›</i>
             </button>
           </div>
           <section className="judgment-skill-list" aria-labelledby="judgment-skill-list-title">
-            <h3 id="judgment-skill-list-title">판단 유형별 연습</h3>
+            <h3 id="judgment-skill-list-title">유형별 연습</h3>
             <div className="judgment-skill-grid">
-              {availableSkills.map((skill) => {
-                const info = JUDGMENT_SKILL_INFO[skill]
-                const status = skillStatus(skill)
-                const progress = skillProgress(skill)
-                const count = items.filter((item) => item.step.skill === skill).length
+              {drills.map((drill) => {
+                const status = courseStatus(drill)
+                const progress = courseProgress(drill)
                 return (
                   <button
-                    key={skill}
+                    key={drill.id}
                     type="button"
-                    className={`judgment-skill-card skill-${skill}`}
-                    aria-label={`${info.title}, ${status.label}, ${count}문제 연습 시작`}
-                    onClick={() => start([skill])}
+                    className={`judgment-skill-card course-${drill.id}`}
+                    aria-label={`${drill.title}, ${status.label}, ${drill.steps.length}단계 연습 시작`}
+                    onClick={() => start(drill)}
                   >
                     <span className="skill-card-top">
-                      <b className="skill-icon"><SkillIcon skill={skill} /></b>
+                      <b className="skill-icon"><CourseIcon course={drill.id} /></b>
                       <span className={`skill-status ${status.tone}`}>{status.label}</span>
                     </span>
-                    <strong>{info.title}</strong>
-                    <p>{info.description}</p>
+                    <strong>{drill.title}</strong>
+                    <p>{drill.description}</p>
                     <span className="skill-card-footer">
-                      <small>{progress ? `최근 ${progress.correct}/${progress.total} 정답 · ` : ''}{count}문제</small>
+                      <small>{progress ? `최근 ${progress.correct}/${progress.total} 정답 · ` : ''}{drill.steps.length}단계</small>
                       <span className="skill-progress" aria-hidden="true"><i style={{ width: `${progress ? progress.correct / progress.total * 100 : 0}%` }} /></span>
                       <b aria-hidden="true">›</b>
                     </span>
@@ -210,8 +194,8 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
           <strong>{guide.title}</strong>
           <progress value={0} max={1} />
         </div>
-        <p className="page-description">안전하게 자세를 바로잡는 과정을 확인한 뒤 연습할 판단 유형을 선택합니다.</p>
-        <JudgmentGuide scenario={guide} runtime={runtime} onStart={() => setPhase('select')} buttonLabel="판단 유형 고르기" />
+        <p className="page-description">가뒤먼앞의 전체 순서를 확인한 뒤 연습할 수정 유형을 선택합니다.</p>
+        <JudgmentGuide scenario={guide} runtime={runtime} onStart={() => setPhase('select')} buttonLabel="유형별 연습 고르기" />
       </section>
     )
   }

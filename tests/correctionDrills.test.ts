@@ -4,153 +4,167 @@ import { createScenarioRuntime } from '../src/data/scenarios.ts'
 import { buildCorrectionDrills } from '../src/engine/correctionDrills.ts'
 import { detectCollision } from '../src/engine/collisionDetection.ts'
 import { simulateJudgmentChoice } from '../src/engine/judgmentScenarios.ts'
-import { evaluateParking, isVehicleInsideParkingBay } from '../src/engine/parkingEvaluation.ts'
+import { evaluateParking, isVehicleInsideParkingBay, TARGET_PARKING_BAY } from '../src/engine/parkingEvaluation.ts'
 
-test('일반 수정 훈련은 비스듬한 자세·가운데 맞추기·모서리 위험 드릴로 구성된다', () => {
+function answerOf(step: ReturnType<typeof buildCorrectionDrills>[number]['steps'][number]) {
+  return step.choices.find(({ id }) => id === step.answer)!
+}
+
+test('유형별 연습은 네 개의 연속 수정 코스로 구성된다', () => {
   const drills = buildCorrectionDrills(createScenarioRuntime('both-sides', { seed: 2 }))
-  assert.deepEqual(drills.map(({ id }) => id), ['crooked', 'off-center', 'inner-clearance', 'outer-swing'])
-  assert.ok(drills.every(({ steps }) => steps.length >= 3))
+  assert.deepEqual(drills.map(({ id }) => id), ['near-side', 'far-side', 'off-center', 'crooked'])
+  assert.deepEqual(drills.map(({ steps }) => steps.length), [3, 3, 2, 2])
+  assert.deepEqual(drills.map(({ title }) => title), [
+    '가까운 쪽 간격 수정',
+    '먼 쪽 간격 수정',
+    '가운데 위치 수정',
+    '기울어진 차체 수정',
+  ])
 })
 
-test('좁은 통로 훈련은 여러 번의 전진 수정과 재후진 판단을 연속 제공한다', () => {
+test('도움이 적은 확인형 판단과 단순 직선 재진입 문제를 제외한다', () => {
+  const steps = buildCorrectionDrills(createScenarioRuntime('both-sides', { seed: 2 }))
+    .flatMap(({ steps: items }) => items)
+  assert.equal(steps.some(({ skill }) => ['hazard-prediction', 'stop-timing', 'recheck'].includes(skill)), false)
+  assert.equal(steps.some(({ title }) => /위험 지점|멈출 시점|재확인|직선 재진입/.test(title)), false)
+  for (const step of steps.filter(({ id }) => id.endsWith('-resume'))) {
+    assert.match(answerOf(step).label, /처음 주차하던/)
+    assert.match(answerOf(step).label, /최대 조향/)
+  }
+})
+
+test('가까운 쪽과 먼 쪽 모두 움직이기 전에 핸들을 정중앙으로 푼다', () => {
+  for (const seed of [2, 3]) {
+    const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
+    const drills = buildCorrectionDrills(runtime)
+    for (const id of ['near-side', 'far-side'] as const) {
+      const step = drills.find((drill) => drill.id === id)!.steps[0]
+      const simulation = simulateJudgmentChoice(step.vehicle, answerOf(step), runtime)
+      assert.match(answerOf(step).label, /핸들을 정중앙으로/)
+      assert.equal(simulation.states.at(-1)!.steeringAngle, 0)
+      assert.ok(Math.hypot(simulation.states.at(-1)!.x - step.vehicle.x, simulation.states.at(-1)!.y - step.vehicle.y) < .001)
+    }
+  }
+})
+
+test('가뒤는 R, 먼앞은 D로 50cm에서 1m 사이를 직선 이동한다', () => {
+  for (const seed of [2, 3]) {
+    const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
+    const drills = buildCorrectionDrills(runtime)
+    for (const [id, gear] of [['near-side', 'R'], ['far-side', 'D']] as const) {
+      const step = drills.find((drill) => drill.id === id)!.steps[1]
+      const simulation = simulateJudgmentChoice(step.vehicle, answerOf(step), runtime)
+      const end = simulation.states.at(-1)!
+      const distance = Math.hypot(end.x - step.vehicle.x, end.y - step.vehicle.y)
+      assert.equal(end.gear, gear)
+      assert.equal(end.steeringAngle, 0)
+      assert.ok(distance >= .5 && distance <= 1, `${id}/${runtime.startSide}/${distance}`)
+      assert.equal(simulation.collided, false)
+    }
+  }
+})
+
+test('공간을 만든 뒤 처음 주차 방향으로 다시 조향해 주차를 완료한다', () => {
+  for (const seed of [2, 3]) {
+    const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
+    const drills = buildCorrectionDrills(runtime)
+    for (const id of ['near-side', 'far-side'] as const) {
+      const step = drills.find((drill) => drill.id === id)!.steps[2]
+      const answer = answerOf(step)
+      const simulation = simulateJudgmentChoice(step.vehicle, answer, runtime)
+      assert.match(answer.label, runtime.startSide === 'left' ? /오른쪽 방향/ : /왼쪽 방향/)
+      assert.ok(answer.steps?.some((item) => /평행/.test(item)))
+      assert.equal(simulation.collided, false)
+      assert.equal(isVehicleInsideParkingBay(simulation.states.at(-1)!), true)
+    }
+  }
+})
+
+test('가운데와 기울기 코스는 주차칸 안의 실제 자세에서 시작한다', () => {
+  const drills = buildCorrectionDrills(createScenarioRuntime('both-sides', { seed: 2 }))
+  const offCenter = drills.find(({ id }) => id === 'off-center')!
+  const crooked = drills.find(({ id }) => id === 'crooked')!
+  const offsetResult = evaluateParking(offCenter.steps[0].vehicle, [])
+  const crookedResult = evaluateParking(crooked.steps[0].vehicle, [])
+  assert.equal(offsetResult.fullyInside, true)
+  assert.ok(offsetResult.angleErrorDegrees < .1)
+  assert.ok(Math.abs(offCenter.steps[0].vehicle.x - 15) >= .15)
+  assert.equal(crookedResult.fullyInside, true)
+  assert.ok(crookedResult.angleErrorDegrees >= 5 && crookedResult.angleErrorDegrees <= 7)
+})
+
+test('가운데와 기울기 수정은 공간 만들기와 평행 복귀를 연속 동작으로 나눈다', () => {
+  const drills = buildCorrectionDrills(createScenarioRuntime('both-sides', { seed: 2 }))
+  const offCenter = drills.find(({ id }) => id === 'off-center')!
+  const crooked = drills.find(({ id }) => id === 'crooked')!
+  assert.match(answerOf(offCenter.steps[0]).label, /핸들을 중앙/)
+  assert.match(answerOf(offCenter.steps[0]).label, /뒷범퍼/)
+  assert.match(answerOf(offCenter.steps[1]).label, /^R로/)
+  assert.match(answerOf(crooked.steps[0]).label, /^D로/)
+  assert.match(answerOf(crooked.steps[1]).label, /^R로/)
+  assert.equal(answerOf(offCenter.steps[0]).steps?.length, 2)
+  assert.equal(answerOf(offCenter.steps[1]).steps?.length, 3)
+  assert.equal(answerOf(crooked.steps[0]).steps?.length, 3)
+  assert.equal(answerOf(crooked.steps[1]).steps?.length, 3)
+})
+
+test('차체가 평행하면 직선으로 빠져나오고 기울어졌으면 반대 조향으로 먼저 편다', () => {
+  for (const seed of [2, 3]) {
+    const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
+    const drills = buildCorrectionDrills(runtime)
+    const offCenter = drills.find(({ id }) => id === 'off-center')!
+    const crooked = drills.find(({ id }) => id === 'crooked')!
+    const offsetExit = simulateJudgmentChoice(offCenter.steps[0].vehicle, answerOf(offCenter.steps[0]), runtime)
+    const crookedExit = simulateJudgmentChoice(crooked.steps[0].vehicle, answerOf(crooked.steps[0]), runtime)
+    const offsetEnd = offsetExit.states.at(-1)!
+    const crookedEnd = crookedExit.states.at(-1)!
+
+    assert.ok(Math.abs(offsetEnd.heading - offCenter.steps[0].vehicle.heading) < .001)
+    assert.ok(offsetEnd.y + 2.3 < TARGET_PARKING_BAY.top, `${runtime.startSide}/평행 차체 출구 여유`)
+    assert.ok(crookedEnd.y + 2.3 < TARGET_PARKING_BAY.top, `${runtime.startSide}/기울어진 차체 출구 여유`)
+    assert.ok(evaluateParking(crookedEnd, []).angleErrorDegrees < 1)
+  }
+})
+
+test('주차칸 안 수정은 좌우 위치와 각도 오차를 줄여 가운데 평행 주차로 끝난다', () => {
+  for (const seed of [2, 3]) {
+    const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
+    for (const id of ['off-center', 'crooked'] as const) {
+      const drill = buildCorrectionDrills(runtime).find((item) => item.id === id)!
+      const initial = evaluateParking(drill.steps[0].vehicle, [])
+      const finalStates = simulateJudgmentChoice(
+        drill.steps[1].vehicle,
+        answerOf(drill.steps[1]),
+        runtime,
+      ).states
+      const final = evaluateParking(finalStates.at(-1)!, [])
+      assert.ok(final.centerError < initial.centerError, `${runtime.startSide}/${id}/중심 오차`)
+      assert.ok(final.angleErrorDegrees < .5, `${runtime.startSide}/${id}/각도 오차`)
+      assert.equal(final.fullyInside, true)
+    }
+  }
+})
+
+test('각 코스의 정답 탑뷰는 충돌 없이 다음 단계로 이어지고 주차칸 안에서 끝난다', () => {
+  for (const seed of [2, 3]) {
+    const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
+    for (const drill of buildCorrectionDrills(runtime)) {
+      let vehicle = drill.steps[0].vehicle
+      for (const step of drill.steps) {
+        assert.ok(Math.hypot(vehicle.x - step.vehicle.x, vehicle.y - step.vehicle.y) < .02, `${drill.id}/${step.id} 연속성`)
+        const simulation = simulateJudgmentChoice(step.vehicle, answerOf(step), runtime)
+        assert.equal(simulation.collided, false, `${drill.id}/${step.id} 충돌`)
+        assert.equal(simulation.states.some((state) => Boolean(detectCollision(state, 0, runtime))), false)
+        vehicle = simulation.states.at(-1)!
+      }
+      assert.equal(isVehicleInsideParkingBay(vehicle), true, `${runtime.startSide}/${drill.id} 완료`)
+    }
+  }
+})
+
+test('좁은 통로가 다시 제공될 때도 연속 수정 코스로 동작한다', () => {
   const drills = buildCorrectionDrills(createScenarioRuntime('narrow-aisle', { seed: 2 }))
   assert.equal(drills.length, 1)
   assert.equal(drills[0].id, 'narrow-multipoint')
-  assert.ok(drills[0].steps.length >= 6)
-  assert.match(drills[0].steps.map(({ title }) => title).join(' '), /첫 번째 짧은 전진 수정/)
-  assert.match(drills[0].steps.map(({ title }) => title).join(' '), /두 번째 각도 수정/)
-})
-
-test('비스듬한 자세와 가운데 치우침 문항은 설명에 맞는 주차칸 내부 상태를 사용한다', () => {
-  const drills = buildCorrectionDrills(createScenarioRuntime('both-sides', { seed: 2 }))
-  const crooked = drills.find(({ id }) => id === 'crooked')!
-  const offCenter = drills.find(({ id }) => id === 'off-center')!
-  const crookedResult = evaluateParking(crooked.steps[0].vehicle, [])
-  const offCenterResult = evaluateParking(offCenter.steps[0].vehicle, [])
-
-  assert.equal(crookedResult.fullyInside, true)
-  assert.ok(crookedResult.angleErrorDegrees >= 5 && crookedResult.angleErrorDegrees <= 7)
-  assert.equal(offCenterResult.fullyInside, true)
-  assert.ok(offCenterResult.angleErrorDegrees < .1)
-  assert.ok(Math.abs(offCenter.steps[0].vehicle.x - 15) >= .15)
-})
-
-test('위험 모서리 문항은 설명과 같은 모서리를 탑뷰에 표시한다', () => {
-  for (const seed of [2, 3]) {
-    const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
-    const drills = buildCorrectionDrills(runtime)
-    const inner = drills.find(({ id }) => id === 'inner-clearance')!
-    const outer = drills.find(({ id }) => id === 'outer-swing')!
-    assert.equal(inner.steps[0].focusZone, runtime.startSide === 'left' ? 'rear-right' : 'rear-left')
-    assert.equal(outer.steps[0].focusZone, runtime.startSide === 'left' ? 'front-left' : 'front-right')
-  }
-})
-
-test('정답 문구는 실제 조작 순서를 쓰고 모호한 조향 표현을 사용하지 않는다', () => {
-  const drills = buildCorrectionDrills(createScenarioRuntime('both-sides', { seed: 2 }))
-  const labels = drills.flatMap(({ steps }) => steps.map((step) => step.choices.find(({ id }) => id === step.answer)!.label)).join(' ')
-  assert.doesNotMatch(labels, /주차 방향 조향|중앙 조향/)
-  assert.doesNotMatch(labels, /R에서|D에서/)
-  assert.match(labels, /정지/)
-  assert.match(labels, /핸들을 정면/)
-})
-
-test('비스듬한 자세 문항은 위험 결과를 답하고 전진 공간 확보와 후진 정렬을 분리한다', () => {
-  const drills = buildCorrectionDrills(createScenarioRuntime('both-sides', { seed: 2 }))
-  const crooked = drills.find(({ id }) => id === 'crooked')!
-  const assess = crooked.steps.find(({ id }) => id === 'crooked-assess')!
-  const makeSpace = crooked.steps.find(({ id }) => id === 'crooked-space')!
-  const align = crooked.steps.find(({ id }) => id === 'crooked-align')!
-
-  assert.match(assess.question, /어떤 위험/)
-  assert.match(assess.choices.find(({ id }) => id === assess.answer)!.label, /주차선을 넘을 수/)
-  assert.equal(makeSpace.skill, 'correction-space')
-  assert.equal(align.skill, 'first-correction')
-  assert.match(makeSpace.choices.find(({ id }) => id === makeSpace.answer)!.label, /^D로 바꾸고/)
-  assert.match(align.choices.find(({ id }) => id === align.answer)!.label, /^R로 바꾸고/)
-  assert.doesNotMatch(makeSpace.choices.find(({ id }) => id === makeSpace.answer)!.label, /후진/)
-})
-
-test('비스듬한 자세의 전진 조향 문구는 실제 탑뷰 조향 방향과 일치한다', () => {
-  for (const seed of [2, 3]) {
-    const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
-    const crooked = buildCorrectionDrills(runtime).find(({ id }) => id === 'crooked')!
-    const makeSpace = crooked.steps.find(({ id }) => id === 'crooked-space')!
-    const answer = makeSpace.choices.find(({ id }) => id === makeSpace.answer)!
-    const end = simulateJudgmentChoice(makeSpace.vehicle, answer, runtime).states.at(-1)!
-    const expectedDirection = end.steeringAngle > 0 ? '오른쪽' : '왼쪽'
-
-    assert.match(answer.label, new RegExp(`핸들을 ${expectedDirection}으로`))
-  }
-})
-
-test('가운데 맞추기는 같은 D 기어에서 두 전진 곡선으로 나누어 안내한다', () => {
-  const runtime = createScenarioRuntime('both-sides', { seed: 2 })
-  const offCenter = buildCorrectionDrills(runtime).find(({ id }) => id === 'off-center')!
-  const shift = offCenter.steps.find(({ id }) => id === 'off-center-shift')!
-  const realign = offCenter.steps.find(({ id }) => id === 'off-center-realign')!
-  const shiftEnd = simulateJudgmentChoice(shift.vehicle, shift.choices.find(({ id }) => id === shift.answer)!, runtime).states.at(-1)!
-
-  assert.equal(shiftEnd.gear, 'D')
-  assert.equal(realign.vehicle.gear, 'D')
-  assert.ok(Math.hypot(shiftEnd.x - realign.vehicle.x, shiftEnd.y - realign.vehicle.y) < .02)
-  assert.doesNotMatch(realign.choices.find(({ id }) => id === realign.answer)!.label, /기어|D로/)
-})
-
-test('수정 판단 문항은 선택 가능한 판단 유형에 고르게 분류된다', () => {
-  const skills = new Set(buildCorrectionDrills(createScenarioRuntime('both-sides', { seed: 2 }))
-    .flatMap(({ steps }) => steps.map(({ skill }) => skill)))
-
-  for (const skill of ['hazard-prediction', 'stop-timing', 'correction-space', 'first-correction', 'recheck', 'reentry-decision']) {
-    assert.equal(skills.has(skill as never), true, `${skill} 유형 문항`)
-  }
-})
-
-test('모서리 간격 회복은 재정렬과 분리되고 실제 조향 방향을 단계별로 안내한다', () => {
-  for (const seed of [2, 3]) {
-    const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
-    const drills = buildCorrectionDrills(runtime)
-    const inner = drills.find(({ id }) => id === 'inner-clearance')!
-    const outer = drills.find(({ id }) => id === 'outer-swing')!
-    const innerPrepare = inner.steps.find(({ id }) => id.endsWith('-prepare'))!
-    const innerRetreat = inner.steps.find(({ id }) => id.endsWith('-retreat'))!
-    const innerAnswer = innerRetreat.choices.find(({ id }) => id === innerRetreat.answer)!
-    const outerRetreat = outer.steps.find(({ id }) => id.endsWith('-retreat'))!
-    const outerRealign = outer.steps.find(({ id }) => id.endsWith('-realign'))
-
-    assert.equal(innerPrepare.vehicle.braking, true)
-    assert.equal(innerPrepare.vehicle.gear, 'R')
-    assert.match(innerPrepare.choices.find(({ id }) => id === innerPrepare.answer)!.label, /브레이크를 유지한 채 D로/)
-    assert.match(innerPrepare.choices.find(({ id }) => id === innerPrepare.answer)!.label, new RegExp(runtime.startSide === 'left' ? '오른쪽' : '왼쪽'))
-    assert.equal(innerAnswer.steps, undefined)
-    assert.match(innerAnswer.label, /짧게 전진하고 간격이 보이면 정지/)
-    assert.ok(outerRealign, '앞 범퍼 간격 회복과 차체 재정렬을 별도 판단으로 제공')
-
-    const simulation = simulateJudgmentChoice(outerRetreat.vehicle, outerRetreat.choices[0], runtime)
-    assert.equal(simulation.collided, false)
-    assert.equal(simulation.states.at(-1)!.gear, 'D')
-    assert.ok(simulation.states.length > 2)
-  }
-})
-
-test('각 드릴의 정답 경로는 충돌 없이 다음 판단 위치로 이어지고 최종 주차를 완료한다', () => {
-  for (const scenarioId of ['both-sides', 'narrow-aisle'] as const) {
-    for (const seed of [2, 3]) {
-      const runtime = createScenarioRuntime(scenarioId, { seed, firstSuccess: true })
-      for (const drill of buildCorrectionDrills(runtime)) {
-        let finalVehicle = drill.steps[0].vehicle
-        for (let index = 0; index < drill.steps.length; index += 1) {
-          const step = drill.steps[index]
-          assert.ok(Math.hypot(finalVehicle.x - step.vehicle.x, finalVehicle.y - step.vehicle.y) < .02, `${drill.id}/${step.id} 위치 연속성`)
-          const answer = step.choices.find(({ id }) => id === step.answer)!
-          const simulation = simulateJudgmentChoice(step.vehicle, answer, runtime)
-          assert.equal(simulation.collided, false, `${drill.id}/${step.id} 정답 충돌`)
-          assert.equal(simulation.states.some((vehicle) => Boolean(detectCollision(vehicle, 0, runtime))), false)
-          finalVehicle = simulation.states.at(-1)!
-        }
-        assert.equal(isVehicleInsideParkingBay(finalVehicle), true, `${scenarioId}/${runtime.startSide}/${drill.id} 최종 주차`)
-        assert.ok(Math.abs(finalVehicle.y - 9.75) < .08, `${scenarioId}/${runtime.startSide}/${drill.id} 양옆 차량과 주차 높이`)
-      }
-    }
-  }
+  assert.equal(drills[0].steps.length, 2)
 })

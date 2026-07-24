@@ -2707,6 +2707,30 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   --skill-wash: rgba(238,249,242,.94);
 }
 
+.judgment-skill-card.course-near-side {
+  --skill-accent: #167a60;
+  --skill-soft: #ddf4ea;
+  --skill-wash: rgba(235,249,243,.94);
+}
+
+.judgment-skill-card.course-far-side {
+  --skill-accent: #2f7198;
+  --skill-soft: #e1f0f8;
+  --skill-wash: rgba(238,247,251,.94);
+}
+
+.judgment-skill-card.course-off-center {
+  --skill-accent: #7660ad;
+  --skill-soft: #eee9f9;
+  --skill-wash: rgba(247,244,252,.94);
+}
+
+.judgment-skill-card.course-crooked {
+  --skill-accent: #b6652c;
+  --skill-soft: #fbeadd;
+  --skill-wash: rgba(253,246,239,.94);
+}
+
 .judgment-skill-card:hover {
   border-color: color-mix(in srgb, var(--skill-accent) 36%, white);
   background: linear-gradient(145deg, white, var(--skill-soft));

@@ -59,6 +59,7 @@ export function JudgmentCanvas({
           ? [{ vehicle: simulation.states[simulation.states.length - 1], color: correct ? '#31d38b' : '#ff6b62' }]
           : undefined,
         highlightContactZone: scenario.focusZone ?? choice?.focusZone,
+        reverseGuideOpacity: 0.24,
       })
     }
     const observer = new ResizeObserver(draw)
