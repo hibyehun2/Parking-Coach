@@ -16,6 +16,7 @@ import type { ReplayEvent } from '../engine/sessionReplay'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../types/practice'
 import { acceptPracticeAutoShareConsent, hasPracticeAutoShareConsent, loadAnonymousNickname } from '../engine/userPreferences'
 import { configuredPracticeSharingGateway, syncPracticeSharing, unpublishAllPracticeCases } from '../engine/practiceSharing'
+import { loadSupabaseSession, subscribeSupabaseAuth, supabaseProfileNickname } from '../engine/supabaseClient'
 
 const PRACTICE_HISTORY_RETENTION_DAYS = 7
 
@@ -217,6 +218,23 @@ export function ResultPage() {
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [selectedCaseAuthorId, setSelectedCaseAuthorId] = useState<string | null>(null)
   const [learningCases, setLearningCases] = useState<LearningCase[]>([])
+  const [nickname, setNickname] = useState(loadAnonymousNickname)
+
+  useEffect(() => {
+    let active = true
+    void loadSupabaseSession().then((session) => {
+      if (!active) return
+      setNickname(supabaseProfileNickname(session?.user ?? null) ?? loadAnonymousNickname())
+    })
+    const unsubscribe = subscribeSupabaseAuth((nextUser) => {
+      if (!active) return
+      setNickname(supabaseProfileNickname(nextUser) ?? loadAnonymousNickname())
+    })
+    return () => {
+      active = false
+      unsubscribe()
+    }
+  }, [])
   const [learningCasesStatus, setLearningCasesStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(
     activeTab === 'community' ? 'loading' : 'idle',
   )
@@ -293,7 +311,7 @@ export function ResultPage() {
   useEffect(() => {
     if (!configuredPracticeSharingGateway || !history || !history.sessions.some((session) => session.shareStatus === 'pending' || session.shareStatus === 'unpublishing')) return
     let cancelled = false
-    void syncPracticeSharing(history, loadAnonymousNickname(), configuredPracticeSharingGateway).then((synced) => {
+    void syncPracticeSharing(history, nickname, configuredPracticeSharingGateway).then((synced) => {
       if (!cancelled) setHistory(synced)
     })
     return () => { cancelled = true }
@@ -566,7 +584,7 @@ export function ResultPage() {
         <section className="share-consent-dialog" role="dialog" aria-modal="true" aria-labelledby="share-consent-title">
           <span>최초 1회 확인</span>
           <h2 id="share-consent-title">보관한 기록을 학습 사례로 공유할까요?</h2>
-          <p>앞으로 책갈피로 보관한 기록은 <strong>{loadAnonymousNickname()}</strong> 닉네임으로 자동 공유됩니다.</p>
+          <p>앞으로 책갈피로 보관한 기록은 <strong>{nickname}</strong> 닉네임으로 자동 공유됩니다.</p>
           <ul>
             <li>주차 상황, 결과와 학습 기준만 공유합니다.</li>
             <li>기기 정보와 사용자를 식별하는 정보는 공유하지 않습니다.</li>
