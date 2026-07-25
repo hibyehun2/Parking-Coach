@@ -34,9 +34,13 @@ function formatSharedDate(value: string) {
 
 function toLearningCase(row: LearningCaseRow): LearningCase {
   const learningPoints = Array.isArray(row.learning_points) ? row.learning_points.filter(Boolean) : []
-  const collisionSummary = row.collision_count > 0
-    ? `충돌 ${row.collision_count}회를 복기한 ${row.practice_type} 기록입니다.`
-    : `충돌 없이 마친 ${row.practice_type} 기록입니다.`
+  const collisionSummary = row.practice_type === '판단 연습'
+    ? (row.outcome === '연습 완료' || row.outcome === '안전 주차' 
+      ? '위험 상황 판단을 완벽하게 마친 판단 연습 기록입니다.' 
+      : '아쉬운 판단을 다시 확인하며 복기한 판단 연습 기록입니다.')
+    : row.collision_count > 0
+      ? `충돌 ${row.collision_count}회를 복기한 ${row.practice_type} 기록입니다.`
+      : `충돌 없이 마친 ${row.practice_type} 기록입니다.`
 
   return {
     id: row.id,

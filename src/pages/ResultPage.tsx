@@ -117,12 +117,12 @@ function CorrectionReviewCard({
         </figure>
       </div> : <p className="review-topview-unavailable">이 기록은 탑뷰 저장 기능이 적용되기 전 기록입니다. 아래에서 당시 판단과 안전한 행동을 확인할 수 있습니다.</p>}
       <div className="correction-review-copy">
-        <header className="correction-review-copy-header">
-          {reviewScenario && <p><b>상황</b><span>{reviewScenario.situation}</span></p>}
-          {hasTopView && reviewScenario && runtime && firstChoice && correctChoice && (
+        {hasTopView && reviewScenario && runtime && firstChoice && correctChoice && (
+          <div className="correction-review-copy-actions">
             <button type="button" className="expand-topview-button" onClick={() => openExpanded('safe')}>크게보기</button>
-          )}
-        </header>
+          </div>
+        )}
+        {reviewScenario && <p><b>상황</b><span>{reviewScenario.situation}</span></p>}
         <p><b>내 판단</b><span>{attempt.firstChoiceLabel}</span></p>
         {firstChoice?.feedback && <p><b>이렇게 되면</b><span>{firstChoice.feedback}</span></p>}
         <div className="safe-action">
