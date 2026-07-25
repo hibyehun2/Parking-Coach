@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { buildLessonSimulation, buildNarrowAisleLessonSimulation, lessonDriverShoulder } from '../engine/lessonSimulation'
+import { buildLessonSimulation, buildNarrowAisleLessonSimulation, buildJudgmentReferenceSimulation, lessonDriverShoulder } from '../engine/lessonSimulation'
 import { TARGET_PARKING_BAY } from '../engine/parkingEvaluation'
 import { renderParkingLot } from '../engine/parkingLotRenderer'
 import type { ScenarioRuntime } from '../types/practice'
 
-export function LessonParkingCanvas({ runtime, stepIndex }: { runtime: ScenarioRuntime; stepIndex: number }) {
+export function LessonParkingCanvas({ runtime, stepIndex, methodId }: { runtime: ScenarioRuntime; stepIndex: number; methodId?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const stages = useMemo(
-    () => runtime.scenarioId === 'narrow-aisle'
-      ? buildNarrowAisleLessonSimulation(runtime)
-      : buildLessonSimulation(runtime),
-    [runtime],
-  )
+  const stages = useMemo(() => {
+    if (runtime.scenarioId === 'narrow-aisle') return buildNarrowAisleLessonSimulation(runtime)
+    if (methodId === '45-degree') return buildJudgmentReferenceSimulation(runtime)
+    return buildLessonSimulation(runtime)
+  }, [runtime, methodId])
   const stage = stages[stepIndex]
   const [frame, setFrame] = useState(0)
 
@@ -61,7 +60,8 @@ export function LessonParkingCanvas({ runtime, stepIndex }: { runtime: ScenarioR
           : undefined,
       })
 
-      if (runtime.scenarioId !== 'narrow-aisle' || stepIndex !== 1) return
+      const showShoulderLine = (runtime.scenarioId === 'narrow-aisle' && stepIndex === 1) || (methodId === '45-degree' && stepIndex === 0)
+      if (!showShoulderLine) return
       const shoulder = lessonDriverShoulder(last)
       const scale = Math.max(width, height) / 14
       const worldLeft = 15 - width / scale / 2

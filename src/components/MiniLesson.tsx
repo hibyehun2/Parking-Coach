@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { LESSON_TRAJECTORIES, lessonDuration, type MiniLesson } from '../data/lessons'
+import { LESSON_TRAJECTORIES, type MiniLesson } from '../data/lessons'
 import type { ScenarioRuntime } from '../types/practice'
 import { LessonParkingCanvas } from './LessonParkingCanvas'
 
@@ -14,10 +14,12 @@ export const SEEN_LESSONS_KEY = 'parking-coach:seen-lessons'
 
 export function MiniLessonView({ lesson, runtime, onFinish }: MiniLessonProps) {
   const [stepIndex, setStepIndex] = useState(0)
+  const [selectedMethodId, setSelectedMethodId] = useState(lesson.methods?.[0]?.id || '')
   const [alwaysSkip, setAlwaysSkip] = useState(
     () => localStorage.getItem(ALWAYS_SKIP_LESSONS_KEY) === 'true',
   )
-  const step = lesson.steps[stepIndex]
+  const activeSteps = lesson.methods?.find((m) => m.id === selectedMethodId)?.steps || lesson.steps
+  const step = activeSteps[stepIndex]
   const isCorrectionLesson = lesson.scenarioId === 'tight-entry'
   const mirrored = runtime.startSide === 'right' || (isCorrectionLesson && runtime.variant === 'right')
   const obstacleSide = runtime.variant === 'right' ? 'right' : 'left'
@@ -50,20 +52,40 @@ export function MiniLessonView({ lesson, runtime, onFinish }: MiniLessonProps) {
     localStorage.setItem(ALWAYS_SKIP_LESSONS_KEY, String(checked))
   }
 
+  const updateMethod = (id: string) => {
+    setSelectedMethodId(id)
+    setStepIndex(0)
+  }
+
   return (
     <div className="lesson-backdrop" role="presentation">
       <section className="mini-lesson" role="dialog" aria-modal="true" aria-labelledby="lesson-title">
         <header className="lesson-header">
           <div>
-            <span>{lesson.steps.length}단계 · 약 {lessonDuration(lesson)}초</span>
+            <span>{activeSteps.length}단계 · 약 {activeSteps.reduce((t, s) => t + s.durationSeconds, 0)}초</span>
             <strong id="lesson-title">{lesson.title}</strong>
           </div>
           <button type="button" className="lesson-skip" aria-label="단계별 안내 건너뛰고 연습 시작" onClick={finish}>바로 연습</button>
         </header>
+        {lesson.methods && lesson.methods.length > 1 && (
+          <div className="lesson-method-tabs" role="tablist">
+            {lesson.methods.map((method) => (
+              <button
+                key={method.id}
+                type="button"
+                role="tab"
+                aria-selected={selectedMethodId === method.id}
+                onClick={() => updateMethod(method.id)}
+              >
+                {method.title}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className={`lesson-animation lesson-scene-${lesson.scenarioId} lesson-obstacle-${sceneObstacleSide} lesson-stage-${stepIndex}`} aria-hidden="true">
           {!isCorrectionLesson
-            ? <LessonParkingCanvas key={`${runtime.seed}-${stepIndex}`} runtime={runtime} stepIndex={stepIndex} />
+            ? <LessonParkingCanvas key={`${runtime.seed}-${stepIndex}-${selectedMethodId}`} runtime={runtime} stepIndex={stepIndex} methodId={selectedMethodId} />
             : <svg key={`${lesson.scenarioId}-${runtime.variant}-${runtime.startSide}-${stepIndex}`} className={mirrored ? 'lesson-mirrored' : undefined} viewBox="0 0 320 260">
             <defs>
               <marker id="lesson-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -130,15 +152,15 @@ export function MiniLessonView({ lesson, runtime, onFinish }: MiniLessonProps) {
         </div>
 
         <div className="lesson-copy">
-          <span>{stepIndex + 1} / {lesson.steps.length} · 약 {step.durationSeconds}초</span>
+          <span>{stepIndex + 1} / {activeSteps.length} · 약 {step.durationSeconds}초</span>
           <h2>{step.title}</h2>
           <p>{step.description}</p>
           <small>확인: {step.check}</small>
           <strong>{step.cue}</strong>
         </div>
 
-        <div className="lesson-progress" style={{ gridTemplateColumns: `repeat(${lesson.steps.length}, 1fr)` }} aria-label={`레슨 ${stepIndex + 1}단계`}>
-          {lesson.steps.map((item, index) => (
+        <div className="lesson-progress" style={{ gridTemplateColumns: `repeat(${activeSteps.length}, 1fr)` }} aria-label={`레슨 ${stepIndex + 1}단계`}>
+          {activeSteps.map((item, index) => (
             <span key={item.title} className={index <= stepIndex ? 'active' : ''} />
           ))}
         </div>
@@ -154,7 +176,7 @@ export function MiniLessonView({ lesson, runtime, onFinish }: MiniLessonProps) {
           </label>
           <div>
             {stepIndex > 0 && <button type="button" onClick={() => setStepIndex(stepIndex - 1)}>이전</button>}
-            {stepIndex < lesson.steps.length - 1 ? (
+            {stepIndex < activeSteps.length - 1 ? (
               <button type="button" className="lesson-next" onClick={() => setStepIndex(stepIndex + 1)}>다음 단계</button>
             ) : (
               <button type="button" className="lesson-next" onClick={finish}>바로 시작</button>

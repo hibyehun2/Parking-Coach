@@ -192,11 +192,15 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .install-guide button { min-height: 44px; border: 0; border-radius: 11px; color: white; background: var(--brand); font-weight: 800; }
 .lesson-backdrop { position: fixed; z-index: 80; inset: 0; padding: 18px; display: grid; place-items: center; color: #17231f; background: rgba(5,12,9,.82); }
 .mini-lesson { width: min(780px, 100%); max-height: calc(100dvh - 36px); padding: 22px; border-radius: 22px; overflow: auto; display: grid; grid-template-columns: minmax(260px, .95fr) minmax(280px, 1.05fr); gap: 18px 24px; background: #f8fbf9; box-shadow: 0 28px 80px rgba(0,0,0,.38); }
-.lesson-header, .lesson-progress, .lesson-footer { grid-column: 1 / -1; }
-.lesson-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.lesson-header, .lesson-progress, .lesson-footer, .lesson-method-tabs { grid-column: 1 / -1; }
+.lesson-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; word-break: keep-all; overflow-wrap: break-word; }
 .lesson-header > div { display: flex; flex-direction: column; gap: 5px; }
 .lesson-header span { color: var(--brand); font-size: .78rem; font-weight: 800; }
 .lesson-header strong { font-size: 1.35rem; }
+
+.lesson-method-tabs { display: flex; gap: 4px; background: rgba(0,0,0,.05); padding: 4px; border-radius: 10px; margin-top: 8px; }
+.lesson-method-tabs button { flex: 1; padding: 7px 10px; border-radius: 7px; border: none; background: transparent; color: var(--muted); font-weight: 700; font-size: .85rem; transition: background .2s, color .2s, box-shadow .2s; }
+.lesson-method-tabs button[aria-selected="true"] { background: #fff; color: var(--brand-dark); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
 .lesson-skip { min-height: 38px; padding: 0 12px; border: 1px solid var(--border); border-radius: 9px; flex: 0 0 auto; color: var(--muted); background: white; font-weight: 800; white-space: nowrap; }
 .lesson-animation { position: relative; min-height: 230px; border-radius: 17px; overflow: hidden; color: white; background: #525d59; }
 .lesson-animation svg, .lesson-animation canvas { width: 100%; height: 100%; min-height: 230px; display: block; }
@@ -265,7 +269,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .lesson-driving-state span { padding: 5px 7px; border-radius: 7px; color: #dbe6e1; background: rgba(9,20,16,.82); font-size: .68rem; font-weight: 700; }
 .lesson-driving-state b { margin-left: 3px; color: white; }
 @keyframes lesson-danger-pulse { 50% { stroke-width: 6; fill: rgba(255,91,80,.3); } }
-.lesson-copy { align-self: center; display: flex; flex-direction: column; gap: 10px; }
+.lesson-copy { align-self: center; display: flex; flex-direction: column; gap: 10px; word-break: keep-all; overflow-wrap: break-word; }
 .lesson-copy > span { color: var(--brand); font-size: .78rem; font-weight: 800; }
 .lesson-copy h2 { font-size: 1.65rem; }
 .lesson-copy p { margin: 0; color: var(--muted); line-height: 1.65; }
@@ -813,7 +817,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .share-case-preparation { align-items: stretch; flex-direction: column; }
   .share-case-preparation button { width: 100%; }
   .mini-lesson { grid-template-columns: minmax(0, 1fr); }
-  .lesson-header, .lesson-progress, .lesson-footer { grid-column: auto; }
+  .lesson-header, .lesson-progress, .lesson-footer, .lesson-method-tabs { grid-column: auto; }
   .lesson-footer { align-items: stretch; flex-direction: column; }
   .lesson-footer > div { justify-content: flex-end; }
 }

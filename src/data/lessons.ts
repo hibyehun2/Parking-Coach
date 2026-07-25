@@ -13,6 +13,7 @@ export type LessonStep = {
 export type MiniLesson = {
   scenarioId: ScenarioId
   title: string
+  methods?: { id: string; title: string; steps: LessonStep[] }[]
   steps: LessonStep[]
 }
 
@@ -37,6 +38,30 @@ export const lessons: Record<ScenarioId, MiniLesson> = {
   'both-sides': {
     scenarioId: 'both-sides',
     title: '양옆 차량 사이에 안전하게 넣기',
+    methods: [
+      {
+        id: '90-degree',
+        title: '나란히 멈춰서 진입',
+        steps: [
+          { title: '주차칸을 지나 나란히 정지', description: '핸들을 중앙에 두고 주차칸과 나란히 천천히 전진합니다. 탑뷰에서 내 차가 목표 주차칸을 충분히 지나면 완전히 정지합니다.', cue: '옆 차량과의 간격을 유지하고, 뒤쪽에 주차칸 입구가 보이는지 확인하세요.', durationSeconds: 10, gear: 'D', steering: '중앙', check: '차체 평행 · 옆 차량 간격 · 목표 주차칸 위치' },
+          { title: '후진 진입 위치 맞추기', description: 'R로 바꾸고 핸들을 중앙에 둔 채 짧게 직선 후진합니다. 탑뷰의 정지 위치에 도착하면 브레이크를 밟습니다.', cue: '후방 가이드는 위치를 돕는 참고선입니다. 양쪽 간격과 주차칸 입구를 함께 확인하세요.', durationSeconds: 12, gear: 'R', steering: '중앙', check: '탑뷰 정지 위치 · 양쪽 간격 · 주차칸 입구' },
+          { title: '주차 방향으로 끝까지 조향', description: '완전히 정지한 상태에서 주차 공간 방향으로 핸들을 끝까지 돌립니다. 움직이기 전에 양쪽 차량의 가까운 모서리를 확인합니다.', cue: '기어와 핸들 조작은 브레이크로 멈춘 상태에서 하세요.', durationSeconds: 8, gear: 'R', steering: '우측 끝까지', check: 'R 기어 · 주차 방향 최대 조향 · 양옆 모서리' },
+          { title: '평행해질 때까지 곡선 후진', description: '핸들을 끝까지 돌린 상태로 천천히 후진합니다. 양쪽 간격뷰를 번갈아 보고 차체가 주차선과 평행해지는 순간 정지합니다.', cue: '후방 화면만 계속 보지 말고, 가까워지는 옆 차량과 주차선을 먼저 확인하세요.', durationSeconds: 14, gear: 'R', steering: '우측 끝까지', check: '좌측 간격뷰 ↔ 우측 간격뷰 · 차체 평행' },
+          { title: '핸들을 풀고 깊이 맞추기', description: '차체가 주차선과 평행해지면 정지하고 핸들을 중앙으로 풉니다. 양쪽 선 간격을 유지하며 직선 후진합니다.', cue: '좌우 위치는 간격뷰로, 뒤쪽 깊이는 후방 화면과 거리선으로 확인하세요.', durationSeconds: 12, gear: 'R', steering: '중앙', check: '차체 평행 · 핸들 중앙 · 좌우 간격 · 후방 거리' },
+        ],
+      },
+      {
+        id: '45-degree',
+        title: '어깨선 맞추고 진입',
+        steps: [
+          { title: '어깨를 먼 쪽 끝 선에 맞추기', description: '핸들을 중앙에 두고 주차칸과 약 1m 간격을 띄워 천천히 전진합니다. 운전자 어깨가 목표 주차칸의 먼 쪽 주차선에 오면 정지합니다.', cue: '차량 폭이 클수록 조금 더 띄우면 회전하기 수월합니다.', durationSeconds: 10, gear: 'D', steering: '중앙', check: '1m 간격 · 어깨선 일치 · 완전 정지' },
+          { title: '주차 반대 방향으로 전진 조향', description: '주차할 칸의 반대 방향으로 핸들을 끝까지 꺾고 전진합니다. 사이드미러에 주차칸 안쪽 모서리가 보일 때 정지합니다.', cue: '너무 많이 나가면 반대편 차량이나 벽에 닿을 수 있으니 주의하세요.', durationSeconds: 12, gear: 'D', steering: '좌측 끝까지', check: '주차칸 안쪽 모서리 · 반대편 차 간격' },
+          { title: '주차 방향으로 끝까지 조향', description: '완전히 정지한 상태에서 주차할 칸 방향으로 핸들을 끝까지 돌리고 후진 기어(R)로 변경합니다.', cue: '기어와 핸들 조작은 브레이크로 멈춘 상태에서 하세요.', durationSeconds: 8, gear: 'R', steering: '우측 끝까지', check: 'R 기어 · 주차 방향 최대 조향' },
+          { title: '평행해질 때까지 곡선 후진', description: '핸들을 끝까지 돌린 상태로 천천히 후진합니다. 양쪽 사이드미러(간격뷰)를 번갈아 보며 간격을 확인하고 차체가 주차선과 평행해지면 정지합니다.', cue: '사이드미러를 양쪽 모두 확인하며 차가 일직선이 될 때 멈추세요.', durationSeconds: 14, gear: 'R', steering: '우측 끝까지', check: '좌측 ↔ 우측 간격뷰 · 차체 평행' },
+          { title: '핸들을 풀고 깊이 맞추기', description: '차체가 주차선과 평행해지면 정지하고 핸들을 중앙으로 풉니다. 양쪽 선 간격을 유지하며 안전하게 끝까지 직선 후진합니다.', cue: '좌우 위치는 간격뷰로, 뒤쪽 깊이는 후방 화면과 거리선으로 확인하세요.', durationSeconds: 12, gear: 'R', steering: '중앙', check: '차체 평행 · 핸들 중앙 · 후방 거리' },
+        ],
+      },
+    ],
     steps: [
       { title: '주차칸을 지나 나란히 정지', description: '핸들을 중앙에 두고 주차칸과 나란히 천천히 전진합니다. 탑뷰에서 내 차가 목표 주차칸을 충분히 지나면 완전히 정지합니다.', cue: '옆 차량과의 간격을 유지하고, 뒤쪽에 주차칸 입구가 보이는지 확인하세요.', durationSeconds: 10, gear: 'D', steering: '중앙', check: '차체 평행 · 옆 차량 간격 · 목표 주차칸 위치' },
       { title: '후진 진입 위치 맞추기', description: 'R로 바꾸고 핸들을 중앙에 둔 채 짧게 직선 후진합니다. 탑뷰의 정지 위치에 도착하면 브레이크를 밟습니다.', cue: '후방 가이드는 위치를 돕는 참고선입니다. 양쪽 간격과 주차칸 입구를 함께 확인하세요.', durationSeconds: 12, gear: 'R', steering: '중앙', check: '탑뷰 정지 위치 · 양쪽 간격 · 주차칸 입구' },

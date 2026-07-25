@@ -29,21 +29,25 @@ export function resolveWheelStop(previous: VehicleState, next: VehicleState) {
   const insideWidth = nextAxle.x >= WHEEL_STOP.segments[0].left - 0.2
     && nextAxle.x <= WHEEL_STOP.segments[1].right + 0.2
   const movingTowardStop = nextAxle.y > previousAxle.y
-  const crossed = previousAxle.y <= WHEEL_STOP.y && nextAxle.y >= WHEEL_STOP.y
-  if (!insideWidth || !movingTowardStop || !crossed) return { vehicle: next, contacted: false }
+  
+  if (!insideWidth || !movingTowardStop) return { vehicle: next, contacted: false }
 
-  const delta = nextAxle.y - previousAxle.y
-  const progress = delta <= 0 ? 0 : (WHEEL_STOP.y - previousAxle.y) / delta
-  const heading = previous.heading + (next.heading - previous.heading) * progress
-  return {
-    contacted: true,
-    vehicle: {
-      ...next,
-      x: previous.x + (next.x - previous.x) * progress,
-      y: previous.y + (next.y - previous.y) * progress,
-      heading,
-      speed: 0,
-      braking: true,
-    },
+  if (nextAxle.y >= WHEEL_STOP.y) {
+    const delta = nextAxle.y - previousAxle.y
+    const progress = Math.max(0, (WHEEL_STOP.y - previousAxle.y) / delta)
+    const heading = previous.heading + (next.heading - previous.heading) * progress
+    return {
+      contacted: true,
+      vehicle: {
+        ...next,
+        x: previous.x + (next.x - previous.x) * progress,
+        y: previous.y + (next.y - previous.y) * progress,
+        heading,
+        speed: 0,
+        braking: true,
+      },
+    }
   }
+
+  return { vehicle: next, contacted: false }
 }
