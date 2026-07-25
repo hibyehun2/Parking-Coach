@@ -3107,6 +3107,28 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 
 .correction-review-card {
   container-type: inline-size;
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(200px, 1.1fr);
+  align-items: start;
+}
+
+.correction-review-card > header {
+  grid-column: 1 / -1;
+}
+
+.correction-review-card > .correction-path-comparison {
+  grid-column: 1;
+}
+
+.correction-review-card > .correction-review-copy {
+  grid-column: 2;
+}
+
+.correction-review-card > .review-topview-unavailable {
+  grid-column: 1;
+  padding: 0 15px 15px;
+  font-size: 0.75rem;
+  color: var(--muted);
 }
 
 .correction-path-comparison {

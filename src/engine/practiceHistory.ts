@@ -57,43 +57,7 @@ export type PracticeSession = {
 export type PracticeHistory = { version: 5; sessions: PracticeSession[] }
 export type PracticeTrend = 'insufficient' | 'improving' | 'steady' | 'needs-focus'
 
-const EMPTY_HISTORY: PracticeHistory = { version: 5, sessions: [] }
-const LOCAL_STORAGE_KEY = 'parking-coach:practice-history:v5'
-
-function readLocalHistory(): PracticeHistory {
-  if (typeof window === 'undefined') return EMPTY_HISTORY
-  const stored = window.localStorage.getItem(LOCAL_STORAGE_KEY)
-  if (!stored) return EMPTY_HISTORY
-  try {
-    const parsed = JSON.parse(stored) as PracticeHistory
-    if (parsed.version === 5) return parsed
-  } catch (e) {
-    console.error('Failed to parse local history:', e)
-  }
-  return EMPTY_HISTORY
-}
-
-function writeLocalHistory(history: PracticeHistory) {
-  if (typeof window !== 'undefined') {
-    window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(history))
-  }
-}
-
-function mergeHistory(local: PracticeHistory, remote: PracticeSession[]): PracticeHistory {
-  const sessionsMap = new Map<string, PracticeSession>()
-  // Local first
-  for (const session of local.sessions) {
-    sessionsMap.set(session.id, session)
-  }
-  // Remote overwrites local if duplicate ID
-  for (const session of remote) {
-    sessionsMap.set(session.id, session)
-  }
-  return {
-    version: 5,
-    sessions: Array.from(sessionsMap.values()).sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())
-  }
-}
+export const EMPTY_HISTORY: PracticeHistory = { version: 5, sessions: [] }
 
 export function createPracticeShareId(randomUUID = globalThis.crypto?.randomUUID?.bind(globalThis.crypto)) {
   if (randomUUID) return randomUUID()
@@ -101,11 +65,10 @@ export function createPracticeShareId(randomUUID = globalThis.crypto?.randomUUID
 }
 
 export async function fetchPracticeHistory(): Promise<PracticeHistory> {
-  const localHistory = readLocalHistory()
-  if (!supabase) return localHistory
+  if (!supabase) return EMPTY_HISTORY
   
   const { data: userResp } = await supabase.auth.getUser()
-  if (!userResp?.user) return localHistory
+  if (!userResp?.user) return EMPTY_HISTORY
 
   const { data, error } = await supabase
     .from('practice_sessions')
@@ -114,10 +77,10 @@ export async function fetchPracticeHistory(): Promise<PracticeHistory> {
 
   if (error) {
     console.error('Failed to fetch practice history:', error)
-    return localHistory
+    return EMPTY_HISTORY
   }
 
-  const remoteSessions: PracticeSession[] = data.map(item => ({
+  const sessions: PracticeSession[] = data.map(item => ({
     id: item.id,
     completedAt: item.completed_at,
     scenarioId: item.scenario_id as ScenarioId,
@@ -143,9 +106,7 @@ export async function fetchPracticeHistory(): Promise<PracticeHistory> {
     shareError: item.share_error,
   }))
 
-  const merged = mergeHistory(localHistory, remoteSessions)
-  writeLocalHistory(merged)
-  return merged
+  return { version: 5, sessions }
 }
 
 export async function recordPracticeSessionDb(
@@ -186,37 +147,33 @@ export async function recordPracticeSessionDb(
     shareStatus: 'private' as PracticeShareStatus,
   } as PracticeSession
 
-  const localHistory = readLocalHistory()
-  localHistory.sessions.unshift(sessionObj)
-  writeLocalHistory(localHistory)
+  if (!supabase) return sessionObj
+  const { data: userResp } = await supabase.auth.getUser()
+  if (!userResp?.user) return sessionObj
 
-  if (supabase) {
-    void supabase.auth.getUser().then(({ data: userResp }) => {
-      if (!userResp?.user) return
-      
-      const sessionData = {
-        id: sessionObj.id,
-        owner_id: userResp.user.id,
-        completed_at: sessionObj.completedAt,
-        scenario_id: sessionObj.scenarioId,
-        mode: sessionObj.mode,
-        success: sessionObj.success,
-        collision_count: sessionObj.collisionCount,
-        collision_targets: sessionObj.collisionTargets,
-        collision_zones: sessionObj.collisionZones,
-        mistakes: sessionObj.mistakes,
-        seed: sessionObj.seed,
-        variant: sessionObj.variant,
-        runtime: sessionObj.runtime,
-        moments: sessionObj.moments,
-        bookmarked: sessionObj.bookmarked,
-        share_status: sessionObj.shareStatus,
-      }
-      
-      void supabase!.from('practice_sessions').insert(sessionData).then(({ error }) => {
-        if (error) console.error('Failed to record practice session to DB:', error)
-      })
-    })
+  const sessionData = {
+    id: sessionObj.id,
+    owner_id: userResp.user.id,
+    completed_at: sessionObj.completedAt,
+    scenario_id: sessionObj.scenarioId,
+    mode: sessionObj.mode,
+    success: sessionObj.success,
+    collision_count: sessionObj.collisionCount,
+    collision_targets: sessionObj.collisionTargets,
+    collision_zones: sessionObj.collisionZones,
+    mistakes: sessionObj.mistakes,
+    seed: sessionObj.seed,
+    variant: sessionObj.variant,
+    runtime: sessionObj.runtime,
+    moments: sessionObj.moments,
+    bookmarked: sessionObj.bookmarked,
+    share_status: sessionObj.shareStatus,
+  }
+  
+  const { error } = await supabase.from('practice_sessions').insert(sessionData)
+  if (error) {
+    console.error('Failed to record practice session to DB:', error)
+    return null
   }
   
   return sessionObj
@@ -237,25 +194,20 @@ export async function clearPracticeHistoryDb(): Promise<PracticeHistory> {
     console.error('Failed to clear practice history:', error)
   }
   
-  writeLocalHistory(EMPTY_HISTORY)
   return EMPTY_HISTORY
 }
 
 export async function deletePracticeSessionDb(sessionId: string): Promise<PracticeHistory> {
-  const currentHistory = await fetchPracticeHistory()
-  const session = currentHistory.sessions.find(s => s.id === sessionId)
-  if (!session) return currentHistory
+  if (!supabase) return EMPTY_HISTORY
+  const { data: userResp } = await supabase.auth.getUser()
+  if (!userResp?.user) return await fetchPracticeHistory()
 
-  if (supabase) {
-    const { data: userResp } = await supabase.auth.getUser()
-    if (userResp?.user) {
-      await supabase.from('practice_sessions').delete().eq('id', sessionId).eq('owner_id', userResp.user.id)
-    }
+  const { error } = await supabase.from('practice_sessions').delete().eq('id', sessionId).eq('owner_id', userResp.user.id)
+  if (error) {
+    console.error('Failed to delete session:', error)
   }
 
-  const nextHistory = { ...currentHistory, sessions: currentHistory.sessions.filter(s => s.id !== sessionId) }
-  writeLocalHistory(nextHistory)
-  return nextHistory
+  return await fetchPracticeHistory()
 }
 
 export async function recordCorrectionSessionDb(
@@ -285,39 +237,35 @@ export async function recordCorrectionSessionDb(
     shareStatus: 'private' as PracticeShareStatus,
   } as PracticeSession
 
-  const localHistory = readLocalHistory()
-  localHistory.sessions.unshift(sessionObj)
-  writeLocalHistory(localHistory)
+  if (!supabase) return sessionObj
+  const { data: userResp } = await supabase.auth.getUser()
+  if (!userResp?.user) return sessionObj
 
-  if (supabase) {
-    void supabase.auth.getUser().then(({ data: userResp }) => {
-      if (!userResp?.user) return
+  const sessionData = {
+    id: sessionObj.id,
+    owner_id: userResp.user.id,
+    completed_at: sessionObj.completedAt,
+    scenario_id: sessionObj.scenarioId,
+    mode: sessionObj.mode,
+    success: sessionObj.success,
+    collision_count: sessionObj.collisionCount,
+    collision_targets: sessionObj.collisionTargets,
+    collision_zones: sessionObj.collisionZones,
+    mistakes: sessionObj.mistakes,
+    seed: sessionObj.seed,
+    variant: sessionObj.variant,
+    runtime: sessionObj.runtime,
+    quiz_score: sessionObj.quizScore,
+    quiz_total: sessionObj.quizTotal,
+    correction_attempts: sessionObj.correctionAttempts,
+    bookmarked: sessionObj.bookmarked,
+    share_status: sessionObj.shareStatus,
+  }
 
-      const sessionData = {
-        id: sessionObj.id,
-        owner_id: userResp.user.id,
-        completed_at: sessionObj.completedAt,
-        scenario_id: sessionObj.scenarioId,
-        mode: sessionObj.mode,
-        success: sessionObj.success,
-        collision_count: sessionObj.collisionCount,
-        collision_targets: sessionObj.collisionTargets,
-        collision_zones: sessionObj.collisionZones,
-        mistakes: sessionObj.mistakes,
-        seed: sessionObj.seed,
-        variant: sessionObj.variant,
-        runtime: sessionObj.runtime,
-        quiz_score: sessionObj.quizScore,
-        quiz_total: sessionObj.quizTotal,
-        correction_attempts: sessionObj.correctionAttempts,
-        bookmarked: sessionObj.bookmarked,
-        share_status: sessionObj.shareStatus,
-      }
-
-      void supabase!.from('practice_sessions').insert(sessionData).then(({ error }) => {
-        if (error) console.error('Failed to record correction session to DB:', error)
-      })
-    })
+  const { error } = await supabase.from('practice_sessions').insert(sessionData)
+  if (error) {
+    console.error('Failed to record correction session to DB:', error)
+    return null
   }
   
   return sessionObj
@@ -328,36 +276,12 @@ export async function togglePracticeBookmarkDb(
   now = new Date(),
   options: { targetState?: boolean, shareWhenAdded?: boolean } = {},
 ) {
-  const localHistory = readLocalHistory()
-  const localTarget = localHistory.sessions.find((session) => session.id === sessionId)
-  
-  if (localTarget) {
-    if (options.targetState === undefined || localTarget.bookmarked !== options.targetState) {
-      if (options.targetState === true && localHistory.sessions.filter(s => s.bookmarked).length >= MAX_BOOKMARKED_SESSIONS) {
-        return { status: 'limit' as const }
-      }
-      localTarget.bookmarked = options.targetState ?? !localTarget.bookmarked
-      localTarget.bookmarkedAt = localTarget.bookmarked ? now.toISOString() : undefined
-      if (localTarget.bookmarked) {
-        localTarget.shareStatus = options.shareWhenAdded ? 'pending' : 'private'
-        localTarget.shareClientId = options.shareWhenAdded ? localTarget.shareClientId ?? createPracticeShareId() : localTarget.shareClientId
-        localTarget.shareRequestedAt = options.shareWhenAdded ? now.toISOString() : undefined
-        localTarget.shareError = undefined
-      } else {
-        localTarget.shareStatus = localTarget.publicCaseId ? 'unpublishing' : 'private'
-        localTarget.shareRequestedAt = localTarget.publicCaseId ? now.toISOString() : undefined
-        localTarget.shareError = undefined
-      }
-      writeLocalHistory(localHistory)
-    }
-  }
-
-  if (!supabase) return { status: localTarget ? (localTarget.bookmarked ? 'added' : 'removed') : 'not-found' }
+  if (!supabase) return { status: 'not-found' as const }
   
   const history = await fetchPracticeHistory()
   const target = history.sessions.find((session) => session.id === sessionId)
   
-  if (!target) return { status: localTarget ? (localTarget.bookmarked ? 'added' : 'removed') : 'not-found' }
+  if (!target) return { status: 'not-found' as const }
   
   if (options.targetState !== undefined && target.bookmarked === options.targetState) {
     return { status: target.bookmarked ? 'added' as const : 'removed' as const }
