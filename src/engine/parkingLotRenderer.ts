@@ -88,6 +88,37 @@ function drawVehicle(
   context.save()
   context.translate(x, y)
   context.rotate(heading)
+
+  if (style.emphasizeDirectionLights && (style.reverseLights || style.forwardLights)) {
+    const pointsTowardFront = style.forwardLights
+    const bumperX = pointsTowardFront ? length / 2 - .04 : -length / 2 + .04
+    const outerX = pointsTowardFront ? length / 2 + 2.25 : -length / 2 - 2.25
+    const glow = context.createLinearGradient(bumperX, 0, outerX, 0)
+    glow.addColorStop(0, pointsTowardFront ? 'rgba(255,247,190,.54)' : 'rgba(238,255,249,.62)')
+    glow.addColorStop(.42, pointsTowardFront ? 'rgba(255,239,164,.2)' : 'rgba(224,255,246,.24)')
+    glow.addColorStop(1, 'rgba(255,255,255,0)')
+    context.fillStyle = glow
+    context.beginPath()
+    context.moveTo(bumperX, -width * .32)
+    context.lineTo(outerX, -width * .7)
+    context.lineTo(outerX, width * .7)
+    context.lineTo(bumperX, width * .32)
+    context.closePath()
+    context.fill()
+
+    for (const side of [-1, 1]) {
+      const lampY = side * width * .08
+      const halo = context.createRadialGradient(bumperX, lampY, .02, bumperX, lampY, .6)
+      halo.addColorStop(0, pointsTowardFront ? 'rgba(255,250,211,.8)' : 'rgba(242,255,251,.9)')
+      halo.addColorStop(.45, pointsTowardFront ? 'rgba(255,239,168,.28)' : 'rgba(224,255,246,.34)')
+      halo.addColorStop(1, 'rgba(255,255,255,0)')
+      context.fillStyle = halo
+      context.beginPath()
+      context.arc(bumperX, lampY, .6, 0, Math.PI * 2)
+      context.fill()
+    }
+  }
+
   if (style.highlight) {
     context.shadowColor = 'rgba(255, 224, 120, .95)'
     context.shadowBlur = 0.22
@@ -186,20 +217,31 @@ function drawVehicle(
     context.fillRect(-length / 2 + .04, -width * .34, .09, width * .25)
     context.fillRect(-length / 2 + .04, width * .09, .09, width * .25)
   } else {
-    context.fillRect(-length / 2 + .04, -width * .36, .16, width * .23)
-    context.fillRect(-length / 2 + .04, width * .13, .16, width * .23)
+    const tailLength = style.emphasizeDirectionLights ? .24 : .16
+    const tailWidth = style.emphasizeDirectionLights ? width * .15 : width * .23
+    const tailInset = style.emphasizeDirectionLights ? width * .23 : width * .13
+    context.fillRect(-length / 2 + .04, -tailInset - tailWidth, tailLength, tailWidth)
+    context.fillRect(-length / 2 + .04, tailInset, tailLength, tailWidth)
   }
   context.shadowBlur = 0
   if (style.reverseLights) {
     const emphasized = style.emphasizeDirectionLights
-    const lightLength = emphasized ? .24 : .13
-    const lightWidth = emphasized ? .18 : .12
-    context.fillStyle = '#f7fff9'
-    context.shadowColor = 'rgba(235,255,246,.95)'
-    context.shadowBlur = emphasized ? .34 : .18
-    context.fillRect(-length / 2 + .04, -width * .24, lightLength, lightWidth)
-    context.fillRect(-length / 2 + .04, width * .06, lightLength, lightWidth)
-    context.shadowBlur = 0
+    const lightLength = emphasized ? .3 : .16
+    const lightWidth = emphasized ? width * .13 : .12
+    const lightX = -length / 2 + .025
+    for (const side of [-1, 1]) {
+      const lightY = side * width * .12 - lightWidth / 2
+      context.fillStyle = emphasized ? 'rgba(226,255,246,.42)' : '#d9ebe5'
+      roundedRect(context, lightX - .035, lightY - .035, lightLength + .07, lightWidth + .07, .055)
+      context.fill()
+      context.fillStyle = '#ffffff'
+      roundedRect(context, lightX, lightY, lightLength, lightWidth, .04)
+      context.fill()
+      if (emphasized) {
+        context.fillStyle = '#dffff5'
+        context.fillRect(lightX + .025, lightY + .025, lightLength * .48, lightWidth - .05)
+      }
+    }
   }
 
   if (style.label) {

@@ -68,25 +68,6 @@ export function JudgmentCanvas({
         showReverseGuide: false,
         emphasizeDirectionLights: true,
       })
-      const moving = Math.abs(displayed.speed) >= .02 && !displayed.braking
-      const status = displayed.gear === 'R'
-        ? moving ? 'R · 후진' : 'R · 정지'
-        : moving ? 'D · 전진' : 'D · 정지'
-      const fontSize = Math.max(14, Math.min(16, width / 25))
-      context.font = `850 ${fontSize}px sans-serif`
-      const textWidth = context.measureText(status).width
-      const badgeWidth = textWidth + 24
-      const badgeHeight = fontSize + 14
-      const badgeX = 12
-      const badgeY = 12
-      context.fillStyle = 'rgba(13,29,23,.86)'
-      context.beginPath()
-      context.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2)
-      context.fill()
-      context.fillStyle = displayed.gear === 'R' ? '#f5fff9' : '#fff5bf'
-      context.textAlign = 'center'
-      context.textBaseline = 'middle'
-      context.fillText(status, badgeX + badgeWidth / 2, badgeY + badgeHeight / 2 + .5)
     }
     const observer = new ResizeObserver(draw)
     observer.observe(canvas)
