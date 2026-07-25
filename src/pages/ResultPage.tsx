@@ -57,6 +57,16 @@ function collisionCoaching(event: ReplayEvent) {
   }
 }
 
+function nextPracticeSummary(result: ParkingResult, steeringCentered: boolean) {
+  if (result.collisionCount > 0) return '다음에는 위험 지점 앞에서 완전히 멈추고, 핸들을 중앙으로 푼 뒤 짧게 이동해 간격을 회복하세요.'
+  if (!result.fullyInside) return '다음에는 좌우 간격을 번갈아 확인하며 차량 전체를 주차선 안에 넣어보세요.'
+  if (!result.stopped) return '다음에는 최종 위치와 양쪽 간격을 확인한 뒤 브레이크로 완전히 정지하세요.'
+  if (!steeringCentered) return '다음에는 차체가 평행해지면 핸들을 중앙으로 돌려놓고 직선으로 마무리하세요.'
+  if (result.angleErrorDegrees > 5) return '다음에는 깊이보다 차체를 주차선과 평행하게 맞추는 데 집중하세요.'
+  if (result.centerError > .3) return '다음에는 좌우 주차선 간격을 번갈아 비교하며 가운데로 조정하세요.'
+  return '완전 정지와 조향 복귀를 잘 지켰습니다. 다음 연습에서도 같은 확인 순서를 유지하세요.'
+}
+
 function findCorrectionScenario(session: PracticeSession, attempt: CorrectionAttempt) {
   if (!session.runtime) return null
   const drill = buildCorrectionDrills(session.runtime).find((item) => item.id === attempt.drillId)
@@ -231,6 +241,8 @@ export function ResultPage() {
   const replayMoments = replay
     .filter((event) => event.type === 'collision' || (event.type === 'finish' && result?.success))
     .slice(-3)
+  const finalVehicle = replay.slice().reverse().find((event) => event.type === 'finish')?.vehicle
+  const steeringCentered = finalVehicle ? Math.abs(finalVehicle.steeringAngle) < .08 : false
   const selectedLearningCase = learningCases.find((learningCase) => learningCase.id === selectedLearningCaseId) ?? learningCases[0]
   const changeResultTab = (tab: 'current' | 'history' | 'community') => {
     if (tab === 'community' && learningCasesStatus === 'idle') setLearningCasesStatus('loading')
@@ -370,14 +382,18 @@ export function ResultPage() {
       </div>
 
       {activeTab === 'current' && challengeComplete && <section className="challenge-result-summary">
-        <strong>첫 선택 기준 {state?.challengeScore ?? 0} / {state?.challengeTotal ?? 6}문제를 정확히 판단했습니다.</strong>
-        <p>위험 지점 발견부터 정지·간격 회복·재확인·다시 후진·최종 주차까지 차량 상태가 이어지는 수정 주차 연습을 완료했습니다.</p>
+        <strong>{(state?.challengeScore ?? 0) === (state?.challengeTotal ?? 6)
+          ? '다음에는 같은 정지·간격 회복 순서를 직접 주차에 적용해보세요.'
+          : '다음에는 틀린 판단부터 다시 보고, 움직이기 전에 정지와 조향 방향을 먼저 정하세요.'}</strong>
+        <p>첫 선택 기준 {state?.challengeScore ?? 0} / {state?.challengeTotal ?? 6}문제를 정확히 판단했습니다.</p>
         <div className="result-actions"><Link className="primary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=practice`}>다른 판단 연습하기</Link><Link className="secondary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=learning`}>직접 연습에 적용</Link></div>
       </section>}
 
       {activeTab === 'current' && result && <section className={`current-result-dashboard${collisionEvent ? ' result-has-detail' : ''}${isCompactLandscape && !collisionEvent && replayMoments.length === 0 ? ' result-single-pane' : ''}`} aria-label="이번 연습 핵심 결과">
         <div className="result-overview-column">
           <article className={`result-card result-overview-card ${result.success && !result.collisionCount ? 'good' : 'needs-work'}`}>
+            <span>다음 연습 한 줄</span>
+            <strong className="next-practice-summary">{nextPracticeSummary(result, steeringCentered)}</strong>
             <span>실제 결과</span>
             <strong>{result.success
               ? result.collisionCount ? '주차는 완료했지만 충돌이 있었습니다' : '안전하게 주차를 완료했습니다'
@@ -387,6 +403,16 @@ export function ResultPage() {
               <div><small>충돌</small><b>{result.collisionCount}회</b></div>
               <div><small>차체 각도</small><b>{result.angleErrorDegrees.toFixed(1)}°</b></div>
               <div><small>중앙 오차</small><b>{Math.round(result.centerError * 100)}cm</b></div>
+            </div>
+            <div className="driving-habits" aria-label="안전 습관 확인">
+              <span className={result.stopped ? 'achieved' : 'needs-practice'}>
+                <i aria-hidden="true">{result.stopped ? '✓' : '!'}</i>
+                <b>{result.stopped ? '완전 정지' : '완전 정지 필요'}</b>
+              </span>
+              <span className={steeringCentered ? 'achieved' : 'needs-practice'}>
+                <i aria-hidden="true">{steeringCentered ? '✓' : '!'}</i>
+                <b>{steeringCentered ? '조향 복귀' : '조향 복귀 필요'}</b>
+              </span>
             </div>
           </article>
 

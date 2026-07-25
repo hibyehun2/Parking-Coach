@@ -285,15 +285,6 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
         <span>{itemIndex + 1} / {practiceItems.length}</span>
         <strong>{current.drill.title} · {current.step.title}</strong>
         <progress value={itemIndex + 1} max={practiceItems.length} />
-        {attempts.length > 0 && (
-          <button
-            type="button"
-            className="previous-quiz-control"
-            onClick={() => setReviewAttemptIndex(attempts.length - 1)}
-          >
-            이전 문제 보기
-          </button>
-        )}
       </div>
       <p className="page-description">{current.drill.description} 선택한 안전 동작의 결과가 다음 판단 단계로 이어집니다.</p>
       <JudgmentQuiz
@@ -303,6 +294,7 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
         questionNumber={itemIndex + 1}
         total={practiceItems.length}
         onComplete={complete}
+        onReviewPrevious={attempts.length > 0 ? () => setReviewAttemptIndex(attempts.length - 1) : undefined}
       />
       {reviewAttemptIndex !== null && attempts[reviewAttemptIndex] && (
         <PreviousQuestionReview

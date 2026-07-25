@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
-import { simulateJudgmentChoice, type JudgmentChoice, type JudgmentScenario } from '../engine/judgmentScenarios'
+import { shuffledJudgmentChoices, simulateJudgmentChoice, type JudgmentChoice, type JudgmentScenario } from '../engine/judgmentScenarios'
 import { renderParkingLot } from '../engine/parkingLotRenderer'
 import type { ScenarioRuntime } from '../types/practice'
 
@@ -65,8 +65,28 @@ export function JudgmentCanvas({
           ? [{ vehicle: simulation.states[simulation.states.length - 1], color: correct ? '#31d38b' : '#ff6b62' }]
           : undefined,
         highlightParkedCorner: highlightedParkedSide,
-        reverseGuideOpacity: 0.38,
+        showReverseGuide: false,
+        emphasizeDirectionLights: true,
       })
+      const moving = Math.abs(displayed.speed) >= .02 && !displayed.braking
+      const status = displayed.gear === 'R'
+        ? moving ? 'R · 후진' : 'R · 정지'
+        : moving ? 'D · 전진' : 'D · 정지'
+      const fontSize = Math.max(14, Math.min(16, width / 25))
+      context.font = `850 ${fontSize}px sans-serif`
+      const textWidth = context.measureText(status).width
+      const badgeWidth = textWidth + 24
+      const badgeHeight = fontSize + 14
+      const badgeX = 12
+      const badgeY = 12
+      context.fillStyle = 'rgba(13,29,23,.86)'
+      context.beginPath()
+      context.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2)
+      context.fill()
+      context.fillStyle = displayed.gear === 'R' ? '#f5fff9' : '#fff5bf'
+      context.textAlign = 'center'
+      context.textBaseline = 'middle'
+      context.fillText(status, badgeX + badgeWidth / 2, badgeY + badgeHeight / 2 + .5)
     }
     const observer = new ResizeObserver(draw)
     observer.observe(canvas)
@@ -74,7 +94,7 @@ export function JudgmentCanvas({
     return () => observer.disconnect()
   }, [correct, frame, highlightedParkedSide, runtime, scenario, simulation])
 
-  return <canvas ref={canvasRef} role="img" aria-label={`${scenario.title} 상황의 차량 위치와 선택 결과`} />
+  return <canvas ref={canvasRef} role="img" aria-label={`${scenario.title} 상황의 차량 위치, 기어와 선택 결과`} />
 }
 
 export function JudgmentGuide({
@@ -118,12 +138,14 @@ export function JudgmentQuiz({
   questionNumber,
   total,
   onComplete,
+  onReviewPrevious,
 }: {
   scenario: JudgmentScenario
   runtime: ScenarioRuntime
   questionNumber: number
   total: number
   onComplete: (firstTryCorrect: boolean, answer: JudgmentChoice, firstChoice: JudgmentChoice) => void
+  onReviewPrevious?: () => void
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [attempted, setAttempted] = useState(false)
@@ -131,6 +153,10 @@ export function JudgmentQuiz({
   const [firstSelectedId, setFirstSelectedId] = useState<string | null>(null)
   const selected = scenario.choices.find((choice) => choice.id === selectedId) ?? null
   const correct = selectedId === scenario.answer
+  const displayedChoices = useMemo(
+    () => shuffledJudgmentChoices(scenario.choices, scenario.id, runtime.seed),
+    [runtime.seed, scenario.choices, scenario.id],
+  )
 
   const select = (choice: JudgmentChoice) => {
     if (correct) return
@@ -161,7 +187,7 @@ export function JudgmentQuiz({
           <small>판단 유형 · {scenario.title}</small>
           <strong>{scenario.question}</strong>
           <div className="quiz-choices">
-            {scenario.choices.map((choice) => (
+            {displayedChoices.map((choice) => (
               <Fragment key={choice.id}>
                 <button
                   type="button"
@@ -180,13 +206,16 @@ export function JudgmentQuiz({
             ))}
           </div>
           {selected && <p className={correct ? 'quiz-correct-copy' : 'quiz-wrong-copy'}>{selected.feedback}</p>}
-          {correct && selected && <button type="button" className="quiz-next" onClick={() => onComplete(
-            firstTryCorrect,
-            selected,
-            scenario.choices.find((choice) => choice.id === firstSelectedId) ?? selected,
-          )}>
-            {questionNumber === total ? '연습 결과 보기' : '다음 판단 문제'}
-          </button>}
+          {(onReviewPrevious || correct && selected) && <div className="quiz-actions">
+            {onReviewPrevious && <button type="button" className="previous-quiz-control" onClick={onReviewPrevious}>이전 문제 보기</button>}
+            {correct && selected && <button type="button" className="quiz-next" onClick={() => onComplete(
+              firstTryCorrect,
+              selected,
+              scenario.choices.find((choice) => choice.id === firstSelectedId) ?? selected,
+            )}>
+              {questionNumber === total ? '연습 결과 보기' : '다음 판단 문제'}
+            </button>}
+          </div>}
         </div>
       </div>
     </section>

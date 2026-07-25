@@ -60,6 +60,8 @@ type VehicleStyle = {
   label?: string
   highlight?: boolean
   reverseLights?: boolean
+  forwardLights?: boolean
+  emphasizeDirectionLights?: boolean
   braking?: boolean
 }
 
@@ -165,6 +167,15 @@ function drawVehicle(
   context.fillStyle = '#f1d47a'
   context.fillRect(length / 2 - 0.12, -width * 0.31, 0.08, width * 0.2)
   context.fillRect(length / 2 - 0.12, width * 0.11, 0.08, width * 0.2)
+  if (style.forwardLights && style.emphasizeDirectionLights) {
+    context.save()
+    context.fillStyle = '#fff8cf'
+    context.shadowColor = 'rgba(255,246,190,.96)'
+    context.shadowBlur = .32
+    context.fillRect(length / 2 - .13, -width * .34, .2, width * .23)
+    context.fillRect(length / 2 - .13, width * .11, .2, width * .23)
+    context.restore()
+  }
   context.fillStyle = style.braking ? '#ff3b30' : '#df6c66'
   context.shadowColor = style.braking ? 'rgba(255,59,48,.9)' : 'transparent'
   context.shadowBlur = style.braking ? .16 : 0
@@ -180,11 +191,14 @@ function drawVehicle(
   }
   context.shadowBlur = 0
   if (style.reverseLights) {
+    const emphasized = style.emphasizeDirectionLights
+    const lightLength = emphasized ? .24 : .13
+    const lightWidth = emphasized ? .18 : .12
     context.fillStyle = '#f7fff9'
     context.shadowColor = 'rgba(235,255,246,.95)'
-    context.shadowBlur = .18
-    context.fillRect(-length / 2 + .04, -width * .09, .13, .12)
-    context.fillRect(-length / 2 + .04, width * .02, .13, .12)
+    context.shadowBlur = emphasized ? .34 : .18
+    context.fillRect(-length / 2 + .04, -width * .24, lightLength, lightWidth)
+    context.fillRect(-length / 2 + .04, width * .06, lightLength, lightWidth)
     context.shadowBlur = 0
   }
 
@@ -628,6 +642,8 @@ export function renderParkingLot(
     ghostVehicles?: { vehicle: VehicleState; color: string }[]
     highlightContactZone?: Collision['contactZone']
     reverseGuideOpacity?: number
+    showReverseGuide?: boolean
+    emphasizeDirectionLights?: boolean
   } = {},
 ) {
   context.clearRect(0, 0, viewportWidth, viewportHeight)
@@ -669,7 +685,7 @@ export function renderParkingLot(
   drawStructure(context, options.runtime?.walls)
   drawParkingLines(context)
   drawWheelStop(context, Boolean(options.wheelStopActive))
-  drawReverseGuide(context, vehicle, options.reverseGuideOpacity)
+  if (options.showReverseGuide !== false) drawReverseGuide(context, vehicle, options.reverseGuideOpacity)
   for (const path of options.candidatePaths ?? []) {
     if (path.points.length < 2) continue
     context.save()
@@ -731,6 +747,8 @@ export function renderParkingLot(
     outline: options.danger ? '#ffd275' : '#b7ffe4',
     variant: 'hatchback',
     reverseLights: vehicle.gear === 'R',
+    forwardLights: vehicle.gear === 'D',
+    emphasizeDirectionLights: options.emphasizeDirectionLights,
     braking: vehicle.braking,
   })
   if (options.highlightParkedCorner) {

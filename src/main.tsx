@@ -2,7 +2,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
 import App from './App'
+import { resetStartupRouteToHome } from './engine/startupRoute'
 import './styles/global.css'
+
+resetStartupRouteToHome(window)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -3,7 +3,7 @@ import test from 'node:test'
 import { createScenarioRuntime } from '../src/data/scenarios.ts'
 import { buildCorrectionDrills } from '../src/engine/correctionDrills.ts'
 import { detectCollision } from '../src/engine/collisionDetection.ts'
-import { simulateJudgmentChoice } from '../src/engine/judgmentScenarios.ts'
+import { shuffledJudgmentChoices, simulateJudgmentChoice } from '../src/engine/judgmentScenarios.ts'
 import { evaluateParking, isVehicleInsideParkingBay, TARGET_PARKING_BAY } from '../src/engine/parkingEvaluation.ts'
 
 function answerOf(step: ReturnType<typeof buildCorrectionDrills>[number]['steps'][number]) {
@@ -41,6 +41,53 @@ test('선택지는 짧게 보여주고 여러 동작의 상세 순서는 정답 
     const answer = answerOf(step)
     if (['near-resume', 'far-resume', 'off-center-exit', 'off-center-realign', 'crooked-space', 'crooked-align'].includes(step.id)) {
       assert.ok((answer.steps?.length ?? 0) >= 2, step.id)
+    }
+  }
+})
+
+test('선택지는 정답을 암시하는 과장 표현 없이 비슷한 조작끼리 비교한다', () => {
+  const steps = buildCorrectionDrills(createScenarioRuntime('both-sides', { seed: 2 }))
+    .flatMap(({ steps: items }) => items)
+  for (const step of steps) {
+    assert.equal(step.choices.some(({ label }) => /빠르게|길게|끝까지|바로|한 번에|계속/.test(label)), false, step.id)
+  }
+})
+
+test('정답 위치는 문제와 연습 시드에 따라 안정적으로 섞인다', () => {
+  const step = buildCorrectionDrills(createScenarioRuntime('both-sides', { seed: 2 }))[0].steps[0]
+  const positions = new Set<number>()
+  for (let seed = 1; seed <= 20; seed += 1) {
+    const first = shuffledJudgmentChoices(step.choices, step.id, seed)
+    const second = shuffledJudgmentChoices(step.choices, step.id, seed)
+    assert.deepEqual(first.map(({ id }) => id), second.map(({ id }) => id))
+    positions.add(first.findIndex(({ id }) => id === step.answer))
+  }
+  assert.deepEqual([...positions].sort(), [0, 1, 2])
+})
+
+test('모든 정답과 오답 탑뷰는 차량 물리로 유효한 상태를 만든다', () => {
+  for (const scenarioId of ['both-sides', 'narrow-aisle'] as const) {
+    const runtime = createScenarioRuntime(scenarioId, { seed: 2, firstSuccess: true })
+    for (const step of buildCorrectionDrills(runtime).flatMap(({ steps }) => steps)) {
+      for (const choice of step.choices) {
+        assert.ok(choice.previewStates?.length || choice.motion?.length, `${step.id}/${choice.id}: 이동 데이터`)
+        const simulation = simulateJudgmentChoice(step.vehicle, choice, runtime)
+        assert.ok(simulation.states.length >= 1, `${step.id}/${choice.id}: 상태`)
+        for (const state of simulation.states) {
+          assert.ok([
+            state.x,
+            state.y,
+            state.heading,
+            state.steeringAngle,
+            state.speed,
+          ].every(Number.isFinite), `${step.id}/${choice.id}: 유한한 차량 상태`)
+        }
+        for (let index = 1; index < simulation.states.length; index += 1) {
+          const previous = simulation.states[index - 1]
+          const current = simulation.states[index]
+          assert.ok(Math.hypot(current.x - previous.x, current.y - previous.y) < .25, `${step.id}/${choice.id}: 연속 경로`)
+        }
+      }
     }
   }
 })

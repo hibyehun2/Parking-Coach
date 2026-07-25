@@ -123,7 +123,7 @@ export function SettingsPage() {
         <p className="settings-note">{user ? '로그아웃해도 서버에 공유한 학습 사례는 유지되며, 다시 로그인하면 같은 계정으로 연결됩니다.' : 'Google 계정의 이름과 사진은 학습 사례에 공개하지 않습니다.'}</p>
         {sharingMessage && <p className="settings-note" aria-live="polite">{sharingMessage}</p>}
       </section>
-      <p className="settings-credit">Parking Coach v0.1.0 · 훈이</p>
+      <p className="settings-credit">Parking Coach v1.0.0 · 훈이</p>
     </section>
   )
 }

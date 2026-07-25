@@ -66,6 +66,29 @@ export type JudgmentScenario = {
   focusZone?: JudgmentChoice['focusZone']
 }
 
+function stringSeed(value: string) {
+  let hash = 2166136261
+  for (const character of value) {
+    hash ^= character.charCodeAt(0)
+    hash = Math.imul(hash, 16777619)
+  }
+  return hash >>> 0
+}
+
+export function shuffledJudgmentChoices(choices: JudgmentChoice[], scenarioId: string, sessionSeed: number) {
+  const shuffled = [...choices]
+  let state = stringSeed(`${scenarioId}:${sessionSeed}`)
+  const random = () => {
+    state = (Math.imul(state, 1664525) + 1013904223) >>> 0
+    return state / 0x100000000
+  }
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const target = Math.floor(random() * (index + 1))
+    ;[shuffled[index], shuffled[target]] = [shuffled[target], shuffled[index]]
+  }
+  return shuffled
+}
+
 export function simulateJudgmentChoice(start: VehicleState, choice: JudgmentChoice, runtime: ScenarioRuntime) {
   if (choice.previewStates?.length) {
     const states = choice.previewStates.map((vehicle) => ({ ...vehicle }))

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import {
   ALWAYS_SKIP_LESSONS_KEY,
@@ -17,6 +18,8 @@ import {
 } from '../engine/screenOrientation'
 import type { VehicleState } from '../engine/vehiclePhysics'
 import type { ScenarioRuntime } from '../types/practice'
+
+const SAFETY_NOTICE_SEEN_KEY = 'parking-coach:real-driving-safety-seen:v1'
 
 export function SimulatorPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -45,6 +48,9 @@ export function SimulatorPage() {
       return true
     }
   })
+  const [showSafetyNotice, setShowSafetyNotice] = useState(
+    () => !isPracticeMode && localStorage.getItem(SAFETY_NOTICE_SEEN_KEY) !== 'true',
+  )
 
   useEffect(() => {
     if (requestedScenarioId === scenario.id) return
@@ -58,6 +64,11 @@ export function SimulatorPage() {
     void requestDirectPracticeLandscape()
     return () => releaseDirectPracticeOrientation()
   }, [isPracticeMode])
+
+  const confirmSafetyNotice = () => {
+    localStorage.setItem(SAFETY_NOTICE_SEEN_KEY, 'true')
+    setShowSafetyNotice(false)
+  }
 
   return (
     <>
@@ -73,7 +84,7 @@ export function SimulatorPage() {
         {!isPracticeMode && <p className="page-description">
           브레이크를 해제하면 선택한 기어 방향으로 천천히 움직입니다. 장애물과 충돌하면 차량이 즉시 정지합니다.
         </p>}
-        {isPracticeMode ? <CorrectionPractice runtime={runtime} /> : <VehicleSimulator
+        {isPracticeMode ? <CorrectionPractice runtime={runtime} /> : !showSafetyNotice && <VehicleSimulator
           learningMode={!isPracticeMode}
           scenarioId={scenario.id}
           mode={isPracticeMode ? 'practice' : 'learning'}
@@ -82,7 +93,24 @@ export function SimulatorPage() {
           onShowLesson={() => setShowLesson(true)}
         />}
       </section>
-      {!isPracticeMode && showLesson && <MiniLessonView lesson={getLesson(scenario.id)} runtime={runtime} onFinish={() => setShowLesson(false)} />}
+      {!isPracticeMode && !showSafetyNotice && showLesson && <MiniLessonView lesson={getLesson(scenario.id)} runtime={runtime} onFinish={() => setShowLesson(false)} />}
+      {showSafetyNotice && createPortal(
+        <div className="control-help-backdrop">
+          <section className="control-help-dialog safety-notice-dialog" role="dialog" aria-modal="true" aria-labelledby="real-driving-safety-title">
+            <header>
+              <div><span>실제 운전 전 확인</span><h2 id="real-driving-safety-title">안전한 장소에서 연습하세요</h2></div>
+            </header>
+            <p>Parking Coach는 주차 판단을 익히는 교육용 도구이며, 실제 차량을 대신하지 않습니다.</p>
+            <ul>
+              <li>차량마다 크기, 회전반경과 카메라 시야가 다릅니다.</li>
+              <li>실제 운전에서는 화면보다 주변과 사각지대를 직접 확인하세요.</li>
+              <li>처음 연습할 때는 안전한 장소에서 지도자의 도움을 받으세요.</li>
+            </ul>
+            <button type="button" className="control-help-start" onClick={confirmSafetyNotice}>확인하고 연습하기</button>
+          </section>
+        </div>,
+        document.body,
+      )}
     </>
   )
 }
