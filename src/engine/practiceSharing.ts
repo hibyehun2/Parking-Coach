@@ -37,6 +37,10 @@ export function buildPublicLearningCase(
   consent: PracticeAutoShareConsent,
 ): PublicLearningCasePayload {
   if (!session.shareClientId) throw new Error('practice-sharing:missing-client-share-id')
+
+  const attempts = session.correctionAttempts ?? []
+  const salientAttempt = attempts.find((a) => !a.firstTryCorrect) ?? attempts[Math.floor(Math.random() * attempts.length)]
+
   return {
     clientShareId: session.shareClientId,
     nickname: nickname.trim().slice(0, 40),
@@ -45,7 +49,9 @@ export function buildPublicLearningCase(
     scenarioId: session.scenarioId,
     scenarioTitle: getScenario(session.scenarioId).title,
     practiceType: session.mode === 'practice' ? '판단 연습' : '직접 연습',
-    outcome: session.success && session.collisionCount === 0 ? '안전 주차' : '복기 필요',
+    outcome: session.success && session.collisionCount === 0
+      ? (session.mode === 'practice' ? '연습 완료' : '안전 주차')
+      : '복기 필요',
     collisionCount: session.collisionCount,
     collisionZones: session.collisionZones,
     quiz: typeof session.quizScore === 'number' && typeof session.quizTotal === 'number'
@@ -53,7 +59,7 @@ export function buildPublicLearningCase(
       : undefined,
     learningPoints: [...new Set(session.correctionAttempts?.map((attempt) => attempt.takeaway) ?? [])].slice(0, 5),
     runtime: session.runtime,
-    vehicleSnapshot: session.moments?.at(-1)?.vehicle ?? session.correctionAttempts?.at(-1)?.reviewSnapshot?.firstChoice?.previewStates?.at(-1),
+    vehicleSnapshot: session.moments?.at(-1)?.vehicle ?? salientAttempt?.reviewSnapshot?.firstChoice?.previewStates?.at(-1),
   }
 }
 

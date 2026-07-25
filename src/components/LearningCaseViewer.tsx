@@ -37,7 +37,7 @@ export function LearningCaseViewer({
           span: 12,
           heading: -Math.PI / 2,
         },
-        candidatePaths: [{ points: [vehicle], color: learningCase.title.includes('안전 완료') ? '#32a8ff' : '#ff5d52' }],
+        candidatePaths: [{ points: [vehicle], color: learningCase.title.includes('안전 주차') || learningCase.title.includes('연습 완료') ? '#32a8ff' : '#ff5d52' }],
       })
     }
     

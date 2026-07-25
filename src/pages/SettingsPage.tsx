@@ -98,7 +98,7 @@ export function SettingsPage() {
       <section className="settings-group" aria-labelledby="profile-settings-title">
         <header><span>프로필</span><h2 id="profile-settings-title">공개 닉네임</h2></header>
         {!user ? (
-          <div className="settings-profile-row" style={{ color: 'var(--muted)', fontSize: '0.85rem', padding: '8px 0' }}>
+          <div className="settings-profile-row" style={{ color: 'var(--muted)', fontSize: '0.85rem' }}>
             로그인 후 닉네임을 설정하고 학습 사례를 공유할 수 있습니다.
           </div>
         ) : (
