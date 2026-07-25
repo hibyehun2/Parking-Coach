@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { ReplayMomentCard } from '../components/ReplayMomentCard'
-import { ResultCollisionQuiz } from '../components/ResultCollisionQuiz'
 import { AnimalAvatar } from '../components/AnimalAvatar'
 import { LearningCaseViewer } from '../components/LearningCaseViewer'
 import { JudgmentCanvas } from '../components/JudgmentQuiz'
@@ -48,18 +47,6 @@ function BookmarkIcon({ filled }: { filled: boolean }) {
   )
 }
 
-function collisionCoaching(event: ReplayEvent) {
-  const zone = event.collision?.contactZone ?? ''
-  const side = zone.includes('left') ? '왼쪽' : zone.includes('right') ? '오른쪽' : '가까운'
-  const corner = zone.includes('front') ? '앞 모서리' : zone.includes('rear') ? '뒤 모서리' : '차체'
-  const recovery = event.vehicle.gear === 'R'
-    ? '완전히 정지한 뒤 핸들을 중앙으로 하고 D로 짧게 전진해 간격을 회복하세요.'
-    : '완전히 정지한 뒤 뒤쪽을 확인하고 R로 짧게 직선 후진해 간격을 회복하세요.'
-  return {
-    cause: `${event.vehicle.gear === 'R' ? '후진' : '전진'} 중 ${side} ${corner}의 간격이 부족해졌습니다.`,
-    action: recovery,
-  }
-}
 
 function nextPracticeSummary(result: ParkingResult, steeringCentered: boolean) {
   if (result.collisionCount > 0) return '다음에는 위험 지점 앞에서 완전히 멈추고, 핸들을 중앙으로 푼 뒤 짧게 이동해 간격을 회복하세요.'
@@ -220,7 +207,6 @@ export function ResultPage() {
   const activeTab = requestedTab === 'community' ? 'community' : requestedTab === 'history' || !hasCurrentResult ? 'history' : 'current'
   const replay = state?.replay ?? []
   const collisionEvent = replay.filter((event) => event.type === 'collision').at(-1)
-  const collisionFeedback = collisionEvent ? collisionCoaching(collisionEvent) : null
   const [history, setHistory] = useState<PracticeHistory | null>(null)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [selectedCaseAuthorId, setSelectedCaseAuthorId] = useState<string | null>(null)
@@ -258,7 +244,7 @@ export function ResultPage() {
     : '/simulator?scenario=both-sides&mode=practice'
   const resultRecommendation = result
     ? result.collisionCount
-      ? { label: '충돌 판단 확인하기', description: '충돌 직전 위험 지점과 안전한 수정 경로를 먼저 확인해보세요.', action: 'quiz' as const }
+      ? { label: '수정 판단 연습하기', description: '충돌 위험이 높은 상황에서 안전하게 다시 주차 위치를 바로잡는 판단 연습을 권장합니다.', action: 'judgment' as const }
       : !result.fullyInside
         ? { label: '같은 상황 다시 연습', description: '차량 전체가 주차선 안에 들어오도록 진입 깊이와 차체 위치를 다시 맞춰보세요.', action: 'retry' as const }
         : !result.stopped
@@ -281,11 +267,6 @@ export function ResultPage() {
   const retryAtEvent = (event: ReplayEvent) => navigate(retryPath, {
     state: { retryVehicle: { ...event.vehicle, braking: true, speed: 0 }, runtime: state?.runtime },
   })
-  const openCollisionQuiz = () => {
-    const quiz = document.getElementById('collision-judgment-quiz')
-    quiz?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    window.setTimeout(() => document.getElementById('result-collision-quiz-title')?.focus({ preventScroll: true }), 350)
-  }
   
   useEffect(() => {
     let active = true
@@ -395,12 +376,12 @@ export function ResultPage() {
         <div className="replay-moment-list">{session.moments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={session.runtime} />)}</div>
         {session.moments.find((event) => event.type === 'collision') && <p>과거 기록은 장면 복기용으로 표시합니다. 새로운 판단 문제는 판단 연습에서 서로 다른 상황으로 연습할 수 있습니다.</p>}
       </>}
-      <aside className="share-case-preparation">
+      {session.bookmarked && <aside className="share-case-preparation">
         <div><strong>{session.shareStatus === 'shared' ? '학습 사례 공유됨' : session.shareStatus === 'pending' ? '학습 사례 공유 대기' : session.shareStatus === 'publish-failed' ? '공유하지 못함' : session.shareStatus === 'unpublishing' ? '공개 중단 대기' : session.shareStatus === 'unpublish-failed' ? '공개 중단 확인 필요' : '비공개로 보관됨'}</strong><p>{session.shareStatus === 'private' ? '공유 동의 전에 보관한 기존 기록은 비공개 상태로 유지됩니다.' : '학습에 필요한 결과만 공개 닉네임으로 공유하며, 서버에서 소유권과 동의 이력을 확인합니다.'}</p></div>
         {session.shareStatus === 'publish-failed' || session.shareStatus === 'unpublish-failed'
           ? <div className="share-retry-actions"><small>{sharingFailureMessage(session)}</small><button type="button" className="share-retry-button" onClick={() => void retrySharing(session)}>다시 시도</button></div>
           : <span className={`share-status share-${session.shareStatus}`}>{session.shareStatus === 'shared' ? '공유됨' : session.shareStatus === 'pending' ? '전송 대기' : session.shareStatus === 'unpublishing' ? '공개 중단 중' : '비공개'}</span>}
-      </aside>
+      </aside>}
     </section>
   }
   const renderHistorySession = (session: PracticeSession) => {
@@ -480,13 +461,11 @@ export function ResultPage() {
               <strong>{resultRecommendation?.label}</strong>
               <p>{resultRecommendation?.description}</p>
             </div>
-            {resultRecommendation?.action === 'quiz'
-              ? <button type="button" className="primary-button" onClick={openCollisionQuiz}>충돌 판단 확인하기</button>
-              : resultRecommendation?.action === 'judgment'
-                ? <Link className="primary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=practice`}>판단 연습 시작</Link>
-                : resultRecommendation?.action === 'scenario'
-                  ? <Link className="primary-button" to="/practice">다른 주차 환경 연습하기</Link>
-                  : <Link className="primary-button" to={retryPath}>같은 상황 다시 연습</Link>}
+            {resultRecommendation?.action === 'judgment'
+              ? <Link className="primary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=practice`}>판단 연습 시작</Link>
+              : resultRecommendation?.action === 'scenario'
+                ? <Link className="primary-button" to="/practice">다른 주차 환경 연습하기</Link>
+                : <Link className="primary-button" to={retryPath}>같은 상황 다시 연습</Link>}
             {resultRecommendation?.action !== 'retry' && <Link className="secondary-button" to={retryPath}>같은 상황 다시 연습</Link>}
             <div className="result-more-actions">
               <Link to={`${retryPath}&lesson=1`}>단계 안내부터</Link>
@@ -495,19 +474,9 @@ export function ResultPage() {
           </div>
         </div>
 
-        <div className="result-detail-column">
-          {collisionEvent && state?.runtime && <ResultCollisionQuiz event={collisionEvent} runtime={state.runtime} onRetry={() => retryAtEvent(collisionEvent)} />}
-
-          {collisionEvent && !state?.runtime && collisionFeedback && <section className="collision-debrief" aria-labelledby="collision-debrief-title">
-            <span>이전 형식의 연습 기록</span>
-            <h2 id="collision-debrief-title">실제 배치 정보가 없어 판단 퀴즈를 만들 수 없습니다</h2>
-            <div><strong>발생 원인</strong><p>{collisionFeedback.cause}</p></div>
-            <div><strong>다음 행동</strong><p>{collisionFeedback.action}</p></div>
-            <p>새 학습 연습부터 실제 차량 위치와 장애물 배치를 이용한 충돌 판단 퀴즈가 제공됩니다.</p>
-            <button type="button" className="primary-button" onClick={() => retryAtEvent(collisionEvent)}>충돌 직전부터 다시 연습</button>
-          </section>}
-          {isCompactLandscape && renderReplayTimeline(true)}
-        </div>
+        {isCompactLandscape && <div className="result-detail-column">
+          {renderReplayTimeline(true)}
+        </div>}
       </section>}
 
       {activeTab === 'current' && !isCompactLandscape && renderReplayTimeline()}
