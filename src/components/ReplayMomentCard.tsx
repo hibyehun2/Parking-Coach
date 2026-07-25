@@ -96,21 +96,22 @@ export function ReplayMomentCard({
         </div>
       </div>
       {isEnlarged && createPortal(
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999, background: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column', backdropFilter: 'blur(4px)' }}>
-          <header style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 20px', color: 'white', alignItems: 'center' }}>
-            <strong style={{ fontSize: '1.1rem' }}>{event.label} (크게 보기)</strong>
-            <button type="button" onClick={() => setIsEnlarged(false)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1rem', padding: '8px', cursor: 'pointer' }}>닫기 ✕</button>
-          </header>
-          <div className="enlarge-modal-layout">
-            <div className="enlarge-modal-canvas-wrap">
+        <div className="review-topview-backdrop" role="presentation" onMouseDown={(e) => {
+          if (e.target === e.currentTarget) setIsEnlarged(false)
+        }}>
+          <section className="review-topview-dialog" role="dialog" aria-modal="true">
+            <header>
+              <div><span>조작 기록 탑뷰</span><h3>{event.label}</h3></div>
+              <button type="button" aria-label="큰 탑뷰 닫기" onClick={() => setIsEnlarged(false)}>×</button>
+            </header>
+            <figure>
               {canvasElement}
+              <figcaption>{event.elapsedSeconds.toFixed(1)}초 · {event.type === 'collision' ? '우선 수정할 순간' : '최종 자세'}</figcaption>
+            </figure>
+            <div className="expanded-review-copy">
+              <p><b>코칭</b><span>{coaching(event)}</span></p>
             </div>
-            <div className="enlarge-modal-text-box">
-              <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>{event.elapsedSeconds.toFixed(1)}초 · {event.type === 'collision' ? '우선 수정할 순간' : '최종 자세'}</span>
-              <strong style={{ display: 'block', fontSize: '1.2rem', margin: '4px 0 8px' }}>{event.label}</strong>
-              <p style={{ margin: 0, lineHeight: 1.5, wordBreak: 'keep-all' }}>{coaching(event)}</p>
-            </div>
-          </div>
+          </section>
         </div>,
         document.body
       )}

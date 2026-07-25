@@ -67,25 +67,22 @@ export function LearningCaseViewer({
       )}
       
       {isEnlarged && createPortal(
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999, background: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column', backdropFilter: 'blur(4px)' }}>
-          <header style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 20px', color: 'white', alignItems: 'center' }}>
-            <strong style={{ fontSize: '1.1rem' }}>{learningCase.title} (크게 보기)</strong>
-            <button type="button" onClick={() => setIsEnlarged(false)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1rem', padding: '8px', cursor: 'pointer' }}>닫기 ✕</button>
-          </header>
-          <div className="enlarge-modal-layout">
-            <div className="enlarge-modal-canvas-wrap">
+        <div className="review-topview-backdrop" role="presentation" onMouseDown={(e) => {
+          if (e.target === e.currentTarget) setIsEnlarged(false)
+        }}>
+          <section className="review-topview-dialog" role="dialog" aria-modal="true">
+            <header>
+              <div><span>{learningCase.scenario}</span><h3>{learningCase.title}</h3></div>
+              <button type="button" aria-label="큰 탑뷰 닫기" onClick={() => setIsEnlarged(false)}>×</button>
+            </header>
+            <figure>
               {canvasElement}
+              <figcaption>{learningCase.summary}</figcaption>
+            </figure>
+            <div className="expanded-review-copy">
+              <p className="correction-memory"><b>기억할 기준</b><span>{learningCase.takeaway}</span></p>
             </div>
-            <div className="enlarge-modal-text-box">
-              <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>{learningCase.scenario}</span>
-              <strong style={{ display: 'block', fontSize: '1.2rem', margin: '4px 0 8px' }}>{learningCase.title}</strong>
-              <p style={{ margin: 0, lineHeight: 1.5, wordBreak: 'keep-all' }}>{learningCase.summary}</p>
-              <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(255,255,255,0.15)', borderRadius: '8px' }}>
-                <span style={{ display: 'block', fontSize: '0.85rem', opacity: 0.8, marginBottom: '4px' }}>기억할 기준</span>
-                <strong style={{ fontSize: '1.05rem', wordBreak: 'keep-all' }}>{learningCase.takeaway}</strong>
-              </div>
-            </div>
-          </div>
+          </section>
         </div>,
         document.body
       )}
