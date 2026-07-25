@@ -3352,10 +3352,11 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .history-master-detail .history-detail,
   .history-master-detail .correction-history-detail { overflow-x: hidden; }
   .history-master-detail .correction-review-card {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: minmax(110px, 1fr) minmax(130px, 1.2fr);
+    gap: 10px;
   }
-  .history-master-detail .correction-path-comparison,
-  .history-master-detail .correction-review-copy { grid-column: 1; }
+  .history-master-detail .correction-path-comparison { grid-column: 1; }
+  .history-master-detail .correction-review-copy { grid-column: 2; }
   .review-topview-backdrop { padding: 8px; }
   .review-topview-dialog {
     width: min(780px, 94vw);
