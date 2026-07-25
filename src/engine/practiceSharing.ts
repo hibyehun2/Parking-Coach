@@ -162,6 +162,8 @@ export function createSupabasePracticeSharingGateway(client: SupabaseClient): Pr
         quiz_score: payload.quiz?.score,
         quiz_total: payload.quiz?.total,
         learning_points: payload.learningPoints,
+        runtime: payload.runtime,
+        vehicle_snapshot: payload.vehicleSnapshot,
       }
       const rpcResult = await client.rpc('publish_learning_case', { payload: record })
       if (!rpcResult.error && typeof rpcResult.data === 'string') {
