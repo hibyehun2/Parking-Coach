@@ -1336,7 +1336,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .current-result-dashboard { margin-top: 9px; grid-template-columns: minmax(190px, .58fr) minmax(430px, 1.42fr); gap: 10px; align-items: start; }
   .current-result-dashboard .result-overview-column { position: sticky; top: 6px; display: grid; gap: 8px; }
   .current-result-dashboard .result-card { padding: 11px 12px; gap: 4px; border-radius: 15px; }
-  .current-result-dashboard .result-card > strong { font-size: 1rem; }
+  .current-result-dashboard .result-card > strong { font-size: .95rem; text-wrap: balance; }
   .current-result-dashboard .result-card > p { font-size: .75rem; line-height: 1.35; }
   .current-result-dashboard .collision-quiz-jump { width: 100%; min-height: 34px; text-align: center; }
   .current-result-dashboard .result-primary-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
@@ -1387,7 +1387,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 }
 
 @media (orientation: landscape) and (max-height: 600px) and (max-width: 760px) {
-  .current-result-dashboard { grid-template-columns: minmax(170px, .52fr) minmax(360px, 1.48fr); }
+  .current-result-dashboard { grid-template-columns: minmax(220px, .65fr) minmax(310px, 1.35fr); }
   .current-result-dashboard .result-card > p { display: none; }
   .current-result-dashboard .result-primary-actions a { min-height: 34px; }
 }
