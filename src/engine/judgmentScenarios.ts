@@ -50,7 +50,7 @@ export type JudgmentChoice = {
   feedback: string
   motion?: JudgmentMotion[]
   previewStates?: VehicleState[]
-  focusZone?: 'front-left' | 'front-right' | 'rear-left' | 'rear-right'
+  focusZone?: 'front-left' | 'front-center' | 'front-right' | 'right-side' | 'rear-right' | 'rear-center' | 'rear-left' | 'left-side'
 }
 
 export type JudgmentScenario = {

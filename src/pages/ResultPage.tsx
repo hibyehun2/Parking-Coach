@@ -8,14 +8,14 @@ import { LearningCaseViewer } from '../components/LearningCaseViewer'
 import { JudgmentCanvas } from '../components/JudgmentQuiz'
 import { buildCorrectionDrills } from '../engine/correctionDrills'
 import type { ParkingResult } from '../engine/parkingEvaluation'
-import { clearPracticeHistoryDb, deletePracticeSessionDb, fetchPracticeHistory, MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, recommendPractice, retryPracticeShareDb, togglePracticeBookmarkDb, type CorrectionAttempt, type PracticeHistory, type PracticeSession } from '../engine/practiceHistory'
+import { deletePracticeSessionDb, fetchPracticeHistory, MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, recommendPractice, retryPracticeShareDb, togglePracticeBookmarkDb, type CorrectionAttempt, type PracticeHistory, type PracticeSession } from '../engine/practiceHistory'
 import { getScenario } from '../data/scenarios'
 import { loadLearningCases, type LearningCase } from '../data/learningCases'
 import type { JudgmentScenario } from '../engine/judgmentScenarios'
 import type { ReplayEvent } from '../engine/sessionReplay'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../types/practice'
 import { acceptPracticeAutoShareConsent, hasPracticeAutoShareConsent, loadAnonymousNickname } from '../engine/userPreferences'
-import { configuredPracticeSharingGateway, syncPracticeSharing, unpublishAllPracticeCases } from '../engine/practiceSharing'
+import { configuredPracticeSharingGateway, syncPracticeSharing } from '../engine/practiceSharing'
 import { loadSupabaseSession, subscribeSupabaseAuth, supabaseProfileNickname } from '../engine/supabaseClient'
 
 const PRACTICE_HISTORY_RETENTION_DAYS = 7
@@ -357,26 +357,7 @@ export function ResultPage() {
     if (code === '23514') return '기록 형식을 확인하지 못했습니다. 새 연습 결과로 다시 시도해주세요.'
     return code ? `공유 오류 코드: ${code}` : '네트워크 연결과 로그인 상태를 확인해주세요.'
   }
-  const resetHistory = async () => {
-    if (!history) return
-    if (!window.confirm('저장된 연습 기록을 모두 초기화할까요? 공개한 학습 사례도 함께 삭제됩니다.')) return
-    const hasPublishedCases = history.sessions.some((session) => session.publicCaseId || session.shareStatus === 'shared' || session.shareStatus === 'unpublishing' || session.shareStatus === 'unpublish-failed')
-    if (hasPublishedCases) {
-      if (!configuredPracticeSharingGateway) {
-        window.alert('공개한 사례를 먼저 삭제할 수 없어 기록을 초기화하지 않았습니다. 서버 연결을 확인해주세요.')
-        return
-      }
-      try {
-        await unpublishAllPracticeCases(configuredPracticeSharingGateway)
-      } catch {
-        window.alert('공개 사례 삭제를 확인하지 못해 기록을 유지했습니다. 잠시 후 다시 시도해주세요.')
-        return
-      }
-    }
-    await clearPracticeHistoryDb()
-    setHistory(await fetchPracticeHistory())
-    setSelectedSessionId(null)
-  }
+
   const confirmDeleteSession = async () => {
     if (!sessionToDelete) return
     const isPublic = sessionToDelete.publicCaseId || sessionToDelete.shareStatus === 'shared' || sessionToDelete.shareStatus === 'unpublishing' || sessionToDelete.shareStatus === 'unpublish-failed'
@@ -597,7 +578,7 @@ export function ResultPage() {
       </section>}
 
       {activeTab === 'history' && <section className="practice-history" aria-labelledby="history-title">
-        <header className="history-heading"><div><h2 id="history-title">나의 연습 기록</h2>{history && history.sessions.length > 0 && <small className="history-scroll-cue"><span aria-hidden="true">↕</span> 위아래로 밀어 더 보기</small>}</div>{history && history.sessions.length > 0 && <button type="button" className="history-reset" onClick={() => { void resetHistory() }}>기록 초기화</button>}</header>
+        <header className="history-heading"><div><h2 id="history-title">나의 연습 기록</h2>{history && history.sessions.length > 0 && <small className="history-scroll-cue"><span aria-hidden="true">↕</span> 위아래로 밀어 더 보기</small>}</div></header>
         {!history ? <div className="history-empty" role="status"><strong>기록을 불러오는 중입니다...</strong></div> : <div className={isCompactLandscape ? 'history-browser' : undefined}>
           <div className={isCompactLandscape ? 'history-master' : undefined}>
             <aside className="correction-practice-cta">
