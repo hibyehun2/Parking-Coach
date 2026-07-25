@@ -10,7 +10,7 @@ import { CornerAssistance } from './CornerAssistance'
 import { detectCollision } from '../../engine/collisionDetection'
 import { evaluateParking } from '../../engine/parkingEvaluation'
 import { isRearWheelAtStop } from '../../engine/parkingLotRenderer'
-import { recordPracticeSession } from '../../engine/practiceHistory'
+import { recordPracticeSessionDb } from '../../engine/practiceHistory'
 import { directPracticeSpeedProfile } from '../../engine/directPracticeAssist'
 import { cloneVehicleState, type ReplayEvent } from '../../engine/sessionReplay'
 import { type Gear, type VehicleState } from '../../engine/vehiclePhysics'
@@ -221,7 +221,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
       vehicle: cloneVehicleState(vehicle),
       clip: sessionTrajectoryRef.current.slice(-18).map(({ vehicle: snapshot }) => snapshot),
     })
-    recordPracticeSession(result, scenarioId, mode, undefined, new Date(), runtime, replayRef.current)
+    void recordPracticeSessionDb(result, scenarioId, mode, new Date(), runtime, replayRef.current)
   }
 
   const completeParking = () => {

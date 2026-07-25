@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { buildCorrectionDrills, type CorrectionDrill } from '../engine/correctionDrills'
 import {
@@ -7,9 +7,10 @@ import {
   type JudgmentScenario,
 } from '../engine/judgmentScenarios'
 import {
-  loadPracticeHistory,
-  recordCorrectionSession,
+  fetchPracticeHistory,
+  recordCorrectionSessionDb,
   type CorrectionAttempt,
+  type PracticeHistory,
 } from '../engine/practiceHistory'
 import type { ScenarioRuntime } from '../types/practice'
 import { JudgmentCanvas, JudgmentGuide, JudgmentQuiz } from './JudgmentQuiz'
@@ -97,14 +98,23 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
   const [score, setScore] = useState(0)
   const [attempts, setAttempts] = useState<CorrectionAttempt[]>([])
   const [reviewAttemptIndex, setReviewAttemptIndex] = useState<number | null>(null)
+  const [history, setHistory] = useState<PracticeHistory | null>(null)
+  
+  useEffect(() => {
+    let active = true
+    void fetchPracticeHistory().then(hist => {
+      if (active) setHistory(hist)
+    })
+    return () => { active = false }
+  }, [])
+
   const guide = useMemo(() => buildJudgmentGuide(runtime), [runtime])
   const drills = useMemo(() => buildCorrectionDrills(runtime), [runtime])
-  const history = useMemo(() => loadPracticeHistory(), [])
   const pastAttempts = useMemo(
-    () => history.sessions
+    () => history ? history.sessions
       .filter((session) => session.mode === 'practice' && session.scenarioId === runtime.scenarioId)
-      .flatMap((session) => session.correctionAttempts ?? []),
-    [history.sessions, runtime.scenarioId],
+      .flatMap((session) => session.correctionAttempts ?? []) : [],
+    [history, runtime.scenarioId],
   )
   const courseStatus = (drill: CorrectionDrill) => {
     const matching = pastAttempts.filter((attempt) => attempt.drillId === drill.id)
@@ -177,7 +187,7 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
       setItemIndex((value) => value + 1)
       return
     }
-    recordCorrectionSession(nextScore, practiceItems.length, runtime, undefined, undefined, nextAttempts)
+    void recordCorrectionSessionDb(nextScore, practiceItems.length, runtime, new Date(), nextAttempts)
     navigate('/result?tab=current', {
       state: {
         challengeComplete: true,
@@ -188,6 +198,12 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
         runtime,
       },
     })
+  }
+
+  if (!history) {
+    return <section className="judgment-skill-picker">
+      <header><div><span>불러오는 중</span></div></header>
+    </section>
   }
 
   if (phase === 'select') {

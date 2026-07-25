@@ -1,14 +1,12 @@
 import type { ParkingResult } from './parkingEvaluation.ts'
 import type { ReplayEvent } from './sessionReplay.ts'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../types/practice.ts'
-import { FIRST_SUCCESS_KEY, isScenarioAvailable, markFirstSuccess } from '../data/scenarios.ts'
+import { isScenarioAvailable } from '../data/scenarios.ts'
 import type { JudgmentChoice, JudgmentScenario, JudgmentSkill } from './judgmentScenarios.ts'
+import { supabase } from './supabaseClient.ts'
 
-export const PRACTICE_HISTORY_KEY = 'parking-coach:practice-history:v5'
 export const MAX_PRACTICE_SESSIONS = 20
 export const MAX_BOOKMARKED_SESSIONS = 3
-export const PRACTICE_HISTORY_RETENTION_DAYS = 7
-const PRACTICE_HISTORY_RETENTION_MS = PRACTICE_HISTORY_RETENTION_DAYS * 24 * 60 * 60 * 1000
 
 export type MistakeType = 'collision'
 export type PracticeShareStatus = 'private' | 'pending' | 'shared' | 'publish-failed' | 'unpublishing' | 'unpublish-failed'
@@ -60,346 +58,318 @@ export type PracticeHistory = { version: 5; sessions: PracticeSession[] }
 export type PracticeTrend = 'insufficient' | 'improving' | 'steady' | 'needs-focus'
 
 const EMPTY_HISTORY: PracticeHistory = { version: 5, sessions: [] }
-const SCENARIO_IDS: ScenarioId[] = ['both-sides', 'narrow-aisle', 'one-side', 'wall-side', 'tight-entry']
-const PRACTICE_MODES: PracticeMode[] = ['learning', 'practice']
-
-function defaultStorage() {
-  return typeof localStorage === 'undefined' ? null : localStorage
-}
-
-function persist(storage: Storage | null, history: PracticeHistory) {
-  if (!storage) return
-  try { storage.setItem(PRACTICE_HISTORY_KEY, JSON.stringify(history)) } catch { /* 결과 화면은 계속 사용 */ }
-}
-
-function migratedScenario(value: unknown): ScenarioId | null {
-  if (value === 'left-side' || value === 'right-side') return 'one-side'
-  if (value === 'pillar-side') return 'wall-side'
-  return SCENARIO_IDS.includes(value as ScenarioId) ? value as ScenarioId : null
-}
-
-function parseSession(value: unknown): PracticeSession | null {
-  if (!value || typeof value !== 'object') return null
-  const item = value as Record<string, unknown>
-  const scenarioId = migratedScenario(item.scenarioId)
-  if (!scenarioId || typeof item.id !== 'string' || typeof item.completedAt !== 'string'
-    || Number.isNaN(Date.parse(item.completedAt)) || !PRACTICE_MODES.includes(item.mode as PracticeMode)
-    || typeof item.success !== 'boolean' || !Number.isInteger(item.collisionCount)
-    || (item.collisionCount as number) < 0) return null
-  const collisionTargets = Array.isArray(item.collisionTargets)
-    ? item.collisionTargets.filter((target): target is string => typeof target === 'string')
-    : []
-  const collisionZones = Array.isArray(item.collisionZones)
-    ? item.collisionZones.filter((zone): zone is string => typeof zone === 'string')
-    : []
-  return {
-    id: item.id,
-    completedAt: item.completedAt,
-    scenarioId,
-    mode: item.mode as PracticeMode,
-    success: item.success,
-    collisionCount: item.collisionCount as number,
-    collisionTargets,
-    collisionZones,
-    mistakes: (item.collisionCount as number) > 0 ? ['collision'] : [],
-    seed: typeof item.seed === 'number' ? item.seed : undefined,
-    variant: item.variant === 'left' || item.variant === 'right' || item.variant === 'fixed' ? item.variant : undefined,
-    runtime: item.runtime && typeof item.runtime === 'object' ? item.runtime as ScenarioRuntime : undefined,
-    moments: Array.isArray(item.moments)
-      ? item.moments.filter((event): event is ReplayEvent => Boolean(event && typeof event === 'object' && typeof (event as ReplayEvent).id === 'string'))
-      : undefined,
-    quizScore: typeof item.quizScore === 'number' ? item.quizScore : undefined,
-    quizTotal: typeof item.quizTotal === 'number' ? item.quizTotal : undefined,
-    correctionAttempts: Array.isArray(item.correctionAttempts)
-      ? item.correctionAttempts.filter((attempt): attempt is CorrectionAttempt => {
-        if (!attempt || typeof attempt !== 'object') return false
-        const value = attempt as Record<string, unknown>
-        return typeof value.drillId === 'string'
-          && typeof value.drillTitle === 'string'
-          && typeof value.stepId === 'string'
-          && typeof value.stepTitle === 'string'
-          && typeof value.firstTryCorrect === 'boolean'
-          && typeof value.firstChoiceLabel === 'string'
-          && typeof value.correctChoiceLabel === 'string'
-          && typeof value.takeaway === 'string'
-      })
-        .map((attempt) => {
-          const value = attempt as CorrectionAttempt & { reviewSnapshot?: unknown }
-          const snapshot = value.reviewSnapshot
-          if (!snapshot || typeof snapshot !== 'object') return value
-          const review = snapshot as Record<string, unknown>
-          const scenario = review.scenario as JudgmentScenario | undefined
-          const firstChoice = review.firstChoice as JudgmentChoice | undefined
-          const correctChoice = review.correctChoice as JudgmentChoice | undefined
-          return scenario && typeof scenario.id === 'string'
-            && scenario.vehicle && typeof scenario.vehicle === 'object'
-            && firstChoice && typeof firstChoice.id === 'string'
-            && correctChoice && typeof correctChoice.id === 'string'
-            ? { ...value, reviewSnapshot: { scenario, firstChoice, correctChoice } }
-            : { ...value, reviewSnapshot: undefined }
-        })
-      : undefined,
-    bookmarked: item.bookmarked === true,
-    bookmarkedAt: typeof item.bookmarkedAt === 'string' && !Number.isNaN(Date.parse(item.bookmarkedAt)) ? item.bookmarkedAt : undefined,
-    shareStatus: item.shareStatus === 'pending' || item.shareStatus === 'shared' || item.shareStatus === 'publish-failed' || item.shareStatus === 'unpublishing' || item.shareStatus === 'unpublish-failed'
-      ? item.shareStatus
-      : item.shareStatus === 'failed'
-        ? item.bookmarked === true ? 'publish-failed' : 'unpublish-failed'
-        : 'private',
-    shareClientId: typeof item.shareClientId === 'string' ? item.shareClientId : undefined,
-    shareRequestedAt: typeof item.shareRequestedAt === 'string' && !Number.isNaN(Date.parse(item.shareRequestedAt)) ? item.shareRequestedAt : undefined,
-    publicCaseId: typeof item.publicCaseId === 'string' ? item.publicCaseId : undefined,
-    shareError: typeof item.shareError === 'string' ? item.shareError : undefined,
-  }
-}
-
-function retainSessions(sessions: PracticeSession[], now = new Date()) {
-  const cutoff = now.getTime() - PRACTICE_HISTORY_RETENTION_MS
-  const sortedBookmarks = sessions
-    .filter((session) => session.bookmarked)
-    .sort((left, right) => Date.parse(right.bookmarkedAt ?? right.completedAt) - Date.parse(left.bookmarkedAt ?? left.completedAt))
-  const bookmarked = sortedBookmarks.slice(0, MAX_BOOKMARKED_SESSIONS)
-  const releasedBookmarks = sortedBookmarks.slice(MAX_BOOKMARKED_SESSIONS).map((session) => ({
-    ...session,
-    bookmarked: false,
-    bookmarkedAt: undefined,
-    shareStatus: 'private' as const,
-    shareClientId: undefined,
-    shareRequestedAt: undefined,
-    publicCaseId: undefined,
-    shareError: undefined,
-  }))
-  const releasedAndRecent = [
-    ...sessions.filter((session) => !session.bookmarked),
-    ...releasedBookmarks,
-  ]
-  const unpublishQueue = releasedAndRecent.filter((session) => session.shareStatus === 'unpublishing' || session.shareStatus === 'unpublish-failed')
-  const recent = releasedAndRecent
-    .filter((session) => session.shareStatus !== 'unpublishing' && session.shareStatus !== 'unpublish-failed')
-    .filter((session) => Date.parse(session.completedAt) >= cutoff)
-    .sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))
-    .slice(0, MAX_PRACTICE_SESSIONS)
-  return [...bookmarked, ...unpublishQueue, ...recent].sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))
-}
-
-export function isPracticeSessionExpired(session: PracticeSession, now = new Date()) {
-  return now.getTime() - Date.parse(session.completedAt) >= PRACTICE_HISTORY_RETENTION_MS
-}
 
 export function createPracticeShareId(randomUUID = globalThis.crypto?.randomUUID?.bind(globalThis.crypto)) {
   if (randomUUID) return randomUUID()
   return `share-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
 }
 
-export function loadPracticeHistory(storage: Storage | null = defaultStorage(), now = new Date()): PracticeHistory {
-  if (!storage) return { version: 5, sessions: [] }
-  try {
-    const raw = storage.getItem(PRACTICE_HISTORY_KEY)
-      ?? storage.getItem('parking-coach:practice-history:v4')
-      ?? storage.getItem('parking-coach:practice-history:v3')
-      ?? storage.getItem('parking-coach:practice-history:v2')
-      ?? storage.getItem('parking-coach:practice-history:v1')
-    if (!raw) return { version: 5, sessions: [] }
-    const parsed = JSON.parse(raw) as { sessions?: unknown[] }
-    if (!Array.isArray(parsed.sessions)) throw new Error('invalid')
-    const sessions = retainSessions(parsed.sessions.map(parseSession).filter((item): item is PracticeSession => Boolean(item)), now)
-    const history = { version: 5 as const, sessions }
-    persist(storage, history)
-    return history
-  } catch {
-    persist(storage, EMPTY_HISTORY)
-    return { version: 5, sessions: [] }
+export async function fetchPracticeHistory(): Promise<PracticeHistory> {
+  if (!supabase) return EMPTY_HISTORY
+  
+  const { data: userResp } = await supabase.auth.getUser()
+  if (!userResp?.user) return EMPTY_HISTORY
+
+  const { data, error } = await supabase
+    .from('practice_sessions')
+    .select('*')
+    .order('completed_at', { ascending: false })
+
+  if (error) {
+    console.error('Failed to fetch practice history:', error)
+    return EMPTY_HISTORY
   }
+
+  const sessions: PracticeSession[] = data.map(item => ({
+    id: item.id,
+    completedAt: item.completed_at,
+    scenarioId: item.scenario_id as ScenarioId,
+    mode: item.mode as PracticeMode,
+    success: item.success,
+    collisionCount: item.collision_count,
+    collisionTargets: item.collision_targets || [],
+    collisionZones: item.collision_zones || [],
+    mistakes: item.mistakes || [],
+    seed: item.seed,
+    variant: item.variant,
+    runtime: item.runtime,
+    moments: item.moments,
+    quizScore: item.quiz_score,
+    quizTotal: item.quiz_total,
+    correctionAttempts: item.correction_attempts,
+    bookmarked: item.bookmarked,
+    bookmarkedAt: item.bookmarked_at,
+    shareStatus: item.share_status as PracticeShareStatus,
+    shareClientId: item.share_client_id,
+    shareRequestedAt: item.share_requested_at,
+    publicCaseId: item.public_case_id,
+    shareError: item.share_error,
+  }))
+
+  return { version: 5, sessions }
 }
 
-export function recordPracticeSession(
+export async function recordPracticeSessionDb(
   result: ParkingResult,
   scenarioId: ScenarioId,
   mode: PracticeMode,
-  storage: Storage | null = defaultStorage(),
   completedAt = new Date(),
   runtime?: ScenarioRuntime,
   replay: ReplayEvent[] = [],
-) {
-  const history = loadPracticeHistory(storage, completedAt)
+): Promise<PracticeSession | null> {
+  if (!supabase) return null
+
+  const { data: userResp } = await supabase.auth.getUser()
+  if (!userResp?.user) return null
+
   const collisionTargets = result.collisions.map((collision) => collision.obstacleId)
   const collisionZones = result.collisions.flatMap((collision) => collision.contactZone ? [collision.contactZone] : [])
-  const session: PracticeSession = {
+  const moments = replay
+    .filter((event) => event.type === 'collision' || (event.type === 'finish' && result.success))
+    .slice(-4)
+    .map((event) => ({
+      ...event,
+      clip: event.clip && event.clip.length > 24
+        ? event.clip.filter((_, index) => index % Math.ceil(event.clip!.length / 24) === 0).slice(-24)
+        : event.clip,
+    }))
+
+  const sessionData = {
     id: `${completedAt.getTime()}-${scenarioId}`,
-    completedAt: completedAt.toISOString(),
-    scenarioId,
+    owner_id: userResp.user.id,
+    completed_at: completedAt.toISOString(),
+    scenario_id: scenarioId,
     mode,
     success: result.success,
-    collisionCount: result.collisionCount,
-    collisionTargets,
-    collisionZones,
+    collision_count: result.collisionCount,
+    collision_targets: collisionTargets,
+    collision_zones: collisionZones,
     mistakes: result.collisionCount ? ['collision'] : [],
     seed: runtime?.seed,
     variant: runtime?.variant,
     runtime,
-    moments: replay
-      .filter((event) => event.type === 'collision' || (event.type === 'finish' && result.success))
-      .slice(-4)
-      .map((event) => ({
-        ...event,
-        clip: event.clip && event.clip.length > 24
-          ? event.clip.filter((_, index) => index % Math.ceil(event.clip!.length / 24) === 0).slice(-24)
-          : event.clip,
-      })),
+    moments,
     bookmarked: false,
-    shareStatus: 'private',
+    share_status: 'private',
   }
-  const next = { version: 5 as const, sessions: retainSessions([session, ...history.sessions], completedAt) }
-  persist(storage, next)
-  if (result.success) markFirstSuccess(scenarioId, storage)
-  return next
-}
 
-export function clearPracticeHistory(storage: Storage | null = defaultStorage()) {
-  persist(storage, EMPTY_HISTORY)
-  storage?.removeItem(FIRST_SUCCESS_KEY)
-  return { version: 5 as const, sessions: [] }
-}
-
-export function recordCorrectionSession(
-  score: number,
-  total: number,
-  runtime: ScenarioRuntime,
-  storage: Storage | null = defaultStorage(),
-  completedAt = new Date(),
-  correctionAttempts: CorrectionAttempt[] = [],
-) {
-  const history = loadPracticeHistory(storage, completedAt)
-  const session: PracticeSession = {
-    id: `${completedAt.getTime()}-correction`,
-    completedAt: completedAt.toISOString(),
-    scenarioId: runtime.scenarioId,
-    mode: 'practice',
-    success: score === total,
-    collisionCount: 0,
-    collisionTargets: [],
-    collisionZones: [],
-    mistakes: [],
-    seed: runtime.seed,
-    variant: runtime.variant,
-    runtime,
-    quizScore: score,
-    quizTotal: total,
-    correctionAttempts,
-    bookmarked: false,
-    shareStatus: 'private',
+  const { error } = await supabase.from('practice_sessions').insert(sessionData)
+  if (error) {
+    console.error('Failed to record practice session:', error)
+    return null
   }
-  const next = { version: 5 as const, sessions: retainSessions([session, ...history.sessions], completedAt) }
-  persist(storage, next)
-  return next
-}
-
-export function togglePracticeBookmark(
-  sessionId: string,
-  storage: Storage | null = defaultStorage(),
-  now = new Date(),
-  options: { shareWhenAdded?: boolean } = {},
-) {
-  const history = loadPracticeHistory(storage, now)
-  const target = history.sessions.find((session) => session.id === sessionId)
-  if (!target) return { history, status: 'not-found' as const }
-  if (!target.bookmarked && history.sessions.filter((session) => session.bookmarked).length >= MAX_BOOKMARKED_SESSIONS) {
-    return { history, status: 'limit' as const }
-  }
-  const sessions = history.sessions.map((session): PracticeSession => {
-    if (session.id !== sessionId) return session
-    if (!session.bookmarked) return {
-      ...session,
-      bookmarked: true,
-      bookmarkedAt: now.toISOString(),
-      shareStatus: options.shareWhenAdded ? 'pending' : 'private',
-      shareClientId: options.shareWhenAdded ? session.shareClientId ?? createPracticeShareId() : session.shareClientId,
-      shareRequestedAt: options.shareWhenAdded ? now.toISOString() : undefined,
-      shareError: undefined,
-    }
-    return {
-      ...session,
-      bookmarked: false,
-      bookmarkedAt: undefined,
-      shareStatus: session.publicCaseId ? 'unpublishing' : 'private',
-      shareClientId: session.publicCaseId ? session.shareClientId : undefined,
-      shareRequestedAt: session.publicCaseId ? now.toISOString() : undefined,
-      shareError: undefined,
-    }
-  })
-  const next = { version: 5 as const, sessions: retainSessions(sessions, now) }
-  persist(storage, next)
-  return { history: next, status: target.bookmarked ? 'removed' as const : 'added' as const }
-}
-
-export function queueBookmarkedSessionsForSharing(
-  storage: Storage | null = defaultStorage(),
-  now = new Date(),
-) {
-  const history = loadPracticeHistory(storage, now)
-  const sessions = history.sessions.map((session): PracticeSession => session.bookmarked && session.shareStatus === 'private'
-    ? { ...session, shareStatus: 'pending', shareClientId: session.shareClientId ?? createPracticeShareId(), shareRequestedAt: now.toISOString(), shareError: undefined }
-    : session)
-  const next = { version: 5 as const, sessions: retainSessions(sessions, now) }
-  persist(storage, next)
-  return next
-}
-
-export function updatePracticeShareState(
-  sessionId: string,
-  update: Pick<PracticeSession, 'shareStatus'> & Partial<Pick<PracticeSession, 'publicCaseId' | 'shareError'>>,
-  storage: Storage | null = defaultStorage(),
-  now = new Date(),
-) {
-  const history = loadPracticeHistory(storage, now)
-  const sessions = history.sessions.map((session): PracticeSession => session.id === sessionId
-    ? {
-      ...session,
-      ...update,
-      publicCaseId: update.shareStatus === 'private' ? undefined : update.publicCaseId ?? session.publicCaseId,
-      shareClientId: update.shareStatus === 'private' ? undefined : session.shareClientId,
-      shareError: update.shareStatus === 'publish-failed' || update.shareStatus === 'unpublish-failed' ? update.shareError : undefined,
-    }
-    : session)
-  const next = { version: 5 as const, sessions: retainSessions(sessions, now) }
-  persist(storage, next)
-  return next
-}
-
-export function retryPracticeShare(
-  sessionId: string,
-  storage: Storage | null = defaultStorage(),
-  now = new Date(),
-) {
-  const history = loadPracticeHistory(storage, now)
-  const sessions = history.sessions.map((session): PracticeSession => session.id !== sessionId
-    ? session
-    : session.shareStatus === 'publish-failed' && session.bookmarked
-      ? { ...session, shareStatus: 'pending', shareRequestedAt: now.toISOString(), shareError: undefined }
-      : session.shareStatus === 'unpublish-failed' && !session.bookmarked
-        ? { ...session, shareStatus: 'unpublishing', shareRequestedAt: now.toISOString(), shareError: undefined }
-        : session)
-  const next = { version: 5 as const, sessions: retainSessions(sessions, now) }
-  persist(storage, next)
-  return next
-}
-
-export function markAllPracticeSharesPrivate(
-  storage: Storage | null = defaultStorage(),
-  now = new Date(),
-) {
-  const history = loadPracticeHistory(storage, now)
-  const sessions = history.sessions.map((session): PracticeSession => ({
-    ...session,
-    shareStatus: 'private',
+  
+  return {
+    ...sessionData,
+    completedAt: sessionData.completed_at,
+    scenarioId: sessionData.scenario_id as ScenarioId,
+    collisionCount: sessionData.collision_count,
+    collisionTargets: sessionData.collision_targets,
+    collisionZones: sessionData.collision_zones,
+    shareStatus: sessionData.share_status as PracticeShareStatus,
     shareClientId: undefined,
     shareRequestedAt: undefined,
     publicCaseId: undefined,
     shareError: undefined,
-  }))
-  const next = { version: 5 as const, sessions: retainSessions(sessions, now) }
-  persist(storage, next)
-  return next
+    bookmarkedAt: undefined,
+  }
+}
+
+export async function clearPracticeHistoryDb(): Promise<PracticeHistory> {
+  if (!supabase) return EMPTY_HISTORY
+  
+  const { data: userResp } = await supabase.auth.getUser()
+  if (!userResp?.user) return EMPTY_HISTORY
+
+  const { error } = await supabase
+    .from('practice_sessions')
+    .delete()
+    .eq('owner_id', userResp.user.id)
+    
+  if (error) {
+    console.error('Failed to clear practice history:', error)
+  }
+  
+  return EMPTY_HISTORY
+}
+
+export async function recordCorrectionSessionDb(
+  score: number,
+  total: number,
+  runtime: ScenarioRuntime,
+  completedAt = new Date(),
+  correctionAttempts: CorrectionAttempt[] = [],
+): Promise<PracticeSession | null> {
+  if (!supabase) return null
+
+  const { data: userResp } = await supabase.auth.getUser()
+  if (!userResp?.user) return null
+
+  const sessionData = {
+    id: `${completedAt.getTime()}-correction`,
+    owner_id: userResp.user.id,
+    completed_at: completedAt.toISOString(),
+    scenario_id: runtime.scenarioId,
+    mode: 'practice',
+    success: score === total,
+    collision_count: 0,
+    collision_targets: [],
+    collision_zones: [],
+    mistakes: [],
+    seed: runtime.seed,
+    variant: runtime.variant,
+    runtime,
+    quiz_score: score,
+    quiz_total: total,
+    correction_attempts: correctionAttempts,
+    bookmarked: false,
+    share_status: 'private',
+  }
+
+  const { error } = await supabase.from('practice_sessions').insert(sessionData)
+  
+  if (error) {
+    console.error('Failed to record correction session:', error)
+    return null
+  }
+  
+  return {
+    ...sessionData,
+    completedAt: sessionData.completed_at,
+    scenarioId: sessionData.scenario_id as ScenarioId,
+    collisionCount: sessionData.collision_count,
+    collisionTargets: sessionData.collision_targets,
+    collisionZones: sessionData.collision_zones,
+    quizScore: sessionData.quiz_score,
+    quizTotal: sessionData.quiz_total,
+    correctionAttempts: sessionData.correction_attempts,
+    shareStatus: sessionData.share_status as PracticeShareStatus,
+    shareClientId: undefined,
+    shareRequestedAt: undefined,
+    publicCaseId: undefined,
+    shareError: undefined,
+    bookmarkedAt: undefined,
+  }
+}
+
+export async function togglePracticeBookmarkDb(
+  sessionId: string,
+  now = new Date(),
+  options: { shareWhenAdded?: boolean } = {},
+) {
+  if (!supabase) return { status: 'not-found' as const }
+  
+  const history = await fetchPracticeHistory()
+  const target = history.sessions.find((session) => session.id === sessionId)
+  
+  if (!target) return { status: 'not-found' as const }
+  
+  if (!target.bookmarked && history.sessions.filter((session) => session.bookmarked).length >= MAX_BOOKMARKED_SESSIONS) {
+    return { status: 'limit' as const }
+  }
+  
+  const updateData: Record<string, unknown> = {
+    bookmarked: !target.bookmarked,
+    bookmarked_at: !target.bookmarked ? now.toISOString() : null,
+  }
+  
+  if (!target.bookmarked) {
+    updateData.share_status = options.shareWhenAdded ? 'pending' : 'private'
+    updateData.share_client_id = options.shareWhenAdded ? target.shareClientId ?? createPracticeShareId() : target.shareClientId
+    updateData.share_requested_at = options.shareWhenAdded ? now.toISOString() : null
+    updateData.share_error = null
+  } else {
+    updateData.share_status = target.publicCaseId ? 'unpublishing' : 'private'
+    updateData.share_requested_at = target.publicCaseId ? now.toISOString() : null
+    updateData.share_error = null
+    // share_client_id kept as is if publicCaseId exists
+  }
+
+  const { error } = await supabase
+    .from('practice_sessions')
+    .update(updateData)
+    .eq('id', sessionId)
+    
+  if (error) {
+    console.error('Failed to toggle bookmark:', error)
+    return { status: 'not-found' as const }
+  }
+  
+  return { status: target.bookmarked ? 'removed' as const : 'added' as const }
+}
+
+export async function queueBookmarkedSessionsForSharingDb(now = new Date()) {
+  if (!supabase) return
+  
+  const history = await fetchPracticeHistory()
+  const sessionsToUpdate = history.sessions.filter(s => s.bookmarked && s.shareStatus === 'private')
+  
+  for (const session of sessionsToUpdate) {
+    await supabase.from('practice_sessions').update({
+      share_status: 'pending',
+      share_client_id: session.shareClientId ?? createPracticeShareId(),
+      share_requested_at: now.toISOString(),
+      share_error: null
+    }).eq('id', session.id)
+  }
+}
+
+export async function updatePracticeShareStateDb(
+  sessionId: string,
+  update: Pick<PracticeSession, 'shareStatus'> & Partial<Pick<PracticeSession, 'publicCaseId' | 'shareError'>>,
+) {
+  if (!supabase) return
+  
+  const { data: session } = await supabase.from('practice_sessions').select('public_case_id, share_client_id').eq('id', sessionId).single()
+  if (!session) return
+  
+  const updateData: Record<string, unknown> = {
+    share_status: update.shareStatus,
+    public_case_id: update.shareStatus === 'private' ? null : update.publicCaseId ?? session.public_case_id,
+    share_client_id: update.shareStatus === 'private' ? null : session.share_client_id,
+    share_error: update.shareStatus === 'publish-failed' || update.shareStatus === 'unpublish-failed' ? update.shareError : null,
+  }
+  
+  await supabase.from('practice_sessions').update(updateData).eq('id', sessionId)
+}
+
+export async function retryPracticeShareDb(
+  sessionId: string,
+  now = new Date(),
+) {
+  if (!supabase) return
+  
+  const { data: session } = await supabase.from('practice_sessions').select('share_status, bookmarked').eq('id', sessionId).single()
+  if (!session) return
+  
+  if (session.share_status === 'publish-failed' && session.bookmarked) {
+    await supabase.from('practice_sessions').update({
+      share_status: 'pending',
+      share_requested_at: now.toISOString(),
+      share_error: null
+    }).eq('id', sessionId)
+  } else if (session.share_status === 'unpublish-failed' && !session.bookmarked) {
+    await supabase.from('practice_sessions').update({
+      share_status: 'unpublishing',
+      share_requested_at: now.toISOString(),
+      share_error: null
+    }).eq('id', sessionId)
+  }
+}
+
+export async function markAllPracticeSharesPrivateDb() {
+  if (!supabase) return
+  
+  const { data: userResp } = await supabase.auth.getUser()
+  if (!userResp?.user) return
+  
+  await supabase.from('practice_sessions').update({
+    share_status: 'private',
+    share_client_id: null,
+    share_requested_at: null,
+    public_case_id: null,
+    share_error: null
+  }).eq('owner_id', userResp.user.id)
 }
 
 export function countMistakes(sessions: PracticeSession[]) {

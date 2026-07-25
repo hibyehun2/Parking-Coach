@@ -7,7 +7,7 @@ import { AnimalAvatar } from '../components/AnimalAvatar'
 import { JudgmentCanvas } from '../components/JudgmentQuiz'
 import { buildCorrectionDrills } from '../engine/correctionDrills'
 import type { ParkingResult } from '../engine/parkingEvaluation'
-import { clearPracticeHistory, isPracticeSessionExpired, loadPracticeHistory, MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, PRACTICE_HISTORY_RETENTION_DAYS, recommendPractice, retryPracticeShare, togglePracticeBookmark, type CorrectionAttempt, type PracticeSession } from '../engine/practiceHistory'
+import { clearPracticeHistoryDb, fetchPracticeHistory, MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, recommendPractice, retryPracticeShareDb, togglePracticeBookmarkDb, type CorrectionAttempt, type PracticeHistory, type PracticeSession } from '../engine/practiceHistory'
 import { getScenario } from '../data/scenarios'
 import { loadLearningCases, type LearningCase } from '../data/learningCases'
 import type { JudgmentScenario } from '../engine/judgmentScenarios'
@@ -15,6 +15,8 @@ import type { ReplayEvent } from '../engine/sessionReplay'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../types/practice'
 import { acceptPracticeAutoShareConsent, hasPracticeAutoShareConsent, loadAnonymousNickname } from '../engine/userPreferences'
 import { configuredPracticeSharingGateway, syncPracticeSharing, unpublishAllPracticeCases } from '../engine/practiceSharing'
+
+const PRACTICE_HISTORY_RETENTION_DAYS = 7
 
 function formatCompletedAt(value: string) {
   return new Intl.DateTimeFormat('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value))
@@ -210,7 +212,7 @@ export function ResultPage() {
   const replay = state?.replay ?? []
   const collisionEvent = replay.filter((event) => event.type === 'collision').at(-1)
   const collisionFeedback = collisionEvent ? collisionCoaching(collisionEvent) : null
-  const [history, setHistory] = useState(loadPracticeHistory)
+  const [history, setHistory] = useState<PracticeHistory | null>(null)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [selectedCaseAuthorId, setSelectedCaseAuthorId] = useState<string | null>(null)
   const [learningCases, setLearningCases] = useState<LearningCase[]>([])
@@ -219,10 +221,10 @@ export function ResultPage() {
   )
   const [selectedLearningCaseId, setSelectedLearningCaseId] = useState('')
   const [pendingShareSession, setPendingShareSession] = useState<PracticeSession | null>(null)
-  const effectiveSelectedSessionId = selectedSessionId ?? (isCompactLandscape && activeTab === 'history' ? history.sessions[0]?.id ?? null : null)
-  const bookmarkedSessions = history.sessions.filter((session) => session.bookmarked)
-  const recentSessions = history.sessions.filter((session) => !session.bookmarked)
-  const recommendation = recommendPractice(history.sessions)
+  const effectiveSelectedSessionId = selectedSessionId ?? (isCompactLandscape && activeTab === 'history' ? history?.sessions[0]?.id ?? null : null)
+  const bookmarkedSessions = history?.sessions.filter((session) => session.bookmarked) ?? []
+  const recentSessions = history?.sessions.filter((session) => !session.bookmarked) ?? []
+  const recommendation = history ? recommendPractice(history.sessions) : null
   const retryPath = `/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=${state?.mode ?? 'learning'}`
   const correctionPracticePath = recommendation?.mode === 'practice'
     ? `/simulator?scenario=${recommendation.scenarioId}&mode=practice`
@@ -257,6 +259,15 @@ export function ResultPage() {
     quiz?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     window.setTimeout(() => document.getElementById('result-collision-quiz-title')?.focus({ preventScroll: true }), 350)
   }
+  
+  useEffect(() => {
+    let active = true
+    void fetchPracticeHistory().then(hist => {
+      if (active) setHistory(hist)
+    })
+    return () => { active = false }
+  }, [])
+
   useEffect(() => {
     if (!effectiveSelectedSessionId) return
     window.requestAnimationFrame(() => {
@@ -279,39 +290,36 @@ export function ResultPage() {
     return () => { cancelled = true }
   }, [activeTab, learningCasesStatus])
   useEffect(() => {
-    if (!configuredPracticeSharingGateway || !history.sessions.some((session) => session.shareStatus === 'pending' || session.shareStatus === 'unpublishing')) return
+    if (!configuredPracticeSharingGateway || !history || !history.sessions.some((session) => session.shareStatus === 'pending' || session.shareStatus === 'unpublishing')) return
     let cancelled = false
     void syncPracticeSharing(history, loadAnonymousNickname(), configuredPracticeSharingGateway).then((synced) => {
       if (!cancelled) setHistory(synced)
     })
     return () => { cancelled = true }
   }, [history])
-  const applyBookmarkChange = (session: PracticeSession) => {
-    const expired = isPracticeSessionExpired(session)
-    if (session.bookmarked && expired && !window.confirm('보관을 해제하면 7일이 지난 이 기록은 바로 삭제됩니다. 해제할까요?')) return
-    const result = togglePracticeBookmark(session.id, undefined, new Date(), { shareWhenAdded: !session.bookmarked })
-    if (result.status === 'limit') {
-      window.alert(`보관할 수 있는 기록은 최대 ${MAX_BOOKMARKED_SESSIONS}개입니다. 기존 기록을 먼저 해제해주세요.`)
-      return
-    }
-    setHistory(result.history)
-    if (result.status === 'removed' && expired) setSelectedSessionId(null)
+  const applyBookmarkChange = async (session: PracticeSession) => {
+    await togglePracticeBookmarkDb(session.id, new Date(), { shareWhenAdded: !session.bookmarked })
+    const updatedHistory = await fetchPracticeHistory()
+    setHistory(updatedHistory)
+    if (session.bookmarked) setSelectedSessionId(null)
   }
   const toggleBookmark = (session: PracticeSession) => {
     if (!session.bookmarked && !hasPracticeAutoShareConsent()) {
       setPendingShareSession(session)
       return
     }
-    applyBookmarkChange(session)
+    void applyBookmarkChange(session)
   }
   const acceptSharingAndBookmark = () => {
     if (!pendingShareSession) return
     acceptPracticeAutoShareConsent()
-    applyBookmarkChange(pendingShareSession)
+    void applyBookmarkChange(pendingShareSession)
     setPendingShareSession(null)
   }
-  const retrySharing = (session: PracticeSession) => {
-    setHistory(retryPracticeShare(session.id))
+  const retrySharing = async (session: PracticeSession) => {
+    await retryPracticeShareDb(session.id)
+    const updatedHistory = await fetchPracticeHistory()
+    setHistory(updatedHistory)
   }
   const sharingFailureMessage = (session: PracticeSession) => {
     const code = session.shareError?.split(':').at(-1)
@@ -323,6 +331,7 @@ export function ResultPage() {
     return code ? `공유 오류 코드: ${code}` : '네트워크 연결과 로그인 상태를 확인해주세요.'
   }
   const resetHistory = async () => {
+    if (!history) return
     if (!window.confirm('저장된 연습 기록을 모두 초기화할까요? 공개한 학습 사례도 함께 삭제됩니다.')) return
     const hasPublishedCases = history.sessions.some((session) => session.publicCaseId || session.shareStatus === 'shared' || session.shareStatus === 'unpublishing' || session.shareStatus === 'unpublish-failed')
     if (hasPublishedCases) {
@@ -337,7 +346,8 @@ export function ResultPage() {
         return
       }
     }
-    setHistory(clearPracticeHistory())
+    await clearPracticeHistoryDb()
+    setHistory(await fetchPracticeHistory())
     setSelectedSessionId(null)
   }
   const renderHistoryDetail = (session: PracticeSession, idSuffix = 'inline') => {
@@ -352,7 +362,7 @@ export function ResultPage() {
       <aside className="share-case-preparation">
         <div><strong>{session.shareStatus === 'shared' ? '학습 사례 공유됨' : session.shareStatus === 'pending' ? '학습 사례 공유 대기' : session.shareStatus === 'publish-failed' ? '공유하지 못함' : session.shareStatus === 'unpublishing' ? '공개 중단 대기' : session.shareStatus === 'unpublish-failed' ? '공개 중단 확인 필요' : '비공개로 보관됨'}</strong><p>{session.shareStatus === 'private' ? '공유 동의 전에 보관한 기존 기록은 비공개 상태로 유지됩니다.' : '학습에 필요한 결과만 공개 닉네임으로 공유하며, 서버에서 소유권과 동의 이력을 확인합니다.'}</p></div>
         {session.shareStatus === 'publish-failed' || session.shareStatus === 'unpublish-failed'
-          ? <div className="share-retry-actions"><small>{sharingFailureMessage(session)}</small><button type="button" className="share-retry-button" onClick={() => retrySharing(session)}>다시 시도</button></div>
+          ? <div className="share-retry-actions"><small>{sharingFailureMessage(session)}</small><button type="button" className="share-retry-button" onClick={() => void retrySharing(session)}>다시 시도</button></div>
           : <span className={`share-status share-${session.shareStatus}`}>{session.shareStatus === 'shared' ? '공유됨' : session.shareStatus === 'pending' ? '전송 대기' : session.shareStatus === 'unpublishing' ? '공개 중단 중' : '비공개'}</span>}
       </aside>
     </section>
@@ -378,7 +388,7 @@ export function ResultPage() {
     <header><div><span>실제 주행 탑뷰</span><h2 id={compact ? 'compact-replay-title' : 'replay-title'}>이번 연습의 주요 순간</h2></div><small>충돌과 최종 자세를 우선 표시합니다</small></header>
     <div className="replay-moment-list">{replayMoments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={state?.runtime} onRetry={event.type === 'collision' ? () => retryAtEvent(event) : undefined} />)}</div>
   </section>
-  const selectedHistorySession = history.sessions.find((session) => session.id === effectiveSelectedSessionId) ?? null
+  const selectedHistorySession = history?.sessions.find((session) => session.id === effectiveSelectedSessionId) ?? null
 
   return (
     <section className={`page single-column result-page${activeTab === 'current' && collisionEvent ? ' result-has-collision' : ''}`} aria-labelledby="result-title">
@@ -529,14 +539,14 @@ export function ResultPage() {
       </section>}
 
       {activeTab === 'history' && <section className="practice-history" aria-labelledby="history-title">
-        <header className="history-heading"><div><h2 id="history-title">나의 연습 기록</h2>{history.sessions.length > 0 && <small className="history-scroll-cue"><span aria-hidden="true">↕</span> 위아래로 밀어 더 보기</small>}</div>{history.sessions.length > 0 && <button type="button" className="history-reset" onClick={() => { void resetHistory() }}>기록 초기화</button>}</header>
-        <div className={isCompactLandscape ? 'history-browser' : undefined}>
+        <header className="history-heading"><div><h2 id="history-title">나의 연습 기록</h2>{history && history.sessions.length > 0 && <small className="history-scroll-cue"><span aria-hidden="true">↕</span> 위아래로 밀어 더 보기</small>}</div>{history && history.sessions.length > 0 && <button type="button" className="history-reset" onClick={() => { void resetHistory() }}>기록 초기화</button>}</header>
+        {!history ? <div className="history-empty" role="status"><strong>기록을 불러오는 중입니다...</strong></div> : <div className={isCompactLandscape ? 'history-browser' : undefined}>
           <div className={isCompactLandscape ? 'history-master' : undefined}>
             <aside className="correction-practice-cta">
               <div><span>수정 주차 연습</span><strong>위험을 발견하고 안전하게 다시 주차하는 판단을 익혀보세요</strong><p>{recommendation?.mode === 'practice' ? recommendation.reason : '비스듬한 자세와 차량 모서리 접근 상황에서 정지·수정·재접근을 연습합니다.'}</p></div>
               <Link className="primary-button" to={correctionPracticePath}>판단 연습 시작 →</Link>
             </aside>
-            {history.sessions.length === 0 ? <div className="history-empty"><strong>아직 저장된 기록이 없습니다</strong><p>연습 기록은 {PRACTICE_HISTORY_RETENTION_DAYS}일간 저장되며, 중요한 기록은 최대 {MAX_BOOKMARKED_SESSIONS}개까지 계속 보관할 수 있습니다.</p><Link className="primary-button result-start-link" to="/practice">첫 기록 만들기</Link></div> : <>
+            {history.sessions.length === 0 ? <div className="history-empty"><strong>아직 저장된 기록이 없습니다</strong><p>연습 기록은 서버에 안전하게 저장되며 언제든 조회할 수 있습니다.</p><Link className="primary-button result-start-link" to="/practice">첫 기록 만들기</Link></div> : <>
               {recommendation && recommendation.mode !== 'practice' && <aside className="next-practice"><div><span>다음 연습</span><p>{recommendation.reason}</p></div><Link to={`/simulator?scenario=${recommendation.scenarioId}&mode=${recommendation.mode}`}>{recommendation.label} →</Link></aside>}
               {bookmarkedSessions.length > 0 && <div className="recent-practice bookmarked-practice"><h3>보관한 기록 <small>{bookmarkedSessions.length} / {MAX_BOOKMARKED_SESSIONS} · 직접 해제하기 전까지 보관</small></h3><ol>{bookmarkedSessions.map(renderHistorySession)}</ol></div>}
               <div className="recent-practice"><h3>최근 {PRACTICE_HISTORY_RETENTION_DAYS}일 기록 <small>최대 {MAX_PRACTICE_SESSIONS}개</small></h3>{recentSessions.length > 0 ? <ol>{recentSessions.map(renderHistorySession)}</ol> : <p className="recent-history-empty">최근 {PRACTICE_HISTORY_RETENTION_DAYS}일 동안 저장된 기록이 없습니다.</p>}</div>
@@ -545,7 +555,7 @@ export function ResultPage() {
           {isCompactLandscape && <aside className="history-master-detail">
             {selectedHistorySession ? renderHistoryDetail(selectedHistorySession, 'landscape') : <div className="history-detail-empty"><strong>확인할 기록을 선택하세요</strong><p>왼쪽 목록에서 기록을 선택하면 주요 순간과 판단 내용을 볼 수 있습니다.</p></div>}
           </aside>}
-        </div>
+        </div>}
       </section>}
       {pendingShareSession && <div className="share-consent-backdrop" role="presentation" onMouseDown={(event) => {
         if (event.target === event.currentTarget) setPendingShareSession(null)
