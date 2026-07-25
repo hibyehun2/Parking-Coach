@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-do
 import { ReplayMomentCard } from '../components/ReplayMomentCard'
 import { ResultCollisionQuiz } from '../components/ResultCollisionQuiz'
 import { AnimalAvatar } from '../components/AnimalAvatar'
+import { LearningCaseViewer } from '../components/LearningCaseViewer'
 import { JudgmentCanvas } from '../components/JudgmentQuiz'
 import { buildCorrectionDrills } from '../engine/correctionDrills'
 import type { ParkingResult } from '../engine/parkingEvaluation'
@@ -508,12 +509,14 @@ export function ResultPage() {
               <button type="button" className="case-author-link" onClick={() => setSelectedCaseAuthorId(selectedLearningCase.authorId)}><AnimalAvatar nickname={selectedLearningCase.nickname} className="case-author-avatar" /><span className="case-author-name">{selectedLearningCase.nickname}의 다른 사례 보기 →</span></button>
               <p>{selectedLearningCase.summary}</p>
               <div><span>기억할 기준</span><strong>{selectedLearningCase.takeaway}</strong></div>
+              <LearningCaseViewer learningCase={selectedLearningCase} />
             </>}
           </aside>
         </div> : <div className="learning-case-grid" aria-label="공개 학습 사례">
           {learningCases.map((learningCase) => <article key={learningCase.id} className="learning-case-card">
             <header><button type="button" onClick={() => setSelectedCaseAuthorId(learningCase.authorId)}><AnimalAvatar nickname={learningCase.nickname} className="case-author-avatar" /><span className="case-author-name">{learningCase.nickname}</span></button><small>{learningCase.sharedLabel}</small></header>
             <span>{learningCase.scenario}</span><strong>{learningCase.title}</strong><p>{learningCase.summary}</p><small>{learningCase.takeaway}</small>
+            <LearningCaseViewer learningCase={learningCase} />
           </article>)}
         </div>)}
         {!isCompactLandscape && selectedCaseAuthorId && (() => {

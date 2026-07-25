@@ -1,4 +1,6 @@
 import { supabase } from '../engine/supabaseClient.ts'
+import type { ScenarioRuntime } from '../types/practice.ts'
+import type { VehicleState } from '../engine/vehiclePhysics.ts'
 
 export type LearningCase = {
   id: string
@@ -9,6 +11,8 @@ export type LearningCase = {
   summary: string
   takeaway: string
   sharedLabel: string
+  runtime?: ScenarioRuntime
+  vehicleSnapshot?: VehicleState
 }
 
 type LearningCaseRow = {
@@ -20,6 +24,8 @@ type LearningCaseRow = {
   outcome: '안전 완료' | '복기 필요'
   collision_count: number
   learning_points: string[]
+  runtime?: ScenarioRuntime
+  vehicle_snapshot?: VehicleState
 }
 
 function formatSharedDate(value: string) {
@@ -42,6 +48,8 @@ function toLearningCase(row: LearningCaseRow): LearningCase {
     summary: collisionSummary,
     takeaway: learningPoints[0] ?? '연습 결과를 살펴보고 내 주차 판단에 적용해보세요.',
     sharedLabel: formatSharedDate(row.completed_date),
+    runtime: row.runtime,
+    vehicleSnapshot: row.vehicle_snapshot,
   }
 }
 
@@ -49,7 +57,7 @@ export async function loadLearningCases(): Promise<LearningCase[]> {
   if (!supabase) return []
   const { data, error } = await supabase
     .from('learning_cases')
-    .select('id,nickname,completed_date,scenario_title,practice_type,outcome,collision_count,learning_points')
+    .select('id,nickname,completed_date,scenario_title,practice_type,outcome,collision_count,learning_points,runtime,vehicle_snapshot')
     .order('created_at', { ascending: false })
     .limit(30)
 

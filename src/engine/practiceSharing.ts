@@ -4,6 +4,8 @@ import { fetchPracticeHistory, updatePracticeShareStateDb } from './practiceHist
 import { loadPracticeAutoShareConsent, type PracticeAutoShareConsent } from './userPreferences.ts'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { supabase } from './supabaseClient.ts'
+import type { ScenarioRuntime } from '../types/practice.ts'
+import type { VehicleState } from './vehiclePhysics.ts'
 
 export type PublicLearningCasePayload = {
   clientShareId: string
@@ -18,6 +20,8 @@ export type PublicLearningCasePayload = {
   collisionZones: string[]
   quiz?: { score: number; total: number }
   learningPoints: string[]
+  runtime?: ScenarioRuntime
+  vehicleSnapshot?: VehicleState
 }
 
 export interface PracticeSharingGateway {
@@ -48,6 +52,8 @@ export function buildPublicLearningCase(
       ? { score: session.quizScore, total: session.quizTotal }
       : undefined,
     learningPoints: [...new Set(session.correctionAttempts?.map((attempt) => attempt.takeaway) ?? [])].slice(0, 5),
+    runtime: session.runtime,
+    vehicleSnapshot: session.moments?.at(-1)?.vehicle ?? session.correctionAttempts?.at(-1)?.reviewSnapshot?.firstChoice?.previewStates?.at(-1),
   }
 }
 

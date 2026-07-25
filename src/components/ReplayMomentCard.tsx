@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { renderParkingLot } from '../engine/parkingLotRenderer'
 import type { ReplayEvent } from '../engine/sessionReplay'
 import type { ScenarioRuntime } from '../types/practice'
@@ -94,18 +95,19 @@ export function ReplayMomentCard({
           {onRetry && <button type="button" className="replay-primary-action" onClick={onRetry}>충돌 직전에서 직접 수정</button>}
         </div>
       </div>
-      {isEnlarged && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column', backdropFilter: 'blur(4px)' }}>
+      {isEnlarged && createPortal(
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999, background: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column', backdropFilter: 'blur(4px)' }}>
           <header style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 20px', color: 'white', alignItems: 'center' }}>
             <strong style={{ fontSize: '1.1rem' }}>{event.label} (크게 보기)</strong>
-            <button type="button" onClick={() => setIsEnlarged(false)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1rem', padding: '8px' }}>닫기 ✕</button>
+            <button type="button" onClick={() => setIsEnlarged(false)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1rem', padding: '8px', cursor: 'pointer' }}>닫기 ✕</button>
           </header>
           <div style={{ flex: 1, minHeight: 0, padding: '0 20px 20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               {canvasElement}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </article>
   )
