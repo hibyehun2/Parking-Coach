@@ -37,13 +37,12 @@ export function HomePage() {
       setUser(nextUser)
       setAuthReady(true)
       if (!nextUser) {
-        setShowLogin(true) // 강제 로그인 표시
         return
       }
+      setShowLogin(false)
       const savedNickname = supabaseProfileNickname(nextUser)
       if (savedNickname) setNickname(savedNickname)
       if (!hasCompletedSupabaseProfile(nextUser)) {
-        setShowLogin(false)
         setShowNickname(true)
         return
       }
@@ -66,7 +65,6 @@ export function HomePage() {
         if (active) {
           setAuthReady(true)
           setAuthMessage('로그인 상태를 확인하지 못했습니다. 잠시 후 다시 시도해주세요.')
-          setShowLogin(true)
         }
       })
     const unsubscribe = subscribeSupabaseAuth(applyUser)
