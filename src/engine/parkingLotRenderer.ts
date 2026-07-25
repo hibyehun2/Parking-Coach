@@ -61,7 +61,7 @@ type VehicleStyle = {
   highlight?: boolean
   reverseLights?: boolean
   forwardLights?: boolean
-  emphasizeDirectionLights?: boolean
+  directionLightStrength?: number
   braking?: boolean
 }
 
@@ -88,36 +88,6 @@ function drawVehicle(
   context.save()
   context.translate(x, y)
   context.rotate(heading)
-
-  if (style.emphasizeDirectionLights && (style.reverseLights || style.forwardLights)) {
-    const pointsTowardFront = style.forwardLights
-    const bumperX = pointsTowardFront ? length / 2 - .04 : -length / 2 + .04
-    const outerX = pointsTowardFront ? length / 2 + 2.25 : -length / 2 - 2.25
-    const glow = context.createLinearGradient(bumperX, 0, outerX, 0)
-    glow.addColorStop(0, pointsTowardFront ? 'rgba(255,247,190,.54)' : 'rgba(238,255,249,.62)')
-    glow.addColorStop(.42, pointsTowardFront ? 'rgba(255,239,164,.2)' : 'rgba(224,255,246,.24)')
-    glow.addColorStop(1, 'rgba(255,255,255,0)')
-    context.fillStyle = glow
-    context.beginPath()
-    context.moveTo(bumperX, -width * .32)
-    context.lineTo(outerX, -width * .7)
-    context.lineTo(outerX, width * .7)
-    context.lineTo(bumperX, width * .32)
-    context.closePath()
-    context.fill()
-
-    for (const side of [-1, 1]) {
-      const lampY = side * width * .08
-      const halo = context.createRadialGradient(bumperX, lampY, .02, bumperX, lampY, .6)
-      halo.addColorStop(0, pointsTowardFront ? 'rgba(255,250,211,.8)' : 'rgba(242,255,251,.9)')
-      halo.addColorStop(.45, pointsTowardFront ? 'rgba(255,239,168,.28)' : 'rgba(224,255,246,.34)')
-      halo.addColorStop(1, 'rgba(255,255,255,0)')
-      context.fillStyle = halo
-      context.beginPath()
-      context.arc(bumperX, lampY, .6, 0, Math.PI * 2)
-      context.fill()
-    }
-  }
 
   if (style.highlight) {
     context.shadowColor = 'rgba(255, 224, 120, .95)'
@@ -198,13 +168,16 @@ function drawVehicle(
   context.fillStyle = '#f1d47a'
   context.fillRect(length / 2 - 0.12, -width * 0.31, 0.08, width * 0.2)
   context.fillRect(length / 2 - 0.12, width * 0.11, 0.08, width * 0.2)
-  if (style.forwardLights && style.emphasizeDirectionLights) {
+  const directionLightStrength = Math.max(0, Math.min(1, style.directionLightStrength ?? 0))
+  if (style.forwardLights && directionLightStrength > 0) {
     context.save()
     context.fillStyle = '#fff8cf'
     context.shadowColor = 'rgba(255,246,190,.96)'
-    context.shadowBlur = .32
-    context.fillRect(length / 2 - .13, -width * .34, .2, width * .23)
-    context.fillRect(length / 2 - .13, width * .11, .2, width * .23)
+    context.shadowBlur = .18 + .14 * directionLightStrength
+    const lampLength = .12 + .08 * directionLightStrength
+    const lampWidth = width * (.18 + .05 * directionLightStrength)
+    context.fillRect(length / 2 - .13, -width * .34, lampLength, lampWidth)
+    context.fillRect(length / 2 - .13, width * .11, lampLength, lampWidth)
     context.restore()
   }
   context.fillStyle = style.braking ? '#ff3b30' : '#df6c66'
@@ -217,27 +190,28 @@ function drawVehicle(
     context.fillRect(-length / 2 + .04, -width * .34, .09, width * .25)
     context.fillRect(-length / 2 + .04, width * .09, .09, width * .25)
   } else {
-    const tailLength = style.emphasizeDirectionLights ? .24 : .16
-    const tailWidth = style.emphasizeDirectionLights ? width * .15 : width * .23
-    const tailInset = style.emphasizeDirectionLights ? width * .23 : width * .13
+    const enhanced = directionLightStrength > 0
+    const tailLength = enhanced ? .2 + .04 * directionLightStrength : .16
+    const tailWidth = enhanced ? width * .15 : width * .23
+    const tailInset = enhanced ? width * .23 : width * .13
     context.fillRect(-length / 2 + .04, -tailInset - tailWidth, tailLength, tailWidth)
     context.fillRect(-length / 2 + .04, tailInset, tailLength, tailWidth)
   }
   context.shadowBlur = 0
   if (style.reverseLights) {
-    const emphasized = style.emphasizeDirectionLights
-    const lightLength = emphasized ? .3 : .16
-    const lightWidth = emphasized ? width * .13 : .12
+    const enhanced = directionLightStrength > 0
+    const lightLength = enhanced ? .22 + .08 * directionLightStrength : .16
+    const lightWidth = enhanced ? width * (.1 + .03 * directionLightStrength) : .12
     const lightX = -length / 2 + .025
     for (const side of [-1, 1]) {
       const lightY = side * width * .12 - lightWidth / 2
-      context.fillStyle = emphasized ? 'rgba(226,255,246,.42)' : '#d9ebe5'
+      context.fillStyle = enhanced ? 'rgba(226,255,246,.42)' : '#d9ebe5'
       roundedRect(context, lightX - .035, lightY - .035, lightLength + .07, lightWidth + .07, .055)
       context.fill()
       context.fillStyle = '#ffffff'
       roundedRect(context, lightX, lightY, lightLength, lightWidth, .04)
       context.fill()
-      if (emphasized) {
+      if (enhanced) {
         context.fillStyle = '#dffff5'
         context.fillRect(lightX + .025, lightY + .025, lightLength * .48, lightWidth - .05)
       }
@@ -250,6 +224,59 @@ function drawVehicle(
     context.textAlign = 'center'
     context.textBaseline = 'middle'
     context.fillText(style.label, 0, 0)
+  }
+  context.restore()
+}
+
+function drawDirectionGroundGlow(
+  context: CanvasRenderingContext2D,
+  vehicle: Pick<VehicleState, 'x' | 'y' | 'heading' | 'gear'>,
+  strength: number,
+) {
+  const normalizedStrength = Math.max(0, Math.min(1, strength))
+  if (normalizedStrength <= 0) return
+
+  const { length, width } = VEHICLE_DIMENSIONS
+  const pointsTowardFront = vehicle.gear === 'D'
+  const bumperX = pointsTowardFront ? length / 2 - .04 : -length / 2 + .04
+  const reach = 2.25 * normalizedStrength
+  const outerX = pointsTowardFront ? length / 2 + reach : -length / 2 - reach
+
+  context.save()
+  context.translate(vehicle.x, vehicle.y)
+  context.rotate(vehicle.heading)
+  const glow = context.createLinearGradient(bumperX, 0, outerX, 0)
+  glow.addColorStop(0, pointsTowardFront
+    ? `rgba(255,247,190,${.54 * normalizedStrength})`
+    : `rgba(238,255,249,${.62 * normalizedStrength})`)
+  glow.addColorStop(.42, pointsTowardFront
+    ? `rgba(255,239,164,${.2 * normalizedStrength})`
+    : `rgba(224,255,246,${.24 * normalizedStrength})`)
+  glow.addColorStop(1, 'rgba(255,255,255,0)')
+  context.fillStyle = glow
+  context.beginPath()
+  context.moveTo(bumperX, -width * .32)
+  context.lineTo(outerX, -width * (.42 + .28 * normalizedStrength))
+  context.lineTo(outerX, width * (.42 + .28 * normalizedStrength))
+  context.lineTo(bumperX, width * .32)
+  context.closePath()
+  context.fill()
+
+  for (const side of [-1, 1]) {
+    const lampY = side * width * (pointsTowardFront ? .22 : .12)
+    const radius = .28 + .32 * normalizedStrength
+    const halo = context.createRadialGradient(bumperX, lampY, .02, bumperX, lampY, radius)
+    halo.addColorStop(0, pointsTowardFront
+      ? `rgba(255,250,211,${.8 * normalizedStrength})`
+      : `rgba(242,255,251,${.9 * normalizedStrength})`)
+    halo.addColorStop(.45, pointsTowardFront
+      ? `rgba(255,239,168,${.28 * normalizedStrength})`
+      : `rgba(224,255,246,${.34 * normalizedStrength})`)
+    halo.addColorStop(1, 'rgba(255,255,255,0)')
+    context.fillStyle = halo
+    context.beginPath()
+    context.arc(bumperX, lampY, radius, 0, Math.PI * 2)
+    context.fill()
   }
   context.restore()
 }
@@ -685,7 +712,7 @@ export function renderParkingLot(
     highlightContactZone?: Collision['contactZone']
     reverseGuideOpacity?: number
     showReverseGuide?: boolean
-    emphasizeDirectionLights?: boolean
+    directionLightStrength?: number
   } = {},
 ) {
   context.clearRect(0, 0, viewportWidth, viewportHeight)
@@ -727,6 +754,7 @@ export function renderParkingLot(
   drawStructure(context, options.runtime?.walls)
   drawParkingLines(context)
   drawWheelStop(context, Boolean(options.wheelStopActive))
+  drawDirectionGroundGlow(context, vehicle, options.directionLightStrength ?? 0)
   if (options.showReverseGuide !== false) drawReverseGuide(context, vehicle, options.reverseGuideOpacity)
   for (const path of options.candidatePaths ?? []) {
     if (path.points.length < 2) continue
@@ -790,7 +818,7 @@ export function renderParkingLot(
     variant: 'hatchback',
     reverseLights: vehicle.gear === 'R',
     forwardLights: vehicle.gear === 'D',
-    emphasizeDirectionLights: options.emphasizeDirectionLights,
+    directionLightStrength: options.directionLightStrength,
     braking: vehicle.braking,
   })
   if (options.highlightParkedCorner) {

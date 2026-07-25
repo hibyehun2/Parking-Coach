@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
-import { createPortal } from 'react-dom'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { buildCorrectionDrills, type CorrectionDrill } from '../engine/correctionDrills'
 import {
@@ -40,49 +39,42 @@ function PreviousQuestionReview({
   const snapshot = attempt.reviewSnapshot
   if (!snapshot) return null
 
-  return createPortal(
-    <div className="previous-quiz-backdrop" onMouseDown={(event) => {
-      if (event.target === event.currentTarget) onClose()
-    }}>
-      <section className="previous-quiz-dialog" role="dialog" aria-modal="true" aria-labelledby="previous-quiz-title">
-        <header>
-          <div>
-            <span>이전 문제 {position + 1} / {total}</span>
-            <h2 id="previous-quiz-title">{snapshot.scenario.title}</h2>
-          </div>
-          <button type="button" onClick={onClose} aria-label="이전 문제 보기 닫기">×</button>
-        </header>
-        <div className="previous-quiz-layout">
-          <div className="previous-quiz-figure">
-            <JudgmentCanvas
-              scenario={snapshot.scenario}
-              choice={snapshot.correctChoice}
-              correct
-              runtime={runtime}
-            />
-            <small>안전한 선택의 움직임</small>
-          </div>
-          <div className="previous-quiz-copy">
-            <p>{snapshot.scenario.situation}</p>
-            <strong>{snapshot.scenario.question}</strong>
-            <dl>
-              <div><dt>내 첫 선택</dt><dd>{snapshot.firstChoice.label}</dd></div>
-              <div><dt>안전한 선택</dt><dd>{snapshot.correctChoice.label}</dd></div>
-            </dl>
-            {snapshot.correctChoice.steps?.length && (
-              <ol>{snapshot.correctChoice.steps.map((step) => <li key={step}>{step}</li>)}</ol>
-            )}
-            <p className="previous-quiz-takeaway">{snapshot.scenario.takeaway}</p>
-          </div>
+  return (
+    <section className="collision-quiz judgment-quiz previous-quiz-review" aria-labelledby="previous-quiz-title">
+      <header>
+        <span>완료한 문제 · 읽기 전용</span>
+        <h2 id="previous-quiz-title">{snapshot.scenario.situation}</h2>
+      </header>
+      <div className="previous-quiz-layout">
+        <div className="previous-quiz-figure">
+          <JudgmentCanvas
+            key={snapshot.scenario.id}
+            scenario={snapshot.scenario}
+            choice={snapshot.correctChoice}
+            correct
+            runtime={runtime}
+          />
+          <small>안전한 선택의 움직임</small>
         </div>
-        <footer>
-          <button type="button" onClick={onPrevious} disabled={position === 0}>이전</button>
-          <button type="button" onClick={onNext} disabled={position === total - 1}>다음</button>
-          <button type="button" className="primary" onClick={onClose}>현재 문제로 돌아가기</button>
-        </footer>
-      </section>
-    </div>,
-    document.body,
+        <div className="previous-quiz-copy">
+          <small>판단 유형 · {snapshot.scenario.title}</small>
+          <strong>{snapshot.scenario.question}</strong>
+          <dl>
+            <div><dt>내 첫 선택</dt><dd>{snapshot.firstChoice.label}</dd></div>
+            <div><dt>안전한 선택</dt><dd>{snapshot.correctChoice.label}</dd></div>
+          </dl>
+          {snapshot.correctChoice.steps?.length && (
+            <ol>{snapshot.correctChoice.steps.map((step) => <li key={step}>{step}</li>)}</ol>
+          )}
+          <p className="previous-quiz-takeaway">{snapshot.scenario.takeaway}</p>
+        </div>
+      </div>
+      <footer className="previous-quiz-actions">
+        <button type="button" onClick={onPrevious} disabled={position === 0}>더 이전</button>
+        <button type="button" onClick={onNext} disabled={position === total - 1}>다음 복습</button>
+        <button type="button" className="primary" onClick={onClose}>현재 문제로 돌아가기</button>
+      </footer>
+    </section>
   )
 }
 
@@ -143,15 +135,6 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
   // pastAttempts is intentionally part of the recommendation input.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drills, pastAttempts])
-
-  useEffect(() => {
-    if (reviewAttemptIndex === null) return
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setReviewAttemptIndex(null)
-    }
-    window.addEventListener('keydown', closeOnEscape)
-    return () => window.removeEventListener('keydown', closeOnEscape)
-  }, [reviewAttemptIndex])
 
   const start = (drill: CorrectionDrill) => {
     const chosen = drill.steps.map((step) => ({ drill, step }))
@@ -279,6 +262,29 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
   }
 
   const current = practiceItems[itemIndex]
+  const reviewPosition = reviewAttemptIndex ?? -1
+  const reviewAttempt = attempts[reviewPosition]
+  if (reviewAttempt) {
+    return (
+      <section className="correction-practice">
+        <div className="correction-progress">
+          <span>복습 중 · {reviewPosition + 1} / {attempts.length}</span>
+          <strong>{reviewAttempt.drillTitle} · {reviewAttempt.stepTitle}</strong>
+          <progress value={reviewPosition + 1} max={attempts.length} />
+        </div>
+        <PreviousQuestionReview
+          attempt={reviewAttempt}
+          position={reviewPosition}
+          total={attempts.length}
+          runtime={runtime}
+          onPrevious={() => setReviewAttemptIndex((index) => Math.max(0, (index ?? 0) - 1))}
+          onNext={() => setReviewAttemptIndex((index) => Math.min(attempts.length - 1, (index ?? 0) + 1))}
+          onClose={() => setReviewAttemptIndex(null)}
+        />
+      </section>
+    )
+  }
+
   return (
     <section className="correction-practice">
       <div className="correction-progress">
@@ -296,17 +302,6 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
         onComplete={complete}
         onReviewPrevious={attempts.length > 0 ? () => setReviewAttemptIndex(attempts.length - 1) : undefined}
       />
-      {reviewAttemptIndex !== null && attempts[reviewAttemptIndex] && (
-        <PreviousQuestionReview
-          attempt={attempts[reviewAttemptIndex]}
-          position={reviewAttemptIndex}
-          total={attempts.length}
-          runtime={runtime}
-          onPrevious={() => setReviewAttemptIndex((index) => Math.max(0, (index ?? 0) - 1))}
-          onNext={() => setReviewAttemptIndex((index) => Math.min(attempts.length - 1, (index ?? 0) + 1))}
-          onClose={() => setReviewAttemptIndex(null)}
-        />
-      )}
     </section>
   )
 }

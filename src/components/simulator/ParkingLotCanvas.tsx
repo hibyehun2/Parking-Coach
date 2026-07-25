@@ -42,6 +42,7 @@ export function ParkingLotCanvas({ vehicle, danger, collisions, wheelStopActive 
       const compactLandscape = height <= 520
       renderParkingLot(context, width, height, vehicleRef.current, {
         ...renderOptionsRef.current,
+        directionLightStrength: .6,
         camera: renderOptionsRef.current.precisionAssist
           ? directPracticeCamera(vehicleRef.current, renderOptionsRef.current.runtime)
           : undefined,

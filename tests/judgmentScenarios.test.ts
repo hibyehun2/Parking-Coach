@@ -10,7 +10,8 @@ test('안내 예시는 핸들 원위치와 간격 회복 순서를 먼저 보여
     const answer = guide.choices.find(({ id }) => id === guide.answer)!
     const result = simulateJudgmentChoice(guide.vehicle, answer, runtime)
     assert.equal(result.states.at(-1)!.steeringAngle, 0)
-    assert.match(answer.steps?.join(' ') ?? '', /정중앙.*가까운 쪽.*R.*먼 쪽.*D.*처음 주차하던 방향/)
+    const parkingTurnSide = runtime.startSide === 'left' ? '오른쪽' : '왼쪽'
+    assert.match(answer.steps?.join(' ') ?? '', new RegExp(`정중앙.*가까운 쪽.*R.*먼 쪽.*D.*${parkingTurnSide}으로`))
     assert.match(answer.feedback, /핸들 원위치부터 반복/)
     assert.equal(result.collided, false)
   }

@@ -382,17 +382,12 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .parking-control.parking-ready { border-color: #9ce2c8; box-shadow: inset 0 1px rgba(255,255,255,.24), 0 0 0 2px rgba(78,205,157,.2), 0 8px 20px rgba(10,91,64,.3); }
 .gear-module .result-control { border-color: #9ce2c8; background: #087858; box-shadow: 0 0 18px rgba(78,205,157,.3); }
 .driving-help { margin: 12px 4px 0; color: var(--brand-dark); font-size: .82rem; font-weight: 700; text-align: center; }
-.control-help-backdrop,
-.previous-quiz-backdrop { position: fixed; z-index: 80; inset: 0; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); display: grid; place-items: center; background: rgba(13,24,20,.64); backdrop-filter: blur(10px); }
+.control-help-backdrop { position: fixed; z-index: 80; inset: 0; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); display: grid; place-items: center; background: rgba(13,24,20,.64); backdrop-filter: blur(10px); }
 .control-help-dialog { width: min(500px, 100%); max-height: 100%; padding: 22px; overflow-y: auto; border: 1px solid rgba(255,255,255,.8); border-radius: 24px; background: #f8fbf9; box-shadow: 0 24px 80px rgba(5,24,17,.28); }
-.control-help-dialog header,
-.previous-quiz-dialog > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
-.control-help-dialog header span,
-.previous-quiz-dialog > header span { color: var(--brand); font-size: .72rem; font-weight: 900; }
-.control-help-dialog h2,
-.previous-quiz-dialog h2 { margin: 3px 0 0; }
-.control-help-dialog header > button,
-.previous-quiz-dialog > header > button { width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; color: #31423c; background: #e7eeeb; font-size: 1.4rem; cursor: pointer; }
+.control-help-dialog header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.control-help-dialog header span { color: var(--brand); font-size: .72rem; font-weight: 900; }
+.control-help-dialog h2 { margin: 3px 0 0; }
+.control-help-dialog header > button { width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; color: #31423c; background: #e7eeeb; font-size: 1.4rem; cursor: pointer; }
 .control-help-dialog > p { color: var(--muted); line-height: 1.55; }
 .control-help-dialog ol { margin: 16px 0; padding: 0; display: grid; gap: 9px; list-style: none; }
 .control-help-dialog li { padding: 11px; border: 1px solid var(--border); border-radius: 14px; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; background: white; }
@@ -603,7 +598,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .quiz-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .quiz-actions .quiz-next { margin-left: auto; }
 .quiz-complete { padding: 12px; border-radius: 12px; color: #126d4f; background: #e9faf3; }
-.previous-quiz-dialog { width: min(900px, 100%); max-height: 100%; padding: 20px; overflow-y: auto; border: 1px solid rgba(255,255,255,.78); border-radius: 24px; background: #f8fbf9; box-shadow: 0 24px 80px rgba(5,24,17,.3); }
+.previous-quiz-review { width: 100%; }
 .previous-quiz-layout { margin-top: 14px; display: grid; grid-template-columns: minmax(240px, .9fr) minmax(280px, 1.1fr); gap: 18px; align-items: start; }
 .previous-quiz-figure canvas { width: 100%; aspect-ratio: 4 / 3; border-radius: 16px; display: block; background: #59635f; }
 .previous-quiz-figure small { margin-top: 6px; display: block; color: var(--muted); font-weight: 750; }
@@ -616,10 +611,10 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .previous-quiz-copy dd { margin: 0; font-size: .82rem; font-weight: 800; }
 .previous-quiz-copy ol { margin: 0; padding: 10px 10px 10px 32px; border-radius: 12px; color: #40534c; background: #effaf5; font-size: .8rem; line-height: 1.55; }
 .previous-quiz-takeaway { padding: 9px 11px; border-radius: 10px; color: white; background: #263d35; font-size: .8rem; }
-.previous-quiz-dialog footer { margin-top: 14px; display: flex; justify-content: flex-end; gap: 8px; }
-.previous-quiz-dialog footer button { min-height: 40px; padding: 8px 13px; border: 1px solid var(--border); border-radius: 11px; background: white; font-weight: 800; cursor: pointer; }
-.previous-quiz-dialog footer button:disabled { opacity: .4; cursor: default; }
-.previous-quiz-dialog footer .primary { color: white; border-color: var(--brand); background: var(--brand); }
+.previous-quiz-actions { margin-top: 14px; display: flex; justify-content: flex-end; gap: 8px; }
+.previous-quiz-actions button { min-height: 40px; padding: 8px 13px; border: 1px solid var(--border); border-radius: 11px; background: white; font-weight: 800; cursor: pointer; }
+.previous-quiz-actions button:disabled { opacity: .4; cursor: default; }
+.previous-quiz-actions .primary { color: white; border-color: var(--brand); background: var(--brand); }
 .collision-debrief { margin-top: 24px; padding: 22px; border: 1px solid rgba(255,255,255,.84); border-radius: 22px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; background: rgba(255,255,255,.72); box-shadow: var(--shadow); }
 .collision-debrief > span, .collision-debrief > h2, .collision-debrief > .primary-button { grid-column: 1 / -1; }
 .collision-debrief > span { color: var(--brand); font-size: .75rem; font-weight: 900; }
@@ -848,8 +843,8 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .correction-shell .quiz-answer-steps { font-size: .88rem; }
   .correction-shell .quiz-next { width: 100%; min-height: 48px; text-align: center; }
   .previous-quiz-layout { grid-template-columns: minmax(0, 1fr); }
-  .previous-quiz-dialog footer { display: grid; grid-template-columns: 1fr 1fr; }
-  .previous-quiz-dialog footer .primary { grid-column: 1 / -1; }
+  .previous-quiz-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .previous-quiz-actions .primary { grid-column: 1 / -1; }
 }
 
 @media (max-width: 390px) and (orientation: portrait) {
@@ -932,7 +927,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .simulator-toolbar { position: absolute; z-index: 8; top: max(7px, env(safe-area-inset-top)); right: 7px; left: 7px; min-height: 0; margin: 0; pointer-events: none; }
   .simulator-toolbar button { min-height: 34px; color: white; border-color: rgba(255,255,255,.25); background: rgba(18,25,22,.72); backdrop-filter: blur(12px); pointer-events: auto; }
   .simulator-toolbar .finish-practice-control { color: #ffd1cc; }
-  .control-help-backdrop, .previous-quiz-backdrop { padding: 7px; }
+  .control-help-backdrop { padding: 7px; }
   .control-help-dialog { width: min(760px, 100%); padding: 11px 14px; border-radius: 16px; }
   .control-help-dialog h2 { font-size: 1.05rem; }
   .control-help-dialog > p { margin: 5px 0; font-size: .73rem; }
@@ -942,16 +937,15 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .control-help-dialog li strong { font-size: .75rem; }
   .control-help-dialog li small { font-size: .66rem; }
   .control-help-start { min-height: 38px; }
-  .previous-quiz-dialog { width: min(920px, 100%); padding: 10px 13px; border-radius: 16px; }
-  .previous-quiz-dialog h2 { font-size: 1rem; }
+  .previous-quiz-review h2 { font-size: 1rem; }
   .previous-quiz-layout { margin-top: 7px; grid-template-columns: minmax(190px, .82fr) minmax(280px, 1.18fr); gap: 10px; }
   .previous-quiz-figure canvas { max-height: calc(100svh - 112px); }
   .previous-quiz-copy { gap: 5px; font-size: .75rem; }
   .previous-quiz-copy dl { gap: 4px; }
   .previous-quiz-copy dl > div { padding: 5px 8px; }
   .previous-quiz-copy ol { padding-top: 5px; padding-bottom: 5px; font-size: .69rem; line-height: 1.35; }
-  .previous-quiz-dialog footer { margin-top: 7px; }
-  .previous-quiz-dialog footer button { min-height: 34px; padding: 5px 10px; }
+  .previous-quiz-actions { margin-top: 7px; }
+  .previous-quiz-actions button { min-height: 34px; padding: 5px 10px; }
   .immersive-control { position: absolute; z-index: 6; top: max(10px, env(safe-area-inset-top)); right: 50%; min-height: 38px; padding: 0 12px; border: 1px solid rgba(255,255,255,.35); border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; color: white; background: rgba(10,18,15,.82); backdrop-filter: blur(6px); font-size: .75rem; font-weight: 800; cursor: pointer; touch-action: manipulation; transform: translateX(50%); }
   .mobile-install-control { max-width: 245px; text-align: center; }
   .parking-canvas-frame { height: 100%; min-height: 0; border: 0; border-radius: 0; }

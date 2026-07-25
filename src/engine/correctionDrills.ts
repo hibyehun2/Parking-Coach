@@ -252,8 +252,8 @@ function buildEntryCorrectionCourse(
         finish,
         pathChoice(
           `${kind}-resume-answer`,
-          '처음 주차 방향으로 다시 후진하기',
-          '처음 꺾었던 방향으로 후진을 재개하고, 평행해지는 순간 핸들을 중앙으로 풀어 깊이를 맞춥니다.',
+          `${nearSide}으로 조향해 R로 후진`,
+          `핸들을 ${nearSide}으로 조향해 후진을 재개하고, 평행해지는 순간 핸들을 중앙으로 풀어 깊이를 맞춥니다.`,
           finish,
           [
             `R 선택 후 핸들을 ${nearSide} 방향으로 끝까지 돌리기`,
@@ -266,17 +266,17 @@ function buildEntryCorrectionCourse(
           {
             id: 'opposite-full-lock',
             label: `${farSide} 방향으로 조향하고 R로 후진`,
-            feedback: '반대 조향이 아니라 처음 주차하던 방향으로 다시 꺾어야 합니다.',
+            feedback: `반대쪽이 아니라 핸들을 ${nearSide}으로 다시 조향해야 합니다.`,
             motion: [{ gear: 'R', steeringAngle: -turn, seconds: 2.2 }],
           },
           {
             id: 'long-straight',
             label: '핸들을 중앙에 두고 R로 후진',
-            feedback: '공간 확보가 끝났으므로 원래 주차 방향의 회전을 다시 만들어야 합니다.',
+            feedback: `공간 확보가 끝났으므로 핸들을 ${nearSide}으로 조향해 회전을 다시 만들어야 합니다.`,
             motion: [{ gear: 'R', steeringAngle: 0, seconds: 2.2 }],
           },
         ],
-        '공간을 만든 뒤에는 반대가 아니라 처음 꺾었던 방향으로 다시 최대 조향하세요.',
+        `공간을 만든 뒤에는 핸들을 ${nearSide}으로 다시 최대 조향하세요.`,
         focusZone,
       ),
     ],

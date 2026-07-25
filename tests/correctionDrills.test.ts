@@ -28,7 +28,7 @@ test('도움이 적은 확인형 판단과 단순 직선 재진입 문제를 제
   assert.equal(steps.some(({ skill }) => ['hazard-prediction', 'stop-timing', 'recheck'].includes(skill)), false)
   assert.equal(steps.some(({ title }) => /위험 지점|멈출 시점|재확인|직선 재진입/.test(title)), false)
   for (const step of steps.filter(({ id }) => id.endsWith('-resume'))) {
-    assert.match(answerOf(step).label, /처음 주차 방향/)
+    assert.match(answerOf(step).label, /오른쪽으로 조향해 R로 후진/)
     assert.ok(answerOf(step).steps?.some((item) => /끝까지 돌리기/.test(item)))
   }
 })
@@ -123,7 +123,7 @@ test('가까운 쪽은 R, 먼 쪽은 D로 50cm에서 1m 사이를 직선 이동�
   }
 })
 
-test('공간을 만든 뒤 처음 주차 방향으로 다시 조향해 주차를 완료한다', () => {
+test('공간을 만든 뒤 화면에 명시된 좌우 방향으로 다시 조향해 주차를 완료한다', () => {
   for (const seed of [2, 3]) {
     const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
     const drills = buildCorrectionDrills(runtime)
@@ -131,6 +131,7 @@ test('공간을 만든 뒤 처음 주차 방향으로 다시 조향해 주차를
       const step = drills.find((drill) => drill.id === id)!.steps[2]
       const answer = answerOf(step)
       const simulation = simulateJudgmentChoice(step.vehicle, answer, runtime)
+      assert.match(answer.label, runtime.startSide === 'left' ? /오른쪽으로 조향/ : /왼쪽으로 조향/)
       assert.ok(answer.steps?.some((item) => runtime.startSide === 'left' ? /오른쪽 방향/.test(item) : /왼쪽 방향/.test(item)))
       assert.ok(answer.steps?.some((item) => /평행/.test(item)))
       assert.equal(simulation.collided, false)

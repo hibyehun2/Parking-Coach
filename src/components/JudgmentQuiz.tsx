@@ -16,6 +16,7 @@ export function JudgmentCanvas({
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [frame, setFrame] = useState(0)
+  const [replayVersion, setReplayVersion] = useState(0)
   const simulation = useMemo(
     () => choice ? simulateJudgmentChoice(scenario.vehicle, choice, runtime) : { states: [scenario.vehicle], points: [], collided: false },
     [choice, runtime, scenario],
@@ -39,7 +40,7 @@ export function JudgmentCanvas({
       })
     }, 38)
     return () => window.clearInterval(timer)
-  }, [choice, simulation.states.length])
+  }, [choice, replayVersion, simulation.states.length])
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -66,7 +67,7 @@ export function JudgmentCanvas({
           : undefined,
         highlightParkedCorner: highlightedParkedSide,
         showReverseGuide: false,
-        emphasizeDirectionLights: true,
+        directionLightStrength: 1,
       })
     }
     const observer = new ResizeObserver(draw)
@@ -75,7 +76,24 @@ export function JudgmentCanvas({
     return () => observer.disconnect()
   }, [correct, frame, highlightedParkedSide, runtime, scenario, simulation])
 
-  return <canvas ref={canvasRef} role="img" aria-label={`${scenario.title} 상황의 차량 위치, 기어와 선택 결과`} />
+  return (
+    <>
+      <canvas ref={canvasRef} role="img" aria-label={`${scenario.title} 상황의 차량 위치, 기어와 선택 결과`} />
+      {choice && simulation.states.length > 1 && (
+        <button
+          type="button"
+          className="quiz-replay-result"
+          onClick={() => {
+            setFrame(0)
+            setReplayVersion((version) => version + 1)
+          }}
+          aria-label={`${scenario.title} 영상 처음부터 다시 재생`}
+        >
+          ↻ 다시 재생
+        </button>
+      )}
+    </>
+  )
 }
 
 export function JudgmentGuide({
@@ -188,7 +206,7 @@ export function JudgmentQuiz({
           </div>
           {selected && <p className={correct ? 'quiz-correct-copy' : 'quiz-wrong-copy'}>{selected.feedback}</p>}
           {(onReviewPrevious || correct && selected) && <div className="quiz-actions">
-            {onReviewPrevious && <button type="button" className="previous-quiz-control" onClick={onReviewPrevious}>이전 문제 보기</button>}
+            {onReviewPrevious && <button type="button" className="previous-quiz-control" onClick={onReviewPrevious}>이전 문제</button>}
             {correct && selected && <button type="button" className="quiz-next" onClick={() => onComplete(
               firstTryCorrect,
               selected,

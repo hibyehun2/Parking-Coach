@@ -125,6 +125,7 @@ export function simulateJudgmentChoice(start: VehicleState, choice: JudgmentChoi
 
 export function buildJudgmentGuide(runtime: ScenarioRuntime): JudgmentScenario {
   const turn = runtime.startSide === 'left' ? .52 : -.52
+  const parkingTurnSide = runtime.startSide === 'left' ? '오른쪽' : '왼쪽'
   const vehicle: VehicleState = {
     ...runtime.initialVehicle,
     x: 15,
@@ -149,15 +150,15 @@ export function buildJudgmentGuide(runtime: ScenarioRuntime): JudgmentScenario {
         '완전히 정지하고 핸들을 정중앙으로 풀기',
         '가까운 쪽이 좁으면 R로 50cm~1m 직선 후진',
         '먼 쪽이 좁으면 D로 50cm~1m 직선 전진',
-        '처음 주차하던 방향으로 다시 최대 조향해 후진',
+        `핸들을 ${parkingTurnSide}으로 다시 최대 조향해 후진`,
       ],
-      feedback: '공간을 만든 뒤 반대가 아니라 처음 꺾었던 방향으로 다시 조향합니다. 여전히 부족하면 핸들 원위치부터 반복합니다.',
+      feedback: `공간을 만든 뒤 핸들을 ${parkingTurnSide}으로 다시 조향합니다. 여전히 부족하면 핸들 원위치부터 반복합니다.`,
       previewStates: [
         vehicle,
         { ...vehicle, steeringAngle: 0 },
       ],
     }],
     answer: 'guided-answer',
-    takeaway: '핸들 원위치 → 가까운 쪽은 짧게 후진 · 먼 쪽은 짧게 전진 → 처음 방향으로 다시 조향',
+    takeaway: `핸들 원위치 → 가까운 쪽은 짧게 후진 · 먼 쪽은 짧게 전진 → ${parkingTurnSide}으로 다시 조향`,
   }
 }

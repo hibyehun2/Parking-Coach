@@ -47,6 +47,7 @@ export function LessonParkingCanvas({ runtime, stepIndex }: { runtime: ScenarioR
       const last = stage.states.at(-1)!
       renderParkingLot(context, width, height, vehicle, {
         runtime,
+        directionLightStrength: .6,
         focus: { x: 15, y: 7.1, span: 14, heading: -Math.PI / 2 },
         candidatePaths: stage.path.length > 1
           ? [{ points: stage.path, color: '#9aefd1', dashed: true }]
