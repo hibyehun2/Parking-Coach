@@ -58,6 +58,42 @@ export type PracticeHistory = { version: 5; sessions: PracticeSession[] }
 export type PracticeTrend = 'insufficient' | 'improving' | 'steady' | 'needs-focus'
 
 const EMPTY_HISTORY: PracticeHistory = { version: 5, sessions: [] }
+const LOCAL_STORAGE_KEY = 'parking-coach:practice-history:v5'
+
+function readLocalHistory(): PracticeHistory {
+  if (typeof window === 'undefined') return EMPTY_HISTORY
+  const stored = window.localStorage.getItem(LOCAL_STORAGE_KEY)
+  if (!stored) return EMPTY_HISTORY
+  try {
+    const parsed = JSON.parse(stored) as PracticeHistory
+    if (parsed.version === 5) return parsed
+  } catch (e) {
+    console.error('Failed to parse local history:', e)
+  }
+  return EMPTY_HISTORY
+}
+
+function writeLocalHistory(history: PracticeHistory) {
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(history))
+  }
+}
+
+function mergeHistory(local: PracticeHistory, remote: PracticeSession[]): PracticeHistory {
+  const sessionsMap = new Map<string, PracticeSession>()
+  // Local first
+  for (const session of local.sessions) {
+    sessionsMap.set(session.id, session)
+  }
+  // Remote overwrites local if duplicate ID
+  for (const session of remote) {
+    sessionsMap.set(session.id, session)
+  }
+  return {
+    version: 5,
+    sessions: Array.from(sessionsMap.values()).sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())
+  }
+}
 
 export function createPracticeShareId(randomUUID = globalThis.crypto?.randomUUID?.bind(globalThis.crypto)) {
   if (randomUUID) return randomUUID()
@@ -65,10 +101,11 @@ export function createPracticeShareId(randomUUID = globalThis.crypto?.randomUUID
 }
 
 export async function fetchPracticeHistory(): Promise<PracticeHistory> {
-  if (!supabase) return EMPTY_HISTORY
+  const localHistory = readLocalHistory()
+  if (!supabase) return localHistory
   
   const { data: userResp } = await supabase.auth.getUser()
-  if (!userResp?.user) return EMPTY_HISTORY
+  if (!userResp?.user) return localHistory
 
   const { data, error } = await supabase
     .from('practice_sessions')
@@ -77,10 +114,10 @@ export async function fetchPracticeHistory(): Promise<PracticeHistory> {
 
   if (error) {
     console.error('Failed to fetch practice history:', error)
-    return EMPTY_HISTORY
+    return localHistory
   }
 
-  const sessions: PracticeSession[] = data.map(item => ({
+  const remoteSessions: PracticeSession[] = data.map(item => ({
     id: item.id,
     completedAt: item.completed_at,
     scenarioId: item.scenario_id as ScenarioId,
@@ -106,7 +143,9 @@ export async function fetchPracticeHistory(): Promise<PracticeHistory> {
     shareError: item.share_error,
   }))
 
-  return { version: 5, sessions }
+  const merged = mergeHistory(localHistory, remoteSessions)
+  writeLocalHistory(merged)
+  return merged
 }
 
 export async function recordPracticeSessionDb(
@@ -153,13 +192,7 @@ export async function recordPracticeSessionDb(
     share_status: 'private',
   }
 
-  const { error } = await supabase.from('practice_sessions').insert(sessionData)
-  if (error) {
-    console.error('Failed to record practice session:', error)
-    return null
-  }
-  
-  return {
+  const sessionObj = {
     ...sessionData,
     completedAt: sessionData.completed_at,
     scenarioId: sessionData.scenario_id as ScenarioId,
@@ -173,6 +206,16 @@ export async function recordPracticeSessionDb(
     shareError: undefined,
     bookmarkedAt: undefined,
   } as unknown as PracticeSession
+
+  const localHistory = readLocalHistory()
+  localHistory.sessions.unshift(sessionObj)
+  writeLocalHistory(localHistory)
+
+  void supabase.from('practice_sessions').insert(sessionData).then(({ error }) => {
+    if (error) console.error('Failed to record practice session to DB:', error)
+  })
+  
+  return sessionObj
 }
 
 export async function clearPracticeHistoryDb(): Promise<PracticeHistory> {
@@ -190,6 +233,7 @@ export async function clearPracticeHistoryDb(): Promise<PracticeHistory> {
     console.error('Failed to clear practice history:', error)
   }
   
+  writeLocalHistory(EMPTY_HISTORY)
   return EMPTY_HISTORY
 }
 
@@ -226,14 +270,7 @@ export async function recordCorrectionSessionDb(
     share_status: 'private',
   }
 
-  const { error } = await supabase.from('practice_sessions').insert(sessionData)
-  
-  if (error) {
-    console.error('Failed to record correction session:', error)
-    return null
-  }
-  
-  return {
+  const sessionObj = {
     ...sessionData,
     completedAt: sessionData.completed_at,
     scenarioId: sessionData.scenario_id as ScenarioId,
@@ -250,6 +287,16 @@ export async function recordCorrectionSessionDb(
     shareError: undefined,
     bookmarkedAt: undefined,
   } as unknown as PracticeSession
+
+  const localHistory = readLocalHistory()
+  localHistory.sessions.unshift(sessionObj)
+  writeLocalHistory(localHistory)
+
+  void supabase.from('practice_sessions').insert(sessionData).then(({ error }) => {
+    if (error) console.error('Failed to record correction session to DB:', error)
+  })
+  
+  return sessionObj
 }
 
 export async function togglePracticeBookmarkDb(

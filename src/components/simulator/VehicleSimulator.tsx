@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react'
-import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { GearSelector } from '../controls/GearSelector'
 import { SteeringWheel } from '../controls/SteeringWheel'
@@ -25,8 +24,6 @@ type VehicleSimulatorProps = {
   runtime: ScenarioRuntime
 }
 
-const CONTROL_HELP_SEEN_KEY = 'parking-coach:control-help-seen:v1'
-
 export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicle, onShowLesson, runtime }: VehicleSimulatorProps) {
   const navigate = useNavigate()
   const isIos = /iPhone|iPad|iPod/.test(navigator.userAgent)
@@ -48,9 +45,6 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [parkedResult, setParkedResult] = useState<ReturnType<typeof evaluateParking> | null>(null)
   const [wheelStopActive, setWheelStopActive] = useState(false)
-  const [showControlHelp, setShowControlHelp] = useState(
-    () => learningMode && window.localStorage.getItem(CONTROL_HELP_SEEN_KEY) !== 'true',
-  )
   const canUseFullscreen = !isIos && document.fullscreenEnabled
   const mobileDirectAssist = learningMode
     && window.matchMedia('(pointer: coarse), (hover: none)').matches
@@ -72,24 +66,6 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
   } = useVehicleSimulation(initialVehicle ?? runtime.initialVehicle, runtime, speedProfile)
   const danger = learningMode ? detectCollision(vehicle, 0.42, runtime) : null
   const parkingEvaluation = evaluateParking(vehicle, collisions)
-
-  useEffect(() => {
-    if (!showControlHelp) return
-    setBraking(true)
-    setControlsLocked(true)
-  }, [setBraking, setControlsLocked, showControlHelp])
-
-  useEffect(() => {
-    if (!showControlHelp) return
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return
-      window.localStorage.setItem(CONTROL_HELP_SEEN_KEY, 'true')
-      setShowControlHelp(false)
-      if (!parkedResult) setControlsLocked(false)
-    }
-    window.addEventListener('keydown', closeOnEscape)
-    return () => window.removeEventListener('keydown', closeOnEscape)
-  }, [parkedResult, setControlsLocked, showControlHelp])
 
   useEffect(() => {
     sessionStartedAtRef.current = Date.now()
@@ -254,24 +230,11 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
     navigateToResult(parkedResult)
   }
 
-  const openControlHelp = () => {
-    setBraking(true)
-    setControlsLocked(true)
-    setShowControlHelp(true)
-  }
-
-  const closeControlHelp = () => {
-    window.localStorage.setItem(CONTROL_HELP_SEEN_KEY, 'true')
-    setShowControlHelp(false)
-    if (!parkedResult) setControlsLocked(false)
-  }
-
   return (
     <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
       <div className="simulator-toolbar" aria-label="연습 도구">
         <div>
           <button type="button" className="lesson-replay-control" onClick={onShowLesson}>단계별 안내</button>
-          {learningMode && <button type="button" className="control-help-button" onClick={openControlHelp}>? 조작 도움말</button>}
         </div>
         <div>
           <button type="button" className="reset-control top-reset-control" onClick={resetSimulation}>↺ 처음 위치</button>
@@ -318,25 +281,6 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
         핸들을 손가락으로 원을 그리듯 돌리세요. 브레이크를 작동한 뒤 기어를 선택하고, 브레이크를 해제하면 천천히 움직입니다.
       </p>
       <p className="keyboard-help">키보드: ←/A · →/D 조향, Space/S 브레이크, F 전진, R 후진, C 중앙 · 1/2/3 미러·카메라</p>
-      {showControlHelp && createPortal(
-        <div className="control-help-backdrop">
-          <section className="control-help-dialog" role="dialog" aria-modal="true" aria-labelledby="control-help-title">
-            <header>
-              <div><span>초보자용</span><h2 id="control-help-title">조작 도움말</h2></div>
-              <button type="button" onClick={closeControlHelp} aria-label="조작 도움말 닫기">×</button>
-            </header>
-            <p>차는 도움말을 보는 동안 멈춰 있어요. 아래 순서대로 천천히 조작해 보세요.</p>
-            <ol>
-              <li><b>1</b><span><strong>브레이크로 완전히 정지</strong><small>기어를 바꾸기 전 속도가 0인지 확인해요.</small></span></li>
-              <li><b>2</b><span><strong>D 또는 R 선택</strong><small>D는 전진, R은 후진이에요.</small></span></li>
-              <li><b>3</b><span><strong>핸들을 돌리고 브레이크 해제</strong><small>핸들은 원을 그리듯 돌리고, 차는 천천히 움직여요.</small></span></li>
-              <li><b>4</b><span><strong>간격뷰와 후방 화면을 나눠 확인</strong><small>좌우 간격은 간격뷰로, 뒤쪽 깊이는 후방 화면으로 확인해요. 불안하면 바로 멈춰요.</small></span></li>
-            </ol>
-            <button type="button" className="control-help-start" onClick={closeControlHelp}>확인하고 연습하기</button>
-          </section>
-        </div>,
-        document.body,
-      )}
     </div>
   )
 }
