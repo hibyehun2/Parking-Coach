@@ -9,7 +9,7 @@ import { buildCorrectionDrills } from '../engine/correctionDrills'
 import type { ParkingResult } from '../engine/parkingEvaluation'
 import { clearPracticeHistory, isPracticeSessionExpired, loadPracticeHistory, MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, PRACTICE_HISTORY_RETENTION_DAYS, recommendPractice, retryPracticeShare, togglePracticeBookmark, type CorrectionAttempt, type PracticeSession } from '../engine/practiceHistory'
 import { getScenario } from '../data/scenarios'
-import { LEARNING_CASES } from '../data/learningCases'
+import { loadLearningCases, type LearningCase } from '../data/learningCases'
 import type { JudgmentScenario } from '../engine/judgmentScenarios'
 import type { ReplayEvent } from '../engine/sessionReplay'
 import type { PracticeMode, ScenarioId, ScenarioRuntime } from '../types/practice'
@@ -203,7 +203,11 @@ export function ResultPage() {
   const [history, setHistory] = useState(loadPracticeHistory)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [selectedCaseAuthorId, setSelectedCaseAuthorId] = useState<string | null>(null)
-  const [selectedLearningCaseId, setSelectedLearningCaseId] = useState(LEARNING_CASES[0]?.id ?? '')
+  const [learningCases, setLearningCases] = useState<LearningCase[]>([])
+  const [learningCasesStatus, setLearningCasesStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>(
+    activeTab === 'community' ? 'loading' : 'idle',
+  )
+  const [selectedLearningCaseId, setSelectedLearningCaseId] = useState('')
   const [pendingShareSession, setPendingShareSession] = useState<PracticeSession | null>(null)
   const effectiveSelectedSessionId = selectedSessionId ?? (isCompactLandscape && activeTab === 'history' ? history.sessions[0]?.id ?? null : null)
   const bookmarkedSessions = history.sessions.filter((session) => session.bookmarked)
@@ -227,8 +231,9 @@ export function ResultPage() {
   const replayMoments = replay
     .filter((event) => event.type === 'collision' || (event.type === 'finish' && result?.success))
     .slice(-3)
-  const selectedLearningCase = LEARNING_CASES.find((learningCase) => learningCase.id === selectedLearningCaseId) ?? LEARNING_CASES[0]
+  const selectedLearningCase = learningCases.find((learningCase) => learningCase.id === selectedLearningCaseId) ?? learningCases[0]
   const changeResultTab = (tab: 'current' | 'history' | 'community') => {
+    if (tab === 'community' && learningCasesStatus === 'idle') setLearningCasesStatus('loading')
     setSearchParams({ tab }, { state: state ?? undefined })
   }
 
@@ -246,6 +251,21 @@ export function ResultPage() {
       document.getElementById(`history-session-${effectiveSelectedSessionId}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     })
   }, [effectiveSelectedSessionId])
+  useEffect(() => {
+    if (activeTab !== 'community' || learningCasesStatus !== 'loading') return
+    let cancelled = false
+    void loadLearningCases()
+      .then((cases) => {
+        if (cancelled) return
+        setLearningCases(cases)
+        setSelectedLearningCaseId(cases[0]?.id ?? '')
+        setLearningCasesStatus('ready')
+      })
+      .catch(() => {
+        if (!cancelled) setLearningCasesStatus('error')
+      })
+    return () => { cancelled = true }
+  }, [activeTab, learningCasesStatus])
   useEffect(() => {
     if (!configuredPracticeSharingGateway || !history.sessions.some((session) => session.shareStatus === 'pending' || session.shareStatus === 'unpublishing')) return
     let cancelled = false
@@ -410,13 +430,16 @@ export function ResultPage() {
 
       {activeTab === 'community' && <section className="community-learning" aria-labelledby="community-learning-title">
         <header>
-          <div><span>함께 배우는 주차 사례</span><b>기능 예시</b></div>
-          <h2 id="community-learning-title">다른 연습자의 경험을 새로운 판단 문제로 만나보세요</h2>
-          <p>아래 내용은 기능을 미리 확인하기 위한 예시입니다. 실제 기능에서는 공유에 동의한 사례만 고정된 공개 닉네임으로 표시됩니다.</p>
+          <div><span>함께 배우는 주차 사례</span></div>
+          <h2 id="community-learning-title">공유된 연습에서 안전한 판단 기준을 찾아보세요</h2>
+          <p>공유에 동의한 연습 결과만 공개 닉네임으로 표시되며, 계정 정보와 원본 주행 데이터는 공개하지 않습니다.</p>
         </header>
-        {isCompactLandscape ? <div className="learning-case-browser">
-          <div className="learning-case-master" aria-label="학습 사례 예시">
-            {LEARNING_CASES.map((learningCase) => <button key={learningCase.id} type="button" className={learningCase.id === selectedLearningCase?.id && !selectedCaseAuthorId ? 'selected' : undefined} onClick={() => {
+        {learningCasesStatus === 'loading' && <div className="history-empty" role="status"><strong>학습 사례를 불러오는 중입니다</strong><p>공유된 사례를 안전하게 확인하고 있어요.</p></div>}
+        {learningCasesStatus === 'error' && <div className="history-empty" role="alert"><strong>학습 사례를 불러오지 못했습니다</strong><p>네트워크 연결을 확인한 뒤 다시 시도해주세요.</p><button type="button" className="secondary-button" onClick={() => setLearningCasesStatus('loading')}>다시 시도</button></div>}
+        {learningCasesStatus === 'ready' && learningCases.length === 0 && <div className="history-empty"><strong>아직 공유된 학습 사례가 없습니다</strong><p>보관한 연습 기록의 공유에 동의하면 첫 사례가 될 수 있습니다.</p><button type="button" className="secondary-button" onClick={() => changeResultTab('history')}>내 연습 기록 보기</button></div>}
+        {learningCasesStatus === 'ready' && learningCases.length > 0 && (isCompactLandscape ? <div className="learning-case-browser">
+          <div className="learning-case-master" aria-label="공개 학습 사례">
+            {learningCases.map((learningCase) => <button key={learningCase.id} type="button" className={learningCase.id === selectedLearningCase?.id && !selectedCaseAuthorId ? 'selected' : undefined} onClick={() => {
               setSelectedCaseAuthorId(null)
               setSelectedLearningCaseId(learningCase.id)
             }}>
@@ -427,10 +450,10 @@ export function ResultPage() {
           </div>
           <aside className="learning-case-detail" aria-live="polite">
             {selectedCaseAuthorId ? (() => {
-              const authorCases = LEARNING_CASES.filter((learningCase) => learningCase.authorId === selectedCaseAuthorId)
+              const authorCases = learningCases.filter((learningCase) => learningCase.authorId === selectedCaseAuthorId)
               const nickname = authorCases[0]?.nickname
               return <>
-                <header><div><span>공개 학습 사례</span><h3>{nickname}</h3><small>{authorCases.length}개의 예시 사례</small></div><button type="button" onClick={() => setSelectedCaseAuthorId(null)}>선택한 사례로 돌아가기</button></header>
+                <header><div><span>공개 학습 사례</span><h3>{nickname}</h3><small>{authorCases.length}개의 공유 사례</small></div><button type="button" onClick={() => setSelectedCaseAuthorId(null)}>선택한 사례로 돌아가기</button></header>
                 <ol>{authorCases.map((learningCase) => <li key={learningCase.id}><span>{learningCase.scenario} · {learningCase.sharedLabel}</span><strong>{learningCase.title}</strong><p>{learningCase.takeaway}</p></li>)}</ol>
               </>
             })() : selectedLearningCase && <>
@@ -440,21 +463,21 @@ export function ResultPage() {
               <div><span>기억할 기준</span><strong>{selectedLearningCase.takeaway}</strong></div>
             </>}
           </aside>
-        </div> : <div className="learning-case-grid" aria-label="학습 사례 예시">
-          {LEARNING_CASES.map((learningCase) => <article key={learningCase.id} className="learning-case-card">
+        </div> : <div className="learning-case-grid" aria-label="공개 학습 사례">
+          {learningCases.map((learningCase) => <article key={learningCase.id} className="learning-case-card">
             <header><button type="button" onClick={() => setSelectedCaseAuthorId(learningCase.authorId)}><AnimalAvatar nickname={learningCase.nickname} className="case-author-avatar" /><span className="case-author-name">{learningCase.nickname}</span></button><small>{learningCase.sharedLabel}</small></header>
             <span>{learningCase.scenario}</span><strong>{learningCase.title}</strong><p>{learningCase.summary}</p><small>{learningCase.takeaway}</small>
           </article>)}
-        </div>}
+        </div>)}
         {!isCompactLandscape && selectedCaseAuthorId && (() => {
-          const authorCases = LEARNING_CASES.filter((learningCase) => learningCase.authorId === selectedCaseAuthorId)
+          const authorCases = learningCases.filter((learningCase) => learningCase.authorId === selectedCaseAuthorId)
           const nickname = authorCases[0]?.nickname
           return <div className="case-author-backdrop" role="presentation" onMouseDown={(event) => {
             if (event.target === event.currentTarget) setSelectedCaseAuthorId(null)
           }}>
             <section className="case-author-panel" role="dialog" aria-modal="true" aria-labelledby="case-author-title">
               <header>
-                <div><span>공개 학습 사례</span><h3 id="case-author-title"><AnimalAvatar nickname={nickname ?? ''} className="case-author-avatar" /><span className="case-author-name">{nickname}</span></h3><small>{authorCases.length}개의 예시 사례</small></div>
+                <div><span>공개 학습 사례</span><h3 id="case-author-title"><AnimalAvatar nickname={nickname ?? ''} className="case-author-avatar" /><span className="case-author-name">{nickname}</span></h3><small>{authorCases.length}개의 공유 사례</small></div>
                 <button type="button" aria-label="사례 목록 닫기" onClick={() => setSelectedCaseAuthorId(null)}>×</button>
               </header>
               <ol>{authorCases.map((learningCase) => <li key={learningCase.id}>
@@ -462,7 +485,7 @@ export function ResultPage() {
                 <strong>{learningCase.title}</strong>
                 <p>{learningCase.takeaway}</p>
               </li>)}</ol>
-              <p>실제 서비스에서는 이 사용자가 공유에 동의한 사례만 표시됩니다.</p>
+              <p>이 공개 닉네임으로 공유에 동의한 사례만 표시됩니다.</p>
             </section>
           </div>
         })()}

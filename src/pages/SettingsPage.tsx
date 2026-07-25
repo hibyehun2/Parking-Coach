@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { AnimalAvatar } from '../components/AnimalAvatar'
 import { configuredPracticeSharingGateway } from '../engine/practiceSharing'
-import { hasPracticeAutoShareConsent, loadAnonymousNickname, refreshAnonymousNickname } from '../engine/userPreferences'
+import { loadAnonymousNickname, refreshAnonymousNickname } from '../engine/userPreferences'
 import {
   completeSupabaseProfile,
   isSupabaseConfigured,
@@ -16,10 +16,10 @@ import {
 export function SettingsPage() {
   const [nickname, setNickname] = useState(loadAnonymousNickname)
   const [changed, setChanged] = useState(false)
-  const autoShareEnabled = hasPracticeAutoShareConsent()
   const [sharingMessage, setSharingMessage] = useState('')
   const [user, setUser] = useState<User | null>(null)
   const [authReady, setAuthReady] = useState(!isSupabaseConfigured())
+  const [authBusy, setAuthBusy] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -57,21 +57,34 @@ export function SettingsPage() {
     }
   }
   const login = async () => {
+    if (user || authBusy) return
+    setAuthBusy(true)
     setSharingMessage('')
     try {
+      const session = await loadSupabaseSession()
+      if (session?.user) {
+        setUser(session.user)
+        return
+      }
       await signInWithGoogle()
     } catch {
       setSharingMessage('Google 로그인을 시작하지 못했습니다. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setAuthBusy(false)
     }
   }
   const logout = async () => {
+    if (authBusy) return
     if (!window.confirm('이 기기에서 로그아웃할까요? 보관한 공개 사례는 삭제되지 않습니다.')) return
+    setAuthBusy(true)
     try {
       await signOutSupabase()
       setUser(null)
       setSharingMessage('이 기기에서 로그아웃했습니다.')
     } catch {
       setSharingMessage('로그아웃하지 못했습니다. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setAuthBusy(false)
     }
   }
   return (
@@ -96,23 +109,6 @@ export function SettingsPage() {
         </p>
       </section>
 
-      <section className="settings-group" aria-labelledby="sharing-settings-title">
-        <header><span>학습 사례</span><h2 id="sharing-settings-title">보관 기록 공유 안내</h2></header>
-        <div className="settings-account-row">
-          <div>
-            <strong>{autoShareEnabled ? '보관하면 학습 사례로 공유돼요' : '처음 보관할 때 공유 여부를 확인해요'}</strong>
-            <small>{autoShareEnabled ? '책갈피로 추가한 기록은 공개 닉네임으로 공유되며, 책갈피를 해제하면 공개 중단을 요청합니다.' : '설정에서 별도로 켤 필요 없이, 기록을 처음 보관할 때 안내를 확인하고 동의할 수 있습니다.'}</small>
-          </div>
-          <span className={`share-status ${autoShareEnabled ? 'share-shared' : 'share-private'}`}>{autoShareEnabled ? '동의 완료' : '보관 시 확인'}</span>
-        </div>
-        <p className="settings-note">{autoShareEnabled
-          ? configuredPracticeSharingGateway
-            ? '보관한 기록은 연결된 학습 사례 서버와 동기화됩니다.'
-            : '현재는 백엔드 연결 전 단계이므로 전송 대기 상태로 저장됩니다.'
-          : '동의하기 전에는 어떤 보관 기록도 공개하지 않습니다.'}</p>
-        {sharingMessage && <p className="settings-note" aria-live="polite">{sharingMessage}</p>}
-      </section>
-
       <section className="settings-group" aria-labelledby="account-settings-title">
         <header><span>계정</span><h2 id="account-settings-title">로그인 및 보안</h2></header>
         <div className="settings-account-row">
@@ -121,18 +117,11 @@ export function SettingsPage() {
             <small>{user?.email ?? '연습 기록을 계정에 연결할 수 있습니다.'}</small>
           </div>
           {user
-            ? <button type="button" onClick={() => { void logout() }}>로그아웃</button>
-            : <button type="button" disabled={!authReady || !isSupabaseConfigured()} onClick={() => { void login() }}>Google 로그인</button>}
+            ? <button type="button" disabled={authBusy} onClick={() => { void logout() }}>{authBusy ? '처리 중…' : '로그아웃'}</button>
+            : <button type="button" disabled={!authReady || authBusy || !isSupabaseConfigured()} onClick={() => { void login() }}>{authBusy ? '확인 중…' : 'Google 로그인'}</button>}
         </div>
         <p className="settings-note">{user ? '로그아웃해도 서버에 공유한 학습 사례는 유지되며, 다시 로그인하면 같은 계정으로 연결됩니다.' : 'Google 계정의 이름과 사진은 학습 사례에 공개하지 않습니다.'}</p>
-      </section>
-
-      <section className="settings-group settings-data-group" aria-labelledby="data-settings-title">
-        <header><span>데이터</span><h2 id="data-settings-title">현재 저장 방식</h2></header>
-        <div className="settings-info-row">
-          <span aria-hidden="true">⌁</span>
-          <div><strong>연습 기록은 이 기기에 저장</strong><small>동의해 보관한 학습 사례만 로그인한 계정으로 Supabase에 공유됩니다.</small></div>
-        </div>
+        {sharingMessage && <p className="settings-note" aria-live="polite">{sharingMessage}</p>}
       </section>
       <p className="settings-credit">Parking Coach v0.1.0 · 훈이</p>
     </section>

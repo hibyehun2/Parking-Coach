@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { simulateJudgmentChoice, type JudgmentChoice, type JudgmentScenario } from '../engine/judgmentScenarios'
 import { renderParkingLot } from '../engine/parkingLotRenderer'
 import type { ScenarioRuntime } from '../types/practice'
@@ -162,23 +162,24 @@ export function JudgmentQuiz({
           <strong>{scenario.question}</strong>
           <div className="quiz-choices">
             {scenario.choices.map((choice) => (
-              <button
-                key={choice.id}
-                type="button"
-                className={selectedId === choice.id ? (correct ? 'correct' : 'wrong') : ''}
-                onClick={() => select(choice)}
-              >
-                <span className="choice-title">{choice.label}</span>
-              </button>
+              <Fragment key={choice.id}>
+                <button
+                  type="button"
+                  className={selectedId === choice.id ? (correct ? 'correct' : 'wrong') : ''}
+                  onClick={() => select(choice)}
+                >
+                  <span className="choice-title">{choice.label}</span>
+                </button>
+                {correct && selectedId === choice.id && choice.steps?.length && (
+                  <section className="quiz-answer-steps" aria-live="polite" aria-label="정답 동작 순서">
+                    <strong>동작 순서</strong>
+                    <ol>{choice.steps.map((step) => <li key={step}>{step}</li>)}</ol>
+                  </section>
+                )}
+              </Fragment>
             ))}
           </div>
           {selected && <p className={correct ? 'quiz-correct-copy' : 'quiz-wrong-copy'}>{selected.feedback}</p>}
-          {correct && selected?.steps?.length && (
-            <section className="quiz-answer-steps" aria-live="polite" aria-label="안전한 동작의 상세 순서">
-              <strong>동작 순서</strong>
-              <ol>{selected.steps.map((step) => <li key={step}>{step}</li>)}</ol>
-            </section>
-          )}
           {correct && selected && <button type="button" className="quiz-next" onClick={() => onComplete(
             firstTryCorrect,
             selected,
