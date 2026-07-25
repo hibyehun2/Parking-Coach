@@ -42,8 +42,16 @@ export function HomePage() {
       setShowLogin(false)
       const savedNickname = supabaseProfileNickname(nextUser)
       if (savedNickname) setNickname(savedNickname)
+      
+      const shouldContinue = sessionStorage.getItem(CONTINUE_TO_PRACTICE_KEY) === 'true'
+      if (shouldContinue) {
+        sessionStorage.removeItem(CONTINUE_TO_PRACTICE_KEY)
+      }
+
       if (!hasCompletedSupabaseProfile(nextUser)) {
-        setShowNickname(true)
+        if (shouldContinue) {
+          setShowNickname(true)
+        }
         return
       }
       
@@ -54,8 +62,7 @@ export function HomePage() {
         setPracticeMessage(todayPracticeMessage(hist.sessions))
       })
 
-      if (sessionStorage.getItem(CONTINUE_TO_PRACTICE_KEY) === 'true') {
-        sessionStorage.removeItem(CONTINUE_TO_PRACTICE_KEY)
+      if (shouldContinue) {
         navigate('/practice')
       }
     }
@@ -138,7 +145,7 @@ export function HomePage() {
             <span>안전한 수정 방법을 익히고,</span>{' '}
             <span>단계별 안내에 따라 후진 주차를 연습해요.</span>
           </p>
-          <button className="primary-button hero-start" type="button" onClick={beginPractice} disabled={!authReady || !user}>
+          <button className="primary-button hero-start" type="button" onClick={beginPractice} disabled={!authReady}>
             연습 시작하기 <span aria-hidden="true">→</span>
           </button>
           <div className="home-hero-visual">
