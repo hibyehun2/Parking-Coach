@@ -863,6 +863,8 @@ export function renderParkingLot(
   }
 
   for (const collision of options.collisions ?? []) {
+    if (Math.hypot(collision.position.x - vehicle.x, collision.position.y - vehicle.y) > 0.01) continue
+    
     context.save()
     context.translate(collision.position.x, collision.position.y)
     context.strokeStyle = '#ff5d52'
