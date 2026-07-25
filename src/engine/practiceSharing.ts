@@ -1,6 +1,6 @@
 import { getScenario } from '../data/scenarios.ts'
 import type { PracticeHistory, PracticeSession } from './practiceHistory.ts'
-import { updatePracticeShareState } from './practiceHistory.ts'
+import { fetchPracticeHistory, updatePracticeShareStateDb } from './practiceHistory.ts'
 import { loadPracticeAutoShareConsent, type PracticeAutoShareConsent } from './userPreferences.ts'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { supabase } from './supabaseClient.ts'
@@ -210,27 +210,26 @@ export async function syncPracticeSharing(
   gateway: PracticeSharingGateway,
   storage?: Storage | null,
 ) {
-  let current = history
   const consent = loadPracticeAutoShareConsent(storage)
   for (const session of history.sessions) {
     try {
       if (session.shareStatus === 'pending') {
         if (!consent) throw new Error('practice-sharing:consent-required')
         const { publicCaseId } = await gateway.publish(buildPublicLearningCase(session, nickname, consent))
-        current = updatePracticeShareState(session.id, { shareStatus: 'shared', publicCaseId }, storage)
+        await updatePracticeShareStateDb(session.id, { shareStatus: 'shared', publicCaseId })
       } else if (session.shareStatus === 'unpublishing') {
         if (!session.shareClientId) throw new Error('practice-sharing:missing-client-share-id')
         await gateway.unpublish(session.shareClientId, session.publicCaseId)
-        current = updatePracticeShareState(session.id, { shareStatus: 'private' }, storage)
+        await updatePracticeShareStateDb(session.id, { shareStatus: 'private' })
       }
     } catch (error) {
-      current = updatePracticeShareState(session.id, {
+      await updatePracticeShareStateDb(session.id, {
         shareStatus: session.bookmarked ? 'publish-failed' : 'unpublish-failed',
         shareError: error instanceof Error ? error.message : 'practice-sharing:unknown',
-      }, storage)
+      })
     }
   }
-  return current
+  return await fetchPracticeHistory()
 }
 
 export async function unpublishAllPracticeCases(gateway: PracticeSharingGateway) {

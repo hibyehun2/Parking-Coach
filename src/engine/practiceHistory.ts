@@ -172,7 +172,7 @@ export async function recordPracticeSessionDb(
     publicCaseId: undefined,
     shareError: undefined,
     bookmarkedAt: undefined,
-  }
+  } as unknown as PracticeSession
 }
 
 export async function clearPracticeHistoryDb(): Promise<PracticeHistory> {
@@ -249,7 +249,7 @@ export async function recordCorrectionSessionDb(
     publicCaseId: undefined,
     shareError: undefined,
     bookmarkedAt: undefined,
-  }
+  } as unknown as PracticeSession
 }
 
 export async function togglePracticeBookmarkDb(
