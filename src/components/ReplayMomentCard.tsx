@@ -101,9 +101,14 @@ export function ReplayMomentCard({
             <strong style={{ fontSize: '1.1rem' }}>{event.label} (크게 보기)</strong>
             <button type="button" onClick={() => setIsEnlarged(false)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1rem', padding: '8px', cursor: 'pointer' }}>닫기 ✕</button>
           </header>
-          <div style={{ flex: 1, minHeight: 0, padding: '0 20px 20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div className="enlarge-modal-layout">
+            <div className="enlarge-modal-canvas-wrap">
               {canvasElement}
+            </div>
+            <div className="enlarge-modal-text-box">
+              <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>{event.elapsedSeconds.toFixed(1)}초 · {event.type === 'collision' ? '우선 수정할 순간' : '최종 자세'}</span>
+              <strong style={{ display: 'block', fontSize: '1.2rem', margin: '4px 0 8px' }}>{event.label}</strong>
+              <p style={{ margin: 0, lineHeight: 1.5, wordBreak: 'keep-all' }}>{coaching(event)}</p>
             </div>
           </div>
         </div>,

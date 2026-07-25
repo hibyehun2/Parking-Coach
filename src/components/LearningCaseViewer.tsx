@@ -72,9 +72,18 @@ export function LearningCaseViewer({
             <strong style={{ fontSize: '1.1rem' }}>{learningCase.title} (크게 보기)</strong>
             <button type="button" onClick={() => setIsEnlarged(false)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1rem', padding: '8px', cursor: 'pointer' }}>닫기 ✕</button>
           </header>
-          <div style={{ flex: 1, minHeight: 0, padding: '0 20px 20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-            <div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div className="enlarge-modal-layout">
+            <div className="enlarge-modal-canvas-wrap">
               {canvasElement}
+            </div>
+            <div className="enlarge-modal-text-box">
+              <span style={{ fontSize: '0.9rem', opacity: 0.8 }}>{learningCase.scenario}</span>
+              <strong style={{ display: 'block', fontSize: '1.2rem', margin: '4px 0 8px' }}>{learningCase.title}</strong>
+              <p style={{ margin: 0, lineHeight: 1.5, wordBreak: 'keep-all' }}>{learningCase.summary}</p>
+              <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(255,255,255,0.15)', borderRadius: '8px' }}>
+                <span style={{ display: 'block', fontSize: '0.85rem', opacity: 0.8, marginBottom: '4px' }}>기억할 기준</span>
+                <strong style={{ fontSize: '1.05rem', wordBreak: 'keep-all' }}>{learningCase.takeaway}</strong>
+              </div>
             </div>
           </div>
         </div>,
