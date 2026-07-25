@@ -2,7 +2,8 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { ParkingResult } from '../src/engine/parkingEvaluation.ts'
 import { recordPracticeSession, togglePracticeBookmark } from '../src/engine/practiceHistory.ts'
-import { buildPublicLearningCase, createHttpPracticeSharingGateway } from '../src/engine/practiceSharing.ts'
+import { buildPublicLearningCase, createHttpPracticeSharingGateway, createSupabasePracticeSharingGateway } from '../src/engine/practiceSharing.ts'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 class MemoryStorage implements Storage {
   private values = new Map<string, string>()
@@ -73,4 +74,37 @@ test('익명 공유 요청은 보안 세션 쿠키와 CSRF 토큰을 사용한�
 
 test('운영 공유 API는 HTTPS 주소만 허용한다', () => {
   assert.throws(() => createHttpPracticeSharingGateway({ baseUrl: 'http://api.example.com' }), /https-required/)
+})
+
+test('Supabase 공유는 비공개 소유 열을 조회하지 않고 보안 함수를 사용한다', async () => {
+  const calls: Array<{ name: string; args: unknown }> = []
+  const client = {
+    auth: {
+      getUser: async () => ({ data: { user: { id: 'user-1' } }, error: null }),
+    },
+    rpc: async (name: string, args: unknown) => {
+      calls.push({ name, args })
+      return { data: '0c434f6a-72b8-45e9-895c-162dbb3ad8e4', error: null }
+    },
+  } as unknown as SupabaseClient
+  const gateway = createSupabasePracticeSharingGateway(client)
+
+  const result = await gateway.publish({
+    clientShareId: '2e2c6bd7-37ea-4ed2-a39e-c9abf831217e',
+    nickname: '차분한수달',
+    completedDate: '2026-07-24',
+    consent: { version: 1, acceptedAt: '2026-07-24T09:00:00Z' },
+    scenarioId: 'both-sides',
+    scenarioTitle: '양옆 차량 사이',
+    practiceType: '직접 연습',
+    outcome: '안전 완료',
+    collisionCount: 0,
+    collisionZones: [],
+    learningPoints: [],
+  })
+
+  assert.equal(result.publicCaseId, '0c434f6a-72b8-45e9-895c-162dbb3ad8e4')
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0].name, 'publish_learning_case')
+  assert.equal((calls[0].args as { payload: { client_share_id: string } }).payload.client_share_id, '2e2c6bd7-37ea-4ed2-a39e-c9abf831217e')
 })

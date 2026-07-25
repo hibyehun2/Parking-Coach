@@ -141,9 +141,8 @@ export function createSupabasePracticeSharingGateway(client: SupabaseClient): Pr
   return {
     async publish(payload) {
       await requireUser()
-      const { data, error } = await client
-        .from('learning_cases')
-        .upsert({
+      const { data, error } = await client.rpc('publish_learning_case', {
+        payload: {
           client_share_id: payload.clientShareId,
           nickname: payload.nickname,
           completed_date: payload.completedDate,
@@ -158,11 +157,10 @@ export function createSupabasePracticeSharingGateway(client: SupabaseClient): Pr
           quiz_score: payload.quiz?.score,
           quiz_total: payload.quiz?.total,
           learning_points: payload.learningPoints,
-        }, { onConflict: 'owner_id,client_share_id' })
-        .select('id')
-        .single()
-      if (error || typeof data?.id !== 'string') throw new Error(`practice-sharing:supabase:${error?.code ?? 'invalid-response'}`)
-      return { publicCaseId: data.id }
+        },
+      })
+      if (error || typeof data !== 'string') throw new Error(`practice-sharing:supabase:${error?.code ?? 'invalid-response'}`)
+      return { publicCaseId: data }
     },
     async unpublish(clientShareId, publicCaseId) {
       await requireUser()
