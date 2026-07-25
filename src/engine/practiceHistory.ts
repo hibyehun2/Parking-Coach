@@ -436,7 +436,7 @@ export function todayPracticeMessage(sessions: PracticeSession[]) {
   if (!collisions) return '충돌 없이 안정적이에요. 무작위 출발에 도전해보세요.'
   const wallHits = sessions.flatMap((item) => item.collisionTargets).filter((id) => id.includes('wall')).length
   if (wallHits) return '벽면 쪽 간격을 먼저 확인하고 수정 주차를 연습하세요.'
-  return '닿을 것 같으면 정지하고 짧게 전진해 간격을 다시 만드세요.'
+  return '닿을 것 같으면 정지하고 간격을 다시 만드세요.'
 }
 
 export function calculatePracticeTrend(sessions: PracticeSession[]): PracticeTrend {

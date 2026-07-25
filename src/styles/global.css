@@ -422,7 +422,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .result-primary-actions button { flex: 1 1 150px; text-align: center; }
 .result-overview-card { gap: 14px; }
 .result-overview-card > strong { font-size: clamp(1.1rem, 2.4vw, 1.35rem); line-height: 1.4; text-wrap: balance; }
-.result-overview-card > .next-practice-summary { padding: 12px 14px; border-radius: 13px; color: var(--brand-dark); background: rgba(229,243,237,.9); font-size: clamp(.94rem, 2vw, 1.08rem); }
+.result-overview-card > .next-practice-summary { padding: 12px 14px; border-radius: 13px; color: var(--brand-dark); background: rgba(229,243,237,.9); font-size: clamp(.94rem, 2vw, 1.08rem); word-break: keep-all; overflow-wrap: break-word; }
 .result-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
 .result-metrics > div { min-width: 0; padding: 11px 8px; border-radius: 12px; display: grid; justify-items: center; gap: 4px; text-align: center; background: rgba(255,255,255,.7); }
 .result-metrics small { color: var(--muted); font-size: .68rem; font-weight: 750; }
@@ -2398,7 +2398,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .current-result-dashboard:not(.result-has-detail) {
     height: 100%;
     margin-top: 6px;
-    grid-template-columns: minmax(250px, 40%) minmax(0, 60%);
+    grid-template-columns: minmax(250px, 4fr) minmax(0, 6fr);
     gap: 9px;
     align-items: stretch;
   }
@@ -2406,6 +2406,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .current-result-dashboard .result-overview-column,
   .current-result-dashboard:not(.result-has-detail) .result-overview-column {
     position: static;
+    min-height: 0;
     width: auto;
     margin: 0;
     padding: 1px 3px 2px 1px;
