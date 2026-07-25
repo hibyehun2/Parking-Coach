@@ -309,14 +309,42 @@ export async function recordCorrectionSessionDb(
 export async function togglePracticeBookmarkDb(
   sessionId: string,
   now = new Date(),
-  options: { shareWhenAdded?: boolean } = {},
+  options: { targetState?: boolean, shareWhenAdded?: boolean } = {},
 ) {
-  if (!supabase) return { status: 'not-found' as const }
+  const localHistory = readLocalHistory()
+  const localTarget = localHistory.sessions.find((session) => session.id === sessionId)
+  
+  if (localTarget) {
+    if (options.targetState === undefined || localTarget.bookmarked !== options.targetState) {
+      if (options.targetState === true && localHistory.sessions.filter(s => s.bookmarked).length >= MAX_BOOKMARKED_SESSIONS) {
+        return { status: 'limit' as const }
+      }
+      localTarget.bookmarked = options.targetState ?? !localTarget.bookmarked
+      localTarget.bookmarkedAt = localTarget.bookmarked ? now.toISOString() : undefined
+      if (localTarget.bookmarked) {
+        localTarget.shareStatus = options.shareWhenAdded ? 'pending' : 'private'
+        localTarget.shareClientId = options.shareWhenAdded ? localTarget.shareClientId ?? createPracticeShareId() : localTarget.shareClientId
+        localTarget.shareRequestedAt = options.shareWhenAdded ? now.toISOString() : undefined
+        localTarget.shareError = undefined
+      } else {
+        localTarget.shareStatus = localTarget.publicCaseId ? 'unpublishing' : 'private'
+        localTarget.shareRequestedAt = localTarget.publicCaseId ? now.toISOString() : undefined
+        localTarget.shareError = undefined
+      }
+      writeLocalHistory(localHistory)
+    }
+  }
+
+  if (!supabase) return { status: localTarget ? (localTarget.bookmarked ? 'added' : 'removed') : 'not-found' }
   
   const history = await fetchPracticeHistory()
   const target = history.sessions.find((session) => session.id === sessionId)
   
-  if (!target) return { status: 'not-found' as const }
+  if (!target) return { status: localTarget ? (localTarget.bookmarked ? 'added' : 'removed') : 'not-found' }
+  
+  if (options.targetState !== undefined && target.bookmarked === options.targetState) {
+    return { status: target.bookmarked ? 'added' as const : 'removed' as const }
+  }
   
   if (!target.bookmarked && history.sessions.filter((session) => session.bookmarked).length >= MAX_BOOKMARKED_SESSIONS) {
     return { status: 'limit' as const }

@@ -299,7 +299,7 @@ export function ResultPage() {
     return () => { cancelled = true }
   }, [history])
   const applyBookmarkChange = async (session: PracticeSession) => {
-    await togglePracticeBookmarkDb(session.id, new Date(), { shareWhenAdded: !session.bookmarked })
+    await togglePracticeBookmarkDb(session.id, new Date(), { targetState: !session.bookmarked, shareWhenAdded: !session.bookmarked })
     const updatedHistory = await fetchPracticeHistory()
     setHistory(updatedHistory)
     if (session.bookmarked) setSelectedSessionId(null)
