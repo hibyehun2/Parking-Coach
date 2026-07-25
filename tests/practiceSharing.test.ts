@@ -108,3 +108,41 @@ test('Supabase 공유는 비공개 소유 열을 조회하지 않고 보안 함�
   assert.equal(calls[0].name, 'publish_learning_case')
   assert.equal((calls[0].args as { payload: { client_share_id: string } }).payload.client_share_id, '2e2c6bd7-37ea-4ed2-a39e-c9abf831217e')
 })
+
+test('Supabase 함수 스키마가 갱신 전이면 보안 정책이 적용된 신규 등록으로 공유한다', async () => {
+  const calls: string[] = []
+  const client = {
+    auth: {
+      getUser: async () => ({ data: { user: { id: 'user-1' } }, error: null }),
+    },
+    rpc: async () => ({ data: null, error: { code: 'PGRST202' } }),
+    from: () => ({
+      insert: () => ({
+        select: () => ({
+          single: async () => {
+            calls.push('insert')
+            return { data: { id: '6b0ad740-d13a-4cb8-821f-db12c7b83e13' }, error: null }
+          },
+        }),
+      }),
+    }),
+  } as unknown as SupabaseClient
+  const gateway = createSupabasePracticeSharingGateway(client)
+
+  const result = await gateway.publish({
+    clientShareId: '2e2c6bd7-37ea-4ed2-a39e-c9abf831217e',
+    nickname: '차분한수달',
+    completedDate: '2026-07-24',
+    consent: { version: 1, acceptedAt: '2026-07-24T09:00:00Z' },
+    scenarioId: 'both-sides',
+    scenarioTitle: '양옆 차량 사이',
+    practiceType: '직접 연습',
+    outcome: '안전 완료',
+    collisionCount: 0,
+    collisionZones: [],
+    learningPoints: [],
+  })
+
+  assert.equal(result.publicCaseId, '6b0ad740-d13a-4cb8-821f-db12c7b83e13')
+  assert.deepEqual(calls, ['insert'])
+})

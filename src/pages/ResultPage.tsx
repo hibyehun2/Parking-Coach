@@ -313,6 +313,15 @@ export function ResultPage() {
   const retrySharing = (session: PracticeSession) => {
     setHistory(retryPracticeShare(session.id))
   }
+  const sharingFailureMessage = (session: PracticeSession) => {
+    const code = session.shareError?.split(':').at(-1)
+    if (code === 'login-required') return '로그인 상태를 다시 확인해주세요.'
+    if (code === 'PGRST202' || code === '42883') return '공유 서버가 새 기능을 준비 중입니다. 잠시 후 다시 시도해주세요.'
+    if (code === '23505') return '같은 기록이 이미 전송됐습니다. 앱을 다시 연 뒤 확인해주세요.'
+    if (code === '42501') return '공유 권한을 확인하지 못했습니다. 다시 로그인한 뒤 시도해주세요.'
+    if (code === '23514') return '기록 형식을 확인하지 못했습니다. 새 연습 결과로 다시 시도해주세요.'
+    return code ? `공유 오류 코드: ${code}` : '네트워크 연결과 로그인 상태를 확인해주세요.'
+  }
   const resetHistory = async () => {
     if (!window.confirm('저장된 연습 기록을 모두 초기화할까요? 공개한 학습 사례도 함께 삭제됩니다.')) return
     const hasPublishedCases = history.sessions.some((session) => session.publicCaseId || session.shareStatus === 'shared' || session.shareStatus === 'unpublishing' || session.shareStatus === 'unpublish-failed')
@@ -343,7 +352,7 @@ export function ResultPage() {
       <aside className="share-case-preparation">
         <div><strong>{session.shareStatus === 'shared' ? '학습 사례 공유됨' : session.shareStatus === 'pending' ? '학습 사례 공유 대기' : session.shareStatus === 'publish-failed' ? '공유하지 못함' : session.shareStatus === 'unpublishing' ? '공개 중단 대기' : session.shareStatus === 'unpublish-failed' ? '공개 중단 확인 필요' : '비공개로 보관됨'}</strong><p>{session.shareStatus === 'private' ? '공유 동의 전에 보관한 기존 기록은 비공개 상태로 유지됩니다.' : '학습에 필요한 결과만 공개 닉네임으로 공유하며, 서버에서 소유권과 동의 이력을 확인합니다.'}</p></div>
         {session.shareStatus === 'publish-failed' || session.shareStatus === 'unpublish-failed'
-          ? <button type="button" className="share-retry-button" onClick={() => retrySharing(session)}>다시 시도</button>
+          ? <div className="share-retry-actions"><small>{sharingFailureMessage(session)}</small><button type="button" className="share-retry-button" onClick={() => retrySharing(session)}>다시 시도</button></div>
           : <span className={`share-status share-${session.shareStatus}`}>{session.shareStatus === 'shared' ? '공유됨' : session.shareStatus === 'pending' ? '전송 대기' : session.shareStatus === 'unpublishing' ? '공개 중단 중' : '비공개'}</span>}
       </aside>
     </section>
@@ -374,7 +383,9 @@ export function ResultPage() {
   return (
     <section className={`page single-column result-page${activeTab === 'current' && collisionEvent ? ' result-has-collision' : ''}`} aria-labelledby="result-title">
       <p className="eyebrow">연습 결과</p>
-      <h1 id="result-title">{challengeComplete ? '후진주차 상황 판단 연습 완료' : result ? (result.success ? '주차 성공' : '아직 주차가 완료되지 않았습니다') : '연습 기록'}</h1>
+      <h1 id="result-title">{challengeComplete
+        ? <span className="challenge-result-title"><span>후진주차 상황 판단</span>{' '}<span>연습 완료</span></span>
+        : result ? (result.success ? '주차 성공' : '아직 주차가 완료되지 않았습니다') : '연습 기록'}</h1>
       <div className="result-tabs" role="tablist" aria-label="결과 보기">
         <button type="button" role="tab" aria-selected={activeTab === 'current'} disabled={!hasCurrentResult} onClick={() => changeResultTab('current')}>이번 연습</button>
         <button type="button" role="tab" aria-selected={activeTab === 'history'} onClick={() => changeResultTab('history')}>연습 기록</button>

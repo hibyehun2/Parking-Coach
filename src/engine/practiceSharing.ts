@@ -141,26 +141,37 @@ export function createSupabasePracticeSharingGateway(client: SupabaseClient): Pr
   return {
     async publish(payload) {
       await requireUser()
-      const { data, error } = await client.rpc('publish_learning_case', {
-        payload: {
-          client_share_id: payload.clientShareId,
-          nickname: payload.nickname,
-          completed_date: payload.completedDate,
-          consent_version: payload.consent.version,
-          consent_accepted_at: payload.consent.acceptedAt,
-          scenario_id: payload.scenarioId,
-          scenario_title: payload.scenarioTitle,
-          practice_type: payload.practiceType,
-          outcome: payload.outcome,
-          collision_count: payload.collisionCount,
-          collision_zones: payload.collisionZones,
-          quiz_score: payload.quiz?.score,
-          quiz_total: payload.quiz?.total,
-          learning_points: payload.learningPoints,
-        },
-      })
-      if (error || typeof data !== 'string') throw new Error(`practice-sharing:supabase:${error?.code ?? 'invalid-response'}`)
-      return { publicCaseId: data }
+      const record = {
+        client_share_id: payload.clientShareId,
+        nickname: payload.nickname,
+        completed_date: payload.completedDate,
+        consent_version: payload.consent.version,
+        consent_accepted_at: payload.consent.acceptedAt,
+        scenario_id: payload.scenarioId,
+        scenario_title: payload.scenarioTitle,
+        practice_type: payload.practiceType,
+        outcome: payload.outcome,
+        collision_count: payload.collisionCount,
+        collision_zones: payload.collisionZones,
+        quiz_score: payload.quiz?.score,
+        quiz_total: payload.quiz?.total,
+        learning_points: payload.learningPoints,
+      }
+      const rpcResult = await client.rpc('publish_learning_case', { payload: record })
+      if (!rpcResult.error && typeof rpcResult.data === 'string') {
+        return { publicCaseId: rpcResult.data }
+      }
+      if (!['PGRST202', '42883'].includes(rpcResult.error?.code ?? '')) {
+        throw new Error(`practice-sharing:supabase:${rpcResult.error?.code ?? 'invalid-response'}`)
+      }
+
+      const { data, error } = await client
+        .from('learning_cases')
+        .insert(record)
+        .select('id')
+        .single()
+      if (error || typeof data?.id !== 'string') throw new Error(`practice-sharing:supabase:${error?.code ?? 'invalid-response'}`)
+      return { publicCaseId: data.id }
     },
     async unpublish(clientShareId, publicCaseId) {
       await requireUser()

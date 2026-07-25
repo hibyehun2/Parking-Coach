@@ -2654,6 +2654,10 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .share-status.share-publish-failed,
 .share-status.share-unpublish-failed { color: #973f37; background: #ffebe8; }
 .share-status.share-unpublishing { color: #665a76; background: #eee9f6; }
+.share-retry-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px 9px; }
+.share-retry-actions small { max-width: 260px; color: #973f37; font-size: .68rem; line-height: 1.4; text-align: right; word-break: keep-all; }
+.challenge-result-title { word-break: keep-all; overflow-wrap: normal; }
+.challenge-result-title > span { display: inline-block; white-space: nowrap; }
 .share-retry-button {
   flex: none;
   min-height: 40px;
