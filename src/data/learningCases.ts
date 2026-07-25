@@ -21,7 +21,7 @@ type LearningCaseRow = {
   completed_date: string
   scenario_title: string
   practice_type: '직접 연습' | '판단 연습'
-  outcome: '안전 완료' | '안전 주차' | '복기 필요'
+  outcome: '안전 완료' | '안전 주차' | '연습 완료' | '복기 필요'
   collision_count: number
   learning_points: string[]
   runtime?: ScenarioRuntime
