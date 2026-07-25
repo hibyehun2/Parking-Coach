@@ -156,11 +156,6 @@ export async function recordPracticeSessionDb(
   runtime?: ScenarioRuntime,
   replay: ReplayEvent[] = [],
 ): Promise<PracticeSession | null> {
-  if (!supabase) return null
-
-  const { data: userResp } = await supabase.auth.getUser()
-  if (!userResp?.user) return null
-
   const collisionTargets = result.collisions.map((collision) => collision.obstacleId)
   const collisionZones = result.collisions.flatMap((collision) => collision.contactZone ? [collision.contactZone] : [])
   const moments = replay
@@ -173,47 +168,56 @@ export async function recordPracticeSessionDb(
         : event.clip,
     }))
 
-  const sessionData = {
+  const sessionObj = {
     id: `${completedAt.getTime()}-${scenarioId}`,
-    owner_id: userResp.user.id,
-    completed_at: completedAt.toISOString(),
-    scenario_id: scenarioId,
+    completedAt: completedAt.toISOString(),
+    scenarioId,
     mode,
     success: result.success,
-    collision_count: result.collisionCount,
-    collision_targets: collisionTargets,
-    collision_zones: collisionZones,
+    collisionCount: result.collisionCount,
+    collisionTargets,
+    collisionZones,
     mistakes: result.collisionCount ? ['collision'] : [],
     seed: runtime?.seed,
     variant: runtime?.variant,
     runtime,
     moments,
     bookmarked: false,
-    share_status: 'private',
-  }
-
-  const sessionObj = {
-    ...sessionData,
-    completedAt: sessionData.completed_at,
-    scenarioId: sessionData.scenario_id as ScenarioId,
-    collisionCount: sessionData.collision_count,
-    collisionTargets: sessionData.collision_targets,
-    collisionZones: sessionData.collision_zones,
-    shareStatus: sessionData.share_status as PracticeShareStatus,
-    shareClientId: undefined,
-    shareRequestedAt: undefined,
-    publicCaseId: undefined,
-    shareError: undefined,
-    bookmarkedAt: undefined,
-  } as unknown as PracticeSession
+    shareStatus: 'private' as PracticeShareStatus,
+  } as PracticeSession
 
   const localHistory = readLocalHistory()
   localHistory.sessions.unshift(sessionObj)
   writeLocalHistory(localHistory)
 
-  void supabase.from('practice_sessions').insert(sessionData).then(({ error }) => {
-    if (error) console.error('Failed to record practice session to DB:', error)
-  })
+  if (supabase) {
+    void supabase.auth.getUser().then(({ data: userResp }) => {
+      if (!userResp?.user) return
+      
+      const sessionData = {
+        id: sessionObj.id,
+        owner_id: userResp.user.id,
+        completed_at: sessionObj.completedAt,
+        scenario_id: sessionObj.scenarioId,
+        mode: sessionObj.mode,
+        success: sessionObj.success,
+        collision_count: sessionObj.collisionCount,
+        collision_targets: sessionObj.collisionTargets,
+        collision_zones: sessionObj.collisionZones,
+        mistakes: sessionObj.mistakes,
+        seed: sessionObj.seed,
+        variant: sessionObj.variant,
+        runtime: sessionObj.runtime,
+        moments: sessionObj.moments,
+        bookmarked: sessionObj.bookmarked,
+        share_status: sessionObj.shareStatus,
+      }
+      
+      void supabase!.from('practice_sessions').insert(sessionData).then(({ error }) => {
+        if (error) console.error('Failed to record practice session to DB:', error)
+      })
+    })
+  }
   
   return sessionObj
 }
@@ -244,57 +248,60 @@ export async function recordCorrectionSessionDb(
   completedAt = new Date(),
   correctionAttempts: CorrectionAttempt[] = [],
 ): Promise<PracticeSession | null> {
-  if (!supabase) return null
-
-  const { data: userResp } = await supabase.auth.getUser()
-  if (!userResp?.user) return null
-
-  const sessionData = {
+  const sessionObj = {
     id: `${completedAt.getTime()}-correction`,
-    owner_id: userResp.user.id,
-    completed_at: completedAt.toISOString(),
-    scenario_id: runtime.scenarioId,
+    completedAt: completedAt.toISOString(),
+    scenarioId: runtime.scenarioId,
     mode: 'practice',
     success: score === total,
-    collision_count: 0,
-    collision_targets: [],
-    collision_zones: [],
+    collisionCount: 0,
+    collisionTargets: [],
+    collisionZones: [],
     mistakes: [],
     seed: runtime.seed,
     variant: runtime.variant,
     runtime,
-    quiz_score: score,
-    quiz_total: total,
-    correction_attempts: correctionAttempts,
+    quizScore: score,
+    quizTotal: total,
+    correctionAttempts,
     bookmarked: false,
-    share_status: 'private',
-  }
-
-  const sessionObj = {
-    ...sessionData,
-    completedAt: sessionData.completed_at,
-    scenarioId: sessionData.scenario_id as ScenarioId,
-    collisionCount: sessionData.collision_count,
-    collisionTargets: sessionData.collision_targets,
-    collisionZones: sessionData.collision_zones,
-    quizScore: sessionData.quiz_score,
-    quizTotal: sessionData.quiz_total,
-    correctionAttempts: sessionData.correction_attempts,
-    shareStatus: sessionData.share_status as PracticeShareStatus,
-    shareClientId: undefined,
-    shareRequestedAt: undefined,
-    publicCaseId: undefined,
-    shareError: undefined,
-    bookmarkedAt: undefined,
-  } as unknown as PracticeSession
+    shareStatus: 'private' as PracticeShareStatus,
+  } as PracticeSession
 
   const localHistory = readLocalHistory()
   localHistory.sessions.unshift(sessionObj)
   writeLocalHistory(localHistory)
 
-  void supabase.from('practice_sessions').insert(sessionData).then(({ error }) => {
-    if (error) console.error('Failed to record correction session to DB:', error)
-  })
+  if (supabase) {
+    void supabase.auth.getUser().then(({ data: userResp }) => {
+      if (!userResp?.user) return
+
+      const sessionData = {
+        id: sessionObj.id,
+        owner_id: userResp.user.id,
+        completed_at: sessionObj.completedAt,
+        scenario_id: sessionObj.scenarioId,
+        mode: sessionObj.mode,
+        success: sessionObj.success,
+        collision_count: sessionObj.collisionCount,
+        collision_targets: sessionObj.collisionTargets,
+        collision_zones: sessionObj.collisionZones,
+        mistakes: sessionObj.mistakes,
+        seed: sessionObj.seed,
+        variant: sessionObj.variant,
+        runtime: sessionObj.runtime,
+        quiz_score: sessionObj.quizScore,
+        quiz_total: sessionObj.quizTotal,
+        correction_attempts: sessionObj.correctionAttempts,
+        bookmarked: sessionObj.bookmarked,
+        share_status: sessionObj.shareStatus,
+      }
+
+      void supabase!.from('practice_sessions').insert(sessionData).then(({ error }) => {
+        if (error) console.error('Failed to record correction session to DB:', error)
+      })
+    })
+  }
   
   return sessionObj
 }

@@ -95,8 +95,8 @@ export function SimulatorPage() {
       </section>
       {!isPracticeMode && !showSafetyNotice && showLesson && <MiniLessonView lesson={getLesson(scenario.id)} runtime={runtime} onFinish={() => setShowLesson(false)} />}
       {showSafetyNotice && createPortal(
-        <div className="control-help-backdrop">
-          <section className="control-help-dialog safety-notice-dialog" role="dialog" aria-modal="true" aria-labelledby="real-driving-safety-title">
+        <div className="modal-backdrop">
+          <section className="modal-dialog safety-notice-dialog" role="dialog" aria-modal="true" aria-labelledby="real-driving-safety-title">
             <header>
               <div><span>실제 운전 전 확인</span><h2 id="real-driving-safety-title">안전한 장소에서 연습하세요</h2></div>
             </header>
@@ -106,7 +106,7 @@ export function SimulatorPage() {
               <li>실제 운전에서는 화면보다 주변과 사각지대를 직접 확인하세요.</li>
               <li>처음 연습할 때는 안전한 장소에서 지도자의 도움을 받으세요.</li>
             </ul>
-            <button type="button" className="control-help-start" onClick={confirmSafetyNotice}>확인하고 연습하기</button>
+            <button type="button" className="modal-start" onClick={confirmSafetyNotice}>확인하고 연습하기</button>
           </section>
         </div>,
         document.body,
