@@ -8,11 +8,13 @@ export function JudgmentCanvas({
   choice,
   correct,
   runtime,
+  children,
 }: {
   scenario: JudgmentScenario
   choice: JudgmentChoice | null
   correct: boolean
   runtime: ScenarioRuntime
+  children?: React.ReactNode
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [frame, setFrame] = useState(0)
@@ -22,11 +24,6 @@ export function JudgmentCanvas({
     [choice, runtime, scenario],
   )
   const focusZone = scenario.focusZone ?? choice?.focusZone
-  const highlightedParkedSide = focusZone?.includes('right')
-    ? 'right'
-    : focusZone?.includes('left')
-      ? 'left'
-      : undefined
 
   useEffect(() => {
     if (!choice || simulation.states.length < 2) return
@@ -65,7 +62,7 @@ export function JudgmentCanvas({
         ghostVehicles: simulation.states.length > 1
           ? [{ vehicle: simulation.states[simulation.states.length - 1], color: correct ? '#31d38b' : '#ff6b62' }]
           : undefined,
-        highlightParkedCorner: highlightedParkedSide,
+        highlightContactZone: focusZone,
         showReverseGuide: false,
         directionLightStrength: 1,
       })
@@ -74,25 +71,30 @@ export function JudgmentCanvas({
     observer.observe(canvas)
     draw()
     return () => observer.disconnect()
-  }, [correct, frame, highlightedParkedSide, runtime, scenario, simulation])
+  }, [correct, frame, focusZone, runtime, scenario, simulation])
 
   return (
-    <>
+    <div className="judgment-canvas-wrapper">
       <canvas ref={canvasRef} role="img" aria-label={`${scenario.title} 상황의 차량 위치, 기어와 선택 결과`} />
-      {choice && simulation.states.length > 1 && (
-        <button
-          type="button"
-          className="quiz-replay-result"
-          onClick={() => {
-            setFrame(0)
-            setReplayVersion((version) => version + 1)
-          }}
-          aria-label={`${scenario.title} 영상 처음부터 다시 재생`}
-        >
-          ↻ 다시 재생
-        </button>
+      {(choice && simulation.states.length > 1 || children) && (
+        <div className="judgment-canvas-actions">
+          {choice && simulation.states.length > 1 ? (
+            <button
+              type="button"
+              className="quiz-replay-result"
+              onClick={() => {
+                setFrame(0)
+                setReplayVersion((version) => version + 1)
+              }}
+              aria-label={`${scenario.title} 영상 처음부터 다시 재생`}
+            >
+              ↻ 다시 재생
+            </button>
+          ) : <div />}
+          {children}
+        </div>
       )}
-    </>
+    </div>
   )
 }
 

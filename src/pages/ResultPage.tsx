@@ -8,7 +8,7 @@ import { LearningCaseViewer } from '../components/LearningCaseViewer'
 import { JudgmentCanvas } from '../components/JudgmentQuiz'
 import { buildCorrectionDrills } from '../engine/correctionDrills'
 import type { ParkingResult } from '../engine/parkingEvaluation'
-import { clearPracticeHistoryDb, fetchPracticeHistory, MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, recommendPractice, retryPracticeShareDb, togglePracticeBookmarkDb, type CorrectionAttempt, type PracticeHistory, type PracticeSession } from '../engine/practiceHistory'
+import { clearPracticeHistoryDb, deletePracticeSessionDb, fetchPracticeHistory, MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, recommendPractice, retryPracticeShareDb, togglePracticeBookmarkDb, type CorrectionAttempt, type PracticeHistory, type PracticeSession } from '../engine/practiceHistory'
 import { getScenario } from '../data/scenarios'
 import { loadLearningCases, type LearningCase } from '../data/learningCases'
 import type { JudgmentScenario } from '../engine/judgmentScenarios'
@@ -112,16 +112,13 @@ function CorrectionReviewCard({
       </header>
       {hasTopView && reviewScenario && runtime && firstChoice && correctChoice ? <div className="correction-path-comparison safe-preview-only">
         <figure className="safe-view">
-          <JudgmentCanvas scenario={reviewScenario} choice={correctChoice} correct runtime={runtime} />
+          <JudgmentCanvas scenario={reviewScenario} choice={correctChoice} correct runtime={runtime}>
+            <button type="button" className="expand-topview-button" onClick={() => openExpanded('safe')}>크게보기</button>
+          </JudgmentCanvas>
           <figcaption><span><i className="safe" />안전한 선택 결과</span></figcaption>
         </figure>
       </div> : <p className="review-topview-unavailable">이 기록은 탑뷰 저장 기능이 적용되기 전 기록입니다. 아래에서 당시 판단과 안전한 행동을 확인할 수 있습니다.</p>}
       <div className="correction-review-copy">
-        {hasTopView && reviewScenario && runtime && firstChoice && correctChoice && (
-          <div className="correction-review-copy-actions">
-            <button type="button" className="expand-topview-button" onClick={() => openExpanded('safe')}>크게보기</button>
-          </div>
-        )}
         {reviewScenario && <p><b>상황</b><span>{reviewScenario.situation}</span></p>}
         <p><b>내 판단</b><span>{attempt.firstChoiceLabel}</span></p>
         {firstChoice?.feedback && <p><b>이렇게 되면</b><span>{firstChoice.feedback}</span></p>}
@@ -229,6 +226,7 @@ export function ResultPage() {
   const [selectedCaseAuthorId, setSelectedCaseAuthorId] = useState<string | null>(null)
   const [learningCases, setLearningCases] = useState<LearningCase[]>([])
   const [nickname, setNickname] = useState(loadAnonymousNickname)
+  const [sessionToDelete, setSessionToDelete] = useState<PracticeSession | null>(null)
 
   useEffect(() => {
     let active = true
@@ -379,6 +377,34 @@ export function ResultPage() {
     setHistory(await fetchPracticeHistory())
     setSelectedSessionId(null)
   }
+  const confirmDeleteSession = async () => {
+    if (!sessionToDelete) return
+    const isPublic = sessionToDelete.publicCaseId || sessionToDelete.shareStatus === 'shared' || sessionToDelete.shareStatus === 'unpublishing' || sessionToDelete.shareStatus === 'unpublish-failed'
+    
+    if (isPublic) {
+      if (!configuredPracticeSharingGateway) {
+        window.alert('공개된 사례를 삭제할 수 없습니다. 서버 연결을 확인해주세요.')
+        setSessionToDelete(null)
+        return
+      }
+      try {
+        if (sessionToDelete.shareClientId && sessionToDelete.publicCaseId) {
+          await configuredPracticeSharingGateway.unpublish(sessionToDelete.shareClientId, sessionToDelete.publicCaseId)
+        }
+      } catch {
+        window.alert('공개 사례 삭제에 실패했습니다. 잠시 후 다시 시도해주세요.')
+        setSessionToDelete(null)
+        return
+      }
+    }
+    
+    const updatedHistory = await deletePracticeSessionDb(sessionToDelete.id)
+    setHistory(updatedHistory)
+    setSessionToDelete(null)
+    if (selectedSessionId === sessionToDelete.id) {
+      setSelectedSessionId(null)
+    }
+  }
   const renderHistoryDetail = (session: PracticeSession, idSuffix = 'inline') => {
     const detailId = `history-detail-${idSuffix}-${session.id}`
     const titleId = `history-detail-title-${idSuffix}-${session.id}`
@@ -408,6 +434,7 @@ export function ResultPage() {
         <div className="session-buttons">
           <button type="button" className={`bookmark-button${session.bookmarked ? ' bookmarked' : ''}`} aria-label={session.bookmarked ? '보관 및 공유 해제하기' : '이 기록 보관 및 공유하기'} aria-pressed={session.bookmarked} title={session.bookmarked ? '보관 및 공유 해제하기' : '보관하고 학습 사례로 공유하기'} onClick={() => toggleBookmark(session)}><BookmarkIcon filled={session.bookmarked} /></button>
           <button type="button" aria-expanded={isSelected} aria-controls={detailId} onClick={() => setSelectedSessionId(isCompactLandscape ? session.id : isSelected ? null : session.id)}>{isCompactLandscape && isSelected ? '선택됨' : isSelected ? '상세 닫기' : session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 보기'}</button>
+          <button type="button" className="delete-session-button" aria-label="기록 삭제" onClick={() => setSessionToDelete(session)}>삭제</button>
         </div>
       </div>
       {isSelected && !isCompactLandscape && renderHistoryDetail(session)}
@@ -588,7 +615,16 @@ export function ResultPage() {
           </aside>}
         </div>}
       </section>}
-      {pendingShareSession && <div className="share-consent-backdrop" role="presentation" onMouseDown={(event) => {
+      {sessionToDelete && createPortal(<div className="share-consent-backdrop" role="presentation" onMouseDown={(event) => {
+        if (event.target === event.currentTarget) setSessionToDelete(null)
+      }}>
+        <section className="share-consent-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-consent-title">
+          <h3 id="delete-consent-title">이 기록을 삭제하시겠습니까?</h3>
+          <p>삭제된 기록은 되돌릴 수 없습니다.<br />{sessionToDelete.shareStatus === 'shared' && '공유된 학습 사례도 함께 삭제됩니다.'}</p>
+          <div><button type="button" className="secondary-button" onClick={() => setSessionToDelete(null)}>취소</button><button type="button" className="primary-button danger-button" onClick={() => void confirmDeleteSession()}>삭제하기</button></div>
+        </section>
+      </div>, document.body)}
+      {pendingShareSession && createPortal(<div className="share-consent-backdrop" role="presentation" onMouseDown={(event) => {
         if (event.target === event.currentTarget) setPendingShareSession(null)
       }}>
         <section className="share-consent-dialog" role="dialog" aria-modal="true" aria-labelledby="share-consent-title">
@@ -602,7 +638,7 @@ export function ResultPage() {
           </ul>
           <div><button type="button" className="secondary-button" onClick={() => setPendingShareSession(null)}>취소</button><button type="button" className="primary-button" onClick={acceptSharingAndBookmark}>동의하고 보관</button></div>
         </section>
-      </div>}
+      </div>, document.body)}
     </section>
   )
 }

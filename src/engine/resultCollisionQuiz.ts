@@ -4,14 +4,22 @@ import type { JudgmentChoice, JudgmentScenario } from './judgmentScenarios.ts'
 import { simulateJudgmentChoice } from './judgmentScenarios.ts'
 import type { ReplayEvent } from './sessionReplay.ts'
 
-const ZONES = ['front-left', 'front-right', 'rear-left', 'rear-right'] as const
+const ZONES = [
+  'front-left', 'front-center', 'front-right', 
+  'right-side', 'rear-right', 'rear-center', 
+  'rear-left', 'left-side'
+] as const
 type ContactZone = typeof ZONES[number]
 
 const ZONE_LABELS: Record<ContactZone, string> = {
   'front-left': '왼쪽 앞 모서리',
+  'front-center': '앞 범퍼 중앙',
   'front-right': '오른쪽 앞 모서리',
-  'rear-left': '왼쪽 뒤 모서리',
+  'right-side': '오른쪽 측면',
   'rear-right': '오른쪽 뒤 모서리',
+  'rear-center': '뒤 범퍼 중앙',
+  'rear-left': '왼쪽 뒤 모서리',
+  'left-side': '왼쪽 측면',
 }
 
 export type ResultCollisionQuiz = {

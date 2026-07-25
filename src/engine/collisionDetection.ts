@@ -16,7 +16,7 @@ export type Collision = {
   obstacleId: string
   kind: ObstacleKind
   position: Point
-  contactZone?: 'front-left' | 'front-right' | 'rear-left' | 'rear-right'
+  contactZone?: 'front-left' | 'front-center' | 'front-right' | 'right-side' | 'rear-right' | 'rear-center' | 'rear-left' | 'left-side'
 }
 
 export const VEHICLE_DIMENSIONS = { length: 4.6, width: 1.8 } as const
@@ -115,11 +115,22 @@ export function detectCollision(vehicle: VehicleState, clearance = 0, environmen
       const deltaY = obstacle.box.center.y - vehicle.y
       const forward = deltaX * Math.cos(vehicle.heading) + deltaY * Math.sin(vehicle.heading)
       const lateral = -deltaX * Math.sin(vehicle.heading) + deltaY * Math.cos(vehicle.heading)
+      const angle = Math.atan2(forward, lateral)
+      let zone: Collision['contactZone']
+      if (angle > -Math.PI / 8 && angle <= Math.PI / 8) zone = 'right-side'
+      else if (angle > Math.PI / 8 && angle <= 3 * Math.PI / 8) zone = 'front-right'
+      else if (angle > 3 * Math.PI / 8 && angle <= 5 * Math.PI / 8) zone = 'front-center'
+      else if (angle > 5 * Math.PI / 8 && angle <= 7 * Math.PI / 8) zone = 'front-left'
+      else if (angle > 7 * Math.PI / 8 || angle <= -7 * Math.PI / 8) zone = 'left-side'
+      else if (angle > -7 * Math.PI / 8 && angle <= -5 * Math.PI / 8) zone = 'rear-left'
+      else if (angle > -5 * Math.PI / 8 && angle <= -3 * Math.PI / 8) zone = 'rear-center'
+      else zone = 'rear-right'
+
       return {
         obstacleId: obstacle.id,
         kind: obstacle.kind,
         position: { x: vehicle.x, y: vehicle.y },
-        contactZone: `${forward >= 0 ? 'front' : 'rear'}-${lateral >= 0 ? 'right' : 'left'}`,
+        contactZone: zone,
       }
     }
   }

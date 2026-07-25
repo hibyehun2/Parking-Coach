@@ -241,6 +241,23 @@ export async function clearPracticeHistoryDb(): Promise<PracticeHistory> {
   return EMPTY_HISTORY
 }
 
+export async function deletePracticeSessionDb(sessionId: string): Promise<PracticeHistory> {
+  const currentHistory = await fetchPracticeHistory()
+  const session = currentHistory.sessions.find(s => s.id === sessionId)
+  if (!session) return currentHistory
+
+  if (supabase) {
+    const { data: userResp } = await supabase.auth.getUser()
+    if (userResp?.user) {
+      await supabase.from('practice_sessions').delete().eq('id', sessionId).eq('owner_id', userResp.user.id)
+    }
+  }
+
+  const nextHistory = { ...currentHistory, sessions: currentHistory.sessions.filter(s => s.id !== sessionId) }
+  writeLocalHistory(nextHistory)
+  return nextHistory
+}
+
 export async function recordCorrectionSessionDb(
   score: number,
   total: number,

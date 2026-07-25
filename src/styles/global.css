@@ -555,6 +555,9 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .quiz-layout { margin-top: 16px; display: grid; grid-template-columns: minmax(240px, .85fr) minmax(280px, 1.15fr); gap: 22px; align-items: center; }
 .quiz-layout svg, .quiz-layout canvas { width: 100%; border-radius: 18px; }
 .quiz-layout canvas { aspect-ratio: 4 / 3; display: block; background: #59635f; }
+.judgment-canvas-wrapper { display: flex; flex-direction: column; width: 100%; }
+.judgment-canvas-actions { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 8px; }
+.judgment-canvas-actions .quiz-replay-result { margin-top: 0; }
 .quiz-replay-result { margin-top: 8px; min-height: 36px; padding: 0 11px; border: 1px solid var(--border); border-radius: 9px; color: var(--brand-dark); background: white; font-size: .72rem; font-weight: 800; cursor: pointer; }
 .quiz-figure { min-width: 0; }
 .quiz-road { fill: #59635f; }
@@ -718,6 +721,9 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .session-buttons { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
 .recent-practice .session-buttons .bookmark-button { width: 44px; min-height: 44px; padding: 0; color: #8b9691; font-size: 1.15rem; line-height: 1; }
 .recent-practice .session-buttons .bookmark-button svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.recent-practice .session-buttons .bookmark-button.bookmarked { color: #5bc493; }
+.session-buttons .delete-session-button { color: #dc5f56; border-color: #f7e6e5; background: #fffaf9; }
+.session-buttons .delete-session-button:hover { background: #ffebeb; border-color: #f0d5d3; color: #d0463c; }
 .recent-practice .session-buttons .bookmark-button.bookmarked { border-color: #e2b95e; color: #c7890b; background: #fff8df; }
 .recent-practice > ol > li.selected .session-row { border-bottom: 1px solid rgba(108,197,164,.45); }
 .recent-practice .history-detail { margin: 0; border: 0; border-radius: 0; background: rgba(255,255,255,.7); }
@@ -915,7 +921,8 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .correction-shell .judgment-quiz h2 { margin: 0; font-size: .82rem; line-height: 1.25; }
   .correction-shell .quiz-layout { margin-top: 0; grid-template-columns: minmax(170px, .82fr) minmax(220px, 1.18fr); gap: 10px; align-items: start; }
   .correction-shell .quiz-layout canvas { max-height: calc(100svh - 68px); }
-  .correction-shell .quiz-replay-result { min-height: 31px; margin-top: 5px; }
+  .correction-shell .judgment-canvas-actions { margin-top: 5px; }
+  .correction-shell .quiz-replay-result { min-height: 31px; margin-top: 0; }
   .correction-shell .quiz-legend { margin-top: 5px; gap: 4px 9px; font-size: .62rem; }
   .correction-shell .quiz-legend b { padding: 4px 6px; }
   .correction-shell .quiz-copy { gap: 6px; }

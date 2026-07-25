@@ -843,12 +843,12 @@ export function renderParkingLot(
     }
   }
   if (options.highlightContactZone) {
-    const localX = options.highlightContactZone.includes('front')
-      ? VEHICLE_DIMENSIONS.length / 2
-      : -VEHICLE_DIMENSIONS.length / 2
-    const localY = options.highlightContactZone.includes('right')
-      ? VEHICLE_DIMENSIONS.width / 2
-      : -VEHICLE_DIMENSIONS.width / 2
+    let localX = 0
+    let localY = 0
+    if (options.highlightContactZone.includes('front')) localX = VEHICLE_DIMENSIONS.length / 2
+    else if (options.highlightContactZone.includes('rear')) localX = -VEHICLE_DIMENSIONS.length / 2
+    if (options.highlightContactZone.includes('right')) localY = VEHICLE_DIMENSIONS.width / 2
+    else if (options.highlightContactZone.includes('left')) localY = -VEHICLE_DIMENSIONS.width / 2
     context.save()
     context.translate(vehicle.x, vehicle.y)
     context.rotate(vehicle.heading)
