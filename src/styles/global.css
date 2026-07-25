@@ -3374,16 +3374,16 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .review-topview-dialog .expanded-review-copy {
     min-height: 0;
     height: 100%;
-    padding: 9px;
-    gap: 6px;
+    padding: 12px 14px;
+    gap: 8px;
     overflow: auto;
   }
   .review-topview-dialog .expanded-review-copy p,
   .review-topview-dialog .expanded-review-copy .safe-action {
-    grid-template-columns: 68px minmax(0, 1fr);
-    gap: 5px;
-    font-size: .68rem;
-    line-height: 1.35;
+    grid-template-columns: 50px minmax(0, 1fr);
+    gap: 8px;
+    font-size: .82rem;
+    line-height: 1.5;
   }
   .review-topview-dialog .expanded-review-copy .safe-action { padding: 7px; }
   .review-topview-dialog .expanded-review-copy .safe-action small { font-size: .62rem; }
