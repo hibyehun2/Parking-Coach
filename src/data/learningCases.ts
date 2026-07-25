@@ -21,7 +21,7 @@ type LearningCaseRow = {
   completed_date: string
   scenario_title: string
   practice_type: '직접 연습' | '판단 연습'
-  outcome: '안전 완료' | '복기 필요'
+  outcome: '안전 완료' | '안전 주차' | '복기 필요'
   collision_count: number
   learning_points: string[]
   runtime?: ScenarioRuntime
@@ -44,7 +44,7 @@ function toLearningCase(row: LearningCaseRow): LearningCase {
     authorId: row.nickname,
     nickname: row.nickname,
     scenario: row.scenario_title,
-    title: `${row.scenario_title} · ${row.outcome}`,
+    title: `${row.scenario_title} · ${row.outcome === '안전 완료' ? '안전 주차' : row.outcome}`,
     summary: collisionSummary,
     takeaway: learningPoints[0] ?? '연습 결과를 살펴보고 내 주차 판단에 적용해보세요.',
     sharedLabel: formatSharedDate(row.completed_date),
@@ -58,6 +58,7 @@ export async function loadLearningCases(): Promise<LearningCase[]> {
   const { data, error } = await supabase
     .from('learning_cases')
     .select('id,nickname,completed_date,scenario_title,practice_type,outcome,collision_count,learning_points,runtime,vehicle_snapshot')
+    .not('runtime', 'is', null)
     .order('created_at', { ascending: false })
     .limit(30)
 

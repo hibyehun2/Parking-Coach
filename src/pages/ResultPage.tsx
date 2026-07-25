@@ -104,11 +104,19 @@ function CorrectionReviewCard({
 
   return (
     <li className="correction-review-card">
-      <header><div><span>{attempt.drillTitle}</span><strong>{attempt.stepTitle}</strong></div><small>{attempt.firstTryCorrect ? '정확한 판단' : '우선 복기'}</small></header>
+      <header>
+        <div><span>{attempt.drillTitle}</span><strong>{attempt.stepTitle}</strong></div>
+        <div className="correction-review-actions">
+          {hasTopView && reviewScenario && runtime && firstChoice && correctChoice && (
+            <button type="button" className="expand-topview-button" onClick={() => openExpanded('safe')}>🔍 화면 크게 보기</button>
+          )}
+          <small>{attempt.firstTryCorrect ? '정확한 판단' : '우선 복기'}</small>
+        </div>
+      </header>
       {hasTopView && reviewScenario && runtime && firstChoice && correctChoice ? <div className="correction-path-comparison safe-preview-only">
         <figure className="safe-view">
           <JudgmentCanvas scenario={reviewScenario} choice={correctChoice} correct runtime={runtime} />
-          <figcaption><span><i className="safe" />안전한 선택 결과</span><button type="button" onClick={() => openExpanded('safe')}>크게 보기</button></figcaption>
+          <figcaption><span><i className="safe" />안전한 선택 결과</span></figcaption>
         </figure>
       </div> : <p className="review-topview-unavailable">이 기록은 탑뷰 저장 기능이 적용되기 전 기록입니다. 아래에서 당시 판단과 안전한 행동을 확인할 수 있습니다.</p>}
       <div className="correction-review-copy">
@@ -393,7 +401,7 @@ export function ResultPage() {
       <div className="session-row">
         <div><strong>{session.mode === 'practice' ? `${getScenario(session.scenarioId).title} · 판단 연습 ${session.quizScore ?? 0}/${session.quizTotal ?? 10}` : `${getScenario(session.scenarioId).title} · ${session.success ? '성공' : '미완료'}`}</strong><span>{formatCompletedAt(session.completedAt)} · {session.mode === 'learning' ? '직접 연습' : '판단 연습'}</span></div>
         <div className={`session-measures${session.mode === 'practice' || session.success && !session.collisionCount ? ' session-complete' : ' session-review'}`}>
-          <span>{session.mode === 'practice' ? '판단 완료' : session.collisionCount ? `충돌 ${session.collisionCount}회` : session.success ? '안전 완료' : '미완료'}</span>
+          <span>{session.mode === 'practice' ? '연습 완료' : session.collisionCount ? `충돌 ${session.collisionCount}회` : session.success ? '안전 주차' : '미완료'}</span>
         </div>
         <div className="session-buttons">
           <button type="button" className={`bookmark-button${session.bookmarked ? ' bookmarked' : ''}`} aria-label={session.bookmarked ? '보관 및 공유 해제하기' : '이 기록 보관 및 공유하기'} aria-pressed={session.bookmarked} title={session.bookmarked ? '보관 및 공유 해제하기' : '보관하고 학습 사례로 공유하기'} onClick={() => toggleBookmark(session)}><BookmarkIcon filled={session.bookmarked} /></button>
@@ -429,7 +437,7 @@ export function ResultPage() {
         <div className="result-actions"><Link className="primary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=practice`}>다른 판단 연습하기</Link><Link className="secondary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=learning`}>직접 연습에 적용</Link></div>
       </section>}
 
-      {activeTab === 'current' && result && <section className={`current-result-dashboard${collisionEvent ? ' result-has-detail' : ''}${isCompactLandscape && !collisionEvent && replayMoments.length === 0 ? ' result-single-pane' : ''}`} aria-label="이번 연습 핵심 결과">
+      {activeTab === 'current' && result && <section className={`current-result-dashboard${collisionEvent ? ' result-has-detail' : ''}${!collisionEvent && replayMoments.length === 0 ? ' result-single-pane' : ''}`} aria-label="이번 연습 핵심 결과">
         <div className="result-overview-column">
           <article className={`result-card result-overview-card ${result.success && !result.collisionCount ? 'good' : 'needs-work'}`}>
             <span>다음 연습 한 줄</span>

@@ -97,15 +97,21 @@ export function SettingsPage() {
 
       <section className="settings-group" aria-labelledby="profile-settings-title">
         <header><span>프로필</span><h2 id="profile-settings-title">공개 닉네임</h2></header>
-        <div className="settings-profile-row">
-          <AnimalAvatar nickname={nickname} className="settings-avatar" />
-          <div>
-            <strong>{nickname}</strong>
+        {!user ? (
+          <div className="settings-profile-row" style={{ color: 'var(--muted)', fontSize: '0.85rem', padding: '8px 0' }}>
+            로그인 후 닉네임을 설정하고 학습 사례를 공유할 수 있습니다.
           </div>
-          <button type="button" aria-label="공개 닉네임 무작위 변경" title="공개 닉네임을 무작위로 변경합니다" onClick={refreshNickname}>변경</button>
-        </div>
+        ) : (
+          <div className="settings-profile-row">
+            <AnimalAvatar nickname={nickname} className="settings-avatar" />
+            <div>
+              <strong>{nickname}</strong>
+            </div>
+            <button type="button" aria-label="공개 닉네임 무작위 변경" title="공개 닉네임을 무작위로 변경합니다" onClick={refreshNickname}>변경</button>
+          </div>
+        )}
         <p className="settings-note" aria-live="polite">
-          {changed ? '새 닉네임을 저장했으며 공개한 모든 사례에도 같은 이름이 사용됩니다.' : '공유에 동의한 모든 학습 사례에는 이 닉네임이 동일하게 표시됩니다.'}
+          {!user ? '학습 사례는 로그인한 사용자만 보관하고 공유할 수 있습니다.' : changed ? '새 닉네임을 저장했으며 공개한 모든 사례에도 같은 이름이 사용됩니다.' : '공유에 동의한 모든 학습 사례에는 이 닉네임이 동일하게 표시됩니다.'}
         </p>
       </section>
 

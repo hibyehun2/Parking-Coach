@@ -15,7 +15,7 @@ export type PublicLearningCasePayload = {
   scenarioId: PracticeSession['scenarioId']
   scenarioTitle: string
   practiceType: '직접 연습' | '판단 연습'
-  outcome: '안전 완료' | '복기 필요'
+  outcome: '안전 주차' | '연습 완료' | '복기 필요'
   collisionCount: number
   collisionZones: string[]
   quiz?: { score: number; total: number }
@@ -45,7 +45,7 @@ export function buildPublicLearningCase(
     scenarioId: session.scenarioId,
     scenarioTitle: getScenario(session.scenarioId).title,
     practiceType: session.mode === 'practice' ? '판단 연습' : '직접 연습',
-    outcome: session.success && session.collisionCount === 0 ? '안전 완료' : '복기 필요',
+    outcome: session.success && session.collisionCount === 0 ? '안전 주차' : '복기 필요',
     collisionCount: session.collisionCount,
     collisionZones: session.collisionZones,
     quiz: typeof session.quizScore === 'number' && typeof session.quizTotal === 'number'
@@ -190,13 +190,13 @@ export function createSupabasePracticeSharingGateway(client: SupabaseClient): Pr
       if (error) throw new Error(`practice-sharing:supabase:${error.code}`)
     },
     async unpublishAll() {
-      await requireUser()
-      const { error } = await client.from('learning_cases').delete().not('id', 'is', null)
+      const user = await requireUser()
+      const { error } = await client.from('learning_cases').delete().eq('owner_id', user.id)
       if (error) throw new Error(`practice-sharing:supabase:${error.code}`)
     },
     async updateNickname(nickname) {
-      await requireUser()
-      const { error } = await client.from('learning_cases').update({ nickname: nickname.trim().slice(0, 40) }).not('id', 'is', null)
+      const user = await requireUser()
+      const { error } = await client.from('learning_cases').update({ nickname: nickname.trim().slice(0, 40) }).eq('owner_id', user.id)
       if (error) throw new Error(`practice-sharing:supabase:${error.code}`)
     },
   }
