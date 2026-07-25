@@ -5,7 +5,7 @@ export const WHEEL_STOP = {
     { left: 14.02, right: 14.62 },
     { left: 15.38, right: 15.98 },
   ],
-  y: 11.85,
+  y: 11.1,
 } as const
 
 function rearAxle(vehicle: Pick<VehicleState, 'x' | 'y' | 'heading'>) {
