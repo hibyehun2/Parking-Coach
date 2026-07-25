@@ -17,7 +17,7 @@ export type LessonSimulationStage = {
 const TIME_STEP = 0.05
 const DRIVER_SHOULDER_FROM_CENTER = 0.8
 const JUDGMENT_ENTRY_ANGLE = 25 * Math.PI / 180
-const FINAL_CENTER_Y = 10.42
+const FINAL_CENTER_Y = 9.75
 const CAMERA_CUE_APPROACH_MARGIN = 1
 
 function stopped(state: VehicleState, changes: Partial<VehicleState> = {}): VehicleState {

@@ -18,8 +18,8 @@ export type CorrectionDrill = {
 
 const TIME_STEP = .05
 const SHORT_CORRECTION_DISTANCE = .7
-const FINAL_CENTER_Y = 10.42
-const INSIDE_BAY_FINAL_Y = TARGET_PARKING_BAY.center.y
+const FINAL_CENTER_Y = 9.75
+const INSIDE_BAY_FINAL_Y = 9.75
 const BAY_EXIT_CENTER_Y = TARGET_PARKING_BAY.top - 2.42
 
 function stopped(vehicle: VehicleState, changes: Partial<VehicleState> = {}) {

@@ -29,6 +29,7 @@ export function ReplayMomentCard({
   )
   const [frame, setFrame] = useState(0)
   const [playKey, setPlayKey] = useState(0)
+  const [isEnlarged, setIsEnlarged] = useState(false)
 
   useEffect(() => {
     if (frames.length < 2) return
@@ -76,20 +77,36 @@ export function ReplayMomentCard({
     observer.observe(canvas)
     draw()
     return () => observer.disconnect()
-  }, [event, frame, frames, runtime])
+  }, [event, frame, frames, runtime, isEnlarged])
+
+  const canvasElement = <canvas ref={canvasRef} role="img" aria-label={`${event.label} 전후 차량 움직임`} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
 
   return (
     <article className={`replay-moment-card replay-${event.type}`}>
-      <canvas ref={canvasRef} role="img" aria-label={`${event.label} 전후 차량 움직임`} />
+      {!isEnlarged && canvasElement}
       <div>
         <span>{event.elapsedSeconds.toFixed(1)}초 · {event.type === 'collision' ? '우선 수정할 순간' : '최종 자세'}</span>
         <strong>{event.label}</strong>
         <p>{coaching(event)}</p>
         <div>
           <button type="button" onClick={() => { setFrame(0); setPlayKey((value) => value + 1) }}>다시 보기</button>
+          <button type="button" onClick={() => setIsEnlarged(true)}>크게 보기</button>
           {onRetry && <button type="button" className="replay-primary-action" onClick={onRetry}>충돌 직전에서 직접 수정</button>}
         </div>
       </div>
+      {isEnlarged && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column', backdropFilter: 'blur(4px)' }}>
+          <header style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 20px', color: 'white', alignItems: 'center' }}>
+            <strong style={{ fontSize: '1.1rem' }}>{event.label} (크게 보기)</strong>
+            <button type="button" onClick={() => setIsEnlarged(false)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1rem', padding: '8px' }}>닫기 ✕</button>
+          </header>
+          <div style={{ flex: 1, minHeight: 0, padding: '0 20px 20px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div style={{ width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              {canvasElement}
+            </div>
+          </div>
+        </div>
+      )}
     </article>
   )
 }
