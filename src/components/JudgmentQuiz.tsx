@@ -63,6 +63,7 @@ export function JudgmentCanvas({
           ? [{ vehicle: simulation.states[simulation.states.length - 1], color: correct ? '#31d38b' : '#ff6b62' }]
           : undefined,
         highlightContactZone: focusZone,
+        highlightContactVehicle: scenario.vehicle,
         showReverseGuide: false,
         directionLightStrength: 1,
       })

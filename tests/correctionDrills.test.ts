@@ -123,6 +123,15 @@ test('가까운 쪽은 R, 먼 쪽은 D로 50cm에서 1m 사이를 직선 이동�
   }
 })
 
+test('먼 쪽 간격 표시는 진입 방향에 맞는 사용자 차량의 뒤쪽 모서리를 가리킨다', () => {
+  for (const seed of [2, 3]) {
+    const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
+    const farSide = buildCorrectionDrills(runtime).find(({ id }) => id === 'far-side')!
+    const expectedZone = runtime.startSide === 'left' ? 'rear-left' : 'rear-right'
+    for (const step of farSide.steps) assert.equal(step.focusZone, expectedZone)
+  }
+})
+
 test('공간을 만든 뒤 화면에 명시된 좌우 방향으로 다시 조향해 주차를 완료한다', () => {
   for (const seed of [2, 3]) {
     const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })

@@ -710,6 +710,7 @@ export function renderParkingLot(
     candidatePaths?: { points: { x: number; y: number }[]; color: string; dashed?: boolean }[]
     ghostVehicles?: { vehicle: VehicleState; color: string }[]
     highlightContactZone?: Collision['contactZone']
+    highlightContactVehicle?: VehicleState
     reverseGuideOpacity?: number
     showReverseGuide?: boolean
     directionLightStrength?: number
@@ -843,6 +844,7 @@ export function renderParkingLot(
     }
   }
   if (options.highlightContactZone) {
+    const highlightVehicle = options.highlightContactVehicle ?? vehicle
     let localX = 0
     let localY = 0
     if (options.highlightContactZone.includes('front')) localX = VEHICLE_DIMENSIONS.length / 2
@@ -850,8 +852,8 @@ export function renderParkingLot(
     if (options.highlightContactZone.includes('right')) localY = VEHICLE_DIMENSIONS.width / 2
     else if (options.highlightContactZone.includes('left')) localY = -VEHICLE_DIMENSIONS.width / 2
     context.save()
-    context.translate(vehicle.x, vehicle.y)
-    context.rotate(vehicle.heading)
+    context.translate(highlightVehicle.x, highlightVehicle.y)
+    context.rotate(highlightVehicle.heading)
     context.fillStyle = 'rgba(255, 69, 58, .24)'
     context.strokeStyle = '#ff453a'
     context.lineWidth = .13

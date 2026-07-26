@@ -173,7 +173,7 @@ function buildEntryCorrectionCourse(
     : '직선 전진으로 먼 쪽 공간 만들기'
   const focusZone = kind === 'near'
     ? (leftEntry ? 'rear-right' as const : 'rear-left' as const)
-    : (leftEntry ? 'front-left' as const : 'front-right' as const)
+    : (leftEntry ? 'rear-left' as const : 'rear-right' as const)
 
   return {
     id: kind === 'near' ? 'near-side' : 'far-side',
