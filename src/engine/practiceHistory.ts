@@ -120,7 +120,7 @@ export async function recordPracticeSessionDb(
   const collisionTargets = result.collisions.map((collision) => collision.obstacleId)
   const collisionZones = result.collisions.flatMap((collision) => collision.contactZone ? [collision.contactZone] : [])
   const moments = replay
-    .filter((event) => event.type === 'collision' || (event.type === 'finish' && result.success))
+    .filter((event) => event.type === 'collision' || event.type === 'finish')
     .slice(-4)
     .map((event) => ({
       ...event,

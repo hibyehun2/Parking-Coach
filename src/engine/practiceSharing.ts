@@ -6,6 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { supabase } from './supabaseClient.ts'
 import type { ScenarioRuntime } from '../types/practice.ts'
 import type { VehicleState } from './vehiclePhysics.ts'
+import { buildCorrectionDrills } from './correctionDrills.ts'
 
 export type PublicLearningCasePayload = {
   clientShareId: string
@@ -31,6 +32,29 @@ export interface PracticeSharingGateway {
   updateNickname(nickname: string): Promise<void>
 }
 
+export function resolveLearningCaseVehicleSnapshot(session: PracticeSession): VehicleState | undefined {
+  const savedMoment = session.moments?.at(-1)?.vehicle
+  if (savedMoment) return { ...savedMoment }
+
+  const attempts = session.correctionAttempts ?? []
+  const salientAttempt = attempts.find((attempt) => !attempt.firstTryCorrect) ?? attempts[0]
+  const savedScenario = salientAttempt?.reviewSnapshot?.scenario
+  const savedChoice = salientAttempt?.reviewSnapshot?.firstChoice
+  const savedPreview = savedChoice?.previewStates?.at(-1)
+  if (savedPreview) return { ...savedPreview }
+  if (savedScenario?.vehicle) return { ...savedScenario.vehicle }
+
+  if (!session.runtime || !salientAttempt) return undefined
+  const reconstructedScenario = buildCorrectionDrills(session.runtime)
+    .find((drill) => drill.id === salientAttempt.drillId)
+    ?.steps.find((step) => step.id === salientAttempt.stepId)
+  const reconstructedChoice = reconstructedScenario?.choices
+    .find((choice) => choice.label === salientAttempt.firstChoiceLabel)
+  const reconstructedPreview = reconstructedChoice?.previewStates?.at(-1)
+  if (reconstructedPreview) return { ...reconstructedPreview }
+  return reconstructedScenario?.vehicle ? { ...reconstructedScenario.vehicle } : undefined
+}
+
 export function buildPublicLearningCase(
   session: PracticeSession,
   nickname: string,
@@ -38,8 +62,9 @@ export function buildPublicLearningCase(
 ): PublicLearningCasePayload {
   if (!session.shareClientId) throw new Error('practice-sharing:missing-client-share-id')
 
-  const attempts = session.correctionAttempts ?? []
-  const salientAttempt = attempts.find((a) => !a.firstTryCorrect) ?? attempts[Math.floor(Math.random() * attempts.length)]
+  if (!session.runtime) throw new Error('practice-sharing:visual-runtime-missing')
+  const vehicleSnapshot = resolveLearningCaseVehicleSnapshot(session)
+  if (!vehicleSnapshot) throw new Error('practice-sharing:visual-snapshot-missing')
 
   return {
     clientShareId: session.shareClientId,
@@ -59,7 +84,7 @@ export function buildPublicLearningCase(
       : undefined,
     learningPoints: [...new Set(session.correctionAttempts?.map((attempt) => attempt.takeaway) ?? [])].slice(0, 5),
     runtime: session.runtime,
-    vehicleSnapshot: session.moments?.at(-1)?.vehicle ?? salientAttempt?.reviewSnapshot?.firstChoice?.previewStates?.at(-1),
+    vehicleSnapshot,
   }
 }
 

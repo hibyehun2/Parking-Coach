@@ -364,6 +364,7 @@ export function ResultPage() {
     if (code === '23505') return '같은 기록이 이미 전송됐습니다. 앱을 다시 연 뒤 확인해주세요.'
     if (code === '42501') return '공유 권한을 확인하지 못했습니다. 다시 로그인한 뒤 시도해주세요.'
     if (code === '23514') return '기록 형식을 확인하지 못했습니다. 새 연습 결과로 다시 시도해주세요.'
+    if (code === 'visual-runtime-missing' || code === 'visual-snapshot-missing') return '탑뷰를 만들 수 없는 이전 기록입니다. 새 연습 결과를 공유해주세요.'
     return code ? `공유 오류 코드: ${code}` : '네트워크 연결과 로그인 상태를 확인해주세요.'
   }
 

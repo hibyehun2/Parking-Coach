@@ -63,6 +63,7 @@ export async function loadLearningCases(): Promise<LearningCase[]> {
     .from('learning_cases')
     .select('id,nickname,completed_date,scenario_title,practice_type,outcome,collision_count,learning_points,runtime,vehicle_snapshot')
     .not('runtime', 'is', null)
+    .not('vehicle_snapshot', 'is', null)
     .order('created_at', { ascending: false })
     .limit(30)
 
