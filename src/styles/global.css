@@ -3701,8 +3701,8 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 
 /* Fluid sizing for tablet app layouts */
 @media (min-width: 721px) and (max-width: 1024px) and (orientation: portrait),
-       (min-width: 721px) and (max-width: 1180px) and (orientation: landscape) and (max-height: 900px),
-       (min-width: 1181px) and (max-width: 1366px) and (orientation: landscape) and (max-height: 1024px) and (any-pointer: coarse) {
+       (min-width: 721px) and (max-width: 1180px) and (min-height: 600px) and (orientation: landscape) and (max-height: 900px),
+       (min-width: 1181px) and (max-width: 1366px) and (min-height: 600px) and (orientation: landscape) and (max-height: 1024px) and (any-pointer: coarse) {
   :root {
     --mobile-tab-height: clamp(64px, 7.5vh, 72px);
     --tablet-body-size: clamp(.84rem, 1.25vw, .94rem);
@@ -3858,8 +3858,8 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   }
 }
 
-@media (min-width: 721px) and (max-width: 1180px) and (orientation: landscape) and (max-height: 900px),
-       (min-width: 1181px) and (max-width: 1366px) and (orientation: landscape) and (max-height: 1024px) and (any-pointer: coarse) {
+@media (min-width: 721px) and (max-width: 1180px) and (min-height: 600px) and (orientation: landscape) and (max-height: 900px),
+       (min-width: 1181px) and (max-width: 1366px) and (min-height: 600px) and (orientation: landscape) and (max-height: 1024px) and (any-pointer: coarse) {
   .history-browser,
   .learning-case-browser {
     grid-template-columns: clamp(360px, 34vw, 420px) minmax(0, 1fr);
@@ -4066,7 +4066,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   }
 }
 
-@media (min-width: 721px) and (max-width: 900px) and (orientation: landscape) {
+@media (min-width: 721px) and (max-width: 900px) and (min-height: 600px) and (orientation: landscape) {
   .result-detail-column .result-collision-quiz .quiz-layout {
     grid-template-columns: minmax(0, 1fr);
   }
