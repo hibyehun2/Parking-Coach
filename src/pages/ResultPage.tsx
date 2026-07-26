@@ -282,6 +282,7 @@ export function ResultPage() {
   const replayMoments = replay
     .filter((event) => event.type === 'collision' || (event.type === 'finish' && result?.success))
     .slice(-3)
+  const hasCompactResultDetail = isCompactLandscape && (Boolean(collisionReview) || replayMoments.length > 0)
   const finalVehicle = replay.slice().reverse().find((event) => event.type === 'finish')?.vehicle
   const steeringCentered = finalVehicle ? Math.abs(finalVehicle.steeringAngle) < .08 : false
   const selectedLearningCase = learningCases.find((learningCase) => learningCase.id === selectedLearningCaseId) ?? learningCases[0]
@@ -457,7 +458,7 @@ export function ResultPage() {
         <div className="result-actions"><Link className="primary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=practice`}>다른 판단 연습하기</Link><Link className="secondary-button" to={`/simulator?scenario=${state?.scenarioId ?? 'both-sides'}&mode=learning`}>직접 연습에 적용</Link></div>
       </section>}
 
-      {activeTab === 'current' && result && <section className={`current-result-dashboard${collisionEvent ? ' result-has-detail' : ''}${!collisionEvent && replayMoments.length === 0 ? ' result-single-pane' : ''}`} aria-label="이번 연습 핵심 결과">
+      {activeTab === 'current' && result && <section className={`current-result-dashboard${hasCompactResultDetail ? ' result-has-detail' : ' result-single-pane'}`} aria-label="이번 연습 핵심 결과">
         <div className="result-overview-column">
           <article className={`result-card result-overview-card ${result.success && !result.collisionCount ? 'good' : 'needs-work'}`}>
             <span>다음 연습 한 줄</span>
