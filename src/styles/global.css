@@ -4086,3 +4086,40 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
     margin-inline: auto;
   }
 }
+
+/* Keep the current-result overview readable on landscape phones.
+   This stays below the 600px tablet boundary and wins over the shared
+   compact-result columns declared earlier. */
+@media (orientation: landscape) and (max-height: 599px) {
+  .current-result-dashboard:not(.result-single-pane) {
+    grid-template-columns: minmax(220px, clamp(220px, 42vw, 280px)) minmax(0, 1fr);
+  }
+
+  .current-result-dashboard .result-overview-column {
+    min-width: 0;
+    padding-inline: 0;
+    overflow-x: hidden;
+    scrollbar-gutter: auto;
+  }
+
+  .current-result-dashboard .result-card,
+  .current-result-dashboard .result-primary-actions,
+  .current-result-dashboard .result-recommendation-copy,
+  .current-result-dashboard .result-primary-actions a {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .current-result-dashboard .result-overview-card > strong,
+  .current-result-dashboard .result-recommendation-copy strong,
+  .current-result-dashboard .result-recommendation-copy p {
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 599px) and (max-width: 760px) {
+  .current-result-dashboard:not(.result-single-pane) {
+    grid-template-columns: minmax(220px, clamp(220px, 36vw, 240px)) minmax(0, 1fr);
+  }
+}
