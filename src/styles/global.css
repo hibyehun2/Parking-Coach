@@ -719,7 +719,9 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .recent-practice > ol > li { scroll-margin-top: 12px; overflow: hidden; border: 1px solid var(--border); border-radius: 13px; background: rgba(255,255,255,.64); transition: border-color .2s ease, box-shadow .2s ease, background .2s ease; }
 .recent-practice > ol > li.selected { border-color: #6cc5a4; background: rgba(242,251,247,.9); box-shadow: 0 8px 24px rgba(24,98,70,.1); }
 .recent-practice .session-row { padding: 13px 15px; display: grid; grid-template-columns: minmax(130px, 1fr) auto auto; align-items: center; gap: 12px; }
-.recent-practice .session-row > div:first-child { display: grid; gap: 3px; }
+.recent-practice .session-row > div:first-child { min-width: 0; display: grid; gap: 3px; }
+.recent-practice .session-row > div:first-child strong,
+.recent-practice .session-row > div:first-child span { word-break: keep-all; overflow-wrap: anywhere; }
 .recent-practice .session-row > div:first-child span { color: var(--muted); font-size: .69rem; }
 .session-buttons { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
 .recent-practice .session-buttons .bookmark-button { width: 44px; min-height: 44px; padding: 0; color: #8b9691; font-size: 1.15rem; line-height: 1; }
@@ -3557,7 +3559,24 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 }
 
 @media (max-width: 720px) and (orientation: portrait) {
+  .correction-review-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .correction-review-card > header,
+  .correction-review-card > .correction-path-comparison,
+  .correction-review-card > .correction-review-copy {
+    grid-column: 1;
+  }
   .correction-path-comparison { grid-template-columns: minmax(0, 1fr); }
+  .correction-review-card .correction-path-comparison figure {
+    width: min(100%, 360px);
+    margin-inline: auto;
+  }
+  .correction-review-copy {
+    width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
   .review-view-selector { display: grid; }
   .correction-path-comparison.view-first .safe-view,
   .correction-path-comparison.view-safe .first-view { display: none; }
