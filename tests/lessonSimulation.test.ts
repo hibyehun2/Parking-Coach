@@ -2,8 +2,8 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createScenarioRuntime } from '../src/data/scenarios.ts'
 import { detectCollision } from '../src/engine/collisionDetection.ts'
-import { buildJudgmentReferenceSimulation, buildLessonSimulation, buildNarrowAisleLessonSimulation } from '../src/engine/lessonSimulation.ts'
-import { isVehicleInsideParkingBay } from '../src/engine/parkingEvaluation.ts'
+import { buildJudgmentReferenceSimulation, buildLessonSimulation, buildNarrowAisleLessonSimulation, buildTwoBayShoulderSimulation, lessonDriverShoulder, withTwoBayReferenceVehicle } from '../src/engine/lessonSimulation.ts'
+import { evaluateParking, isVehicleInsideParkingBay } from '../src/engine/parkingEvaluation.ts'
 import { isRedGuideAlignedWithParkingLine, parkingCameraCueCenter } from '../src/engine/parkingLotRenderer.ts'
 
 test('기본 안내는 주차칸을 충분히 지나 나란히 정지한 뒤 진입 위치를 맞춘다', () => {
@@ -63,6 +63,32 @@ test('오른쪽 출발 경로도 진입 기준과 최종 주차 위치가 좌우
   assert.equal(runtime.startSide, 'right')
   assert.equal(isRedGuideAlignedWithParkingLine(cameraCueEnd), true)
   assert.equal(isVehicleInsideParkingBay(finalVehicle), true)
+})
+
+test('두 칸 옆 어깨선 경로는 기준선에서 연속 후진해 충돌 없이 목표 칸 가운데로 들어간다', () => {
+  for (const seed of [2, 3]) {
+    const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
+    const visualRuntime = withTwoBayReferenceVehicle(runtime)
+    const stages = buildTwoBayShoulderSimulation(runtime)
+    const states = stages.flatMap(({ states: items }) => items)
+    const referenceVehicle = visualRuntime.parkedVehicles.find(({ id }) => id.startsWith('lesson-second-'))!
+    const referenceLineX = referenceVehicle.x + (runtime.startSide === 'right' ? -1.35 : 1.35)
+    const shoulder = lessonDriverShoulder(stages[1].states.at(-1)!)
+    const finalResult = evaluateParking(states.at(-1)!, [])
+
+    assert.equal(stages.length, 6)
+    assert.ok(Math.abs(shoulder.x - referenceLineX) < .01)
+    for (let index = 0; index < stages.length - 1; index += 1) {
+      const end = stages[index].states.at(-1)!
+      const start = stages[index + 1].states[0]
+      assert.ok(Math.hypot(end.x - start.x, end.y - start.y) < .001)
+      assert.ok(Math.abs(end.heading - start.heading) < .001)
+    }
+    assert.equal(states.some((vehicle) => Boolean(detectCollision(vehicle, 0, visualRuntime))), false)
+    assert.equal(finalResult.fullyInside, true)
+    assert.ok(finalResult.centerError < .01)
+    assert.ok(finalResult.angleErrorDegrees < .1)
+  }
 })
 
 test('좁은 통로 7단계는 충돌 없이 연속되고 전진 수정 후 주차칸 안에서 끝난다', () => {

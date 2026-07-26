@@ -31,7 +31,11 @@ export function MiniLessonView({ lesson, runtime, onFinish }: MiniLessonProps) {
     || (lesson.scenarioId === 'one-side' && sceneObstacleSide === 'right')
     || (lesson.scenarioId === 'wall-side' && sceneObstacleSide === 'left')
   const displayedSteering = mirrored
-    ? step.steering === '좌측 끝까지' ? '우측 끝까지' : step.steering === '우측 끝까지' ? '좌측 끝까지' : step.steering
+    ? step.steering === '좌측 끝까지' ? '우측 끝까지'
+      : step.steering === '우측 끝까지' ? '좌측 끝까지'
+        : step.steering === '좌측 약 25도' ? '우측 약 25도'
+          : step.steering === '우측 약 25도' ? '좌측 약 25도'
+            : step.steering
     : step.steering
 
   const finish = () => {

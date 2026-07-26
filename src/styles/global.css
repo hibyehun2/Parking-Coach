@@ -199,7 +199,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .lesson-header strong { font-size: 1.35rem; }
 
 .lesson-method-tabs { display: flex; gap: 4px; background: rgba(0,0,0,.05); padding: 4px; border-radius: 10px; margin-top: 8px; }
-.lesson-method-tabs button { flex: 1; padding: 7px 10px; border-radius: 7px; border: none; background: transparent; color: var(--muted); font-weight: 700; font-size: .85rem; transition: background .2s, color .2s, box-shadow .2s; }
+.lesson-method-tabs button { min-width: 0; flex: 1; padding: 7px 10px; border-radius: 7px; border: none; background: transparent; color: var(--muted); font-weight: 700; font-size: .85rem; line-height: 1.35; word-break: keep-all; overflow-wrap: anywhere; transition: background .2s, color .2s, box-shadow .2s; }
 .lesson-method-tabs button[aria-selected="true"] { background: #fff; color: var(--brand-dark); box-shadow: 0 1px 3px rgba(0,0,0,.1); }
 .lesson-skip { min-height: 38px; padding: 0 12px; border: 1px solid var(--border); border-radius: 9px; flex: 0 0 auto; color: var(--muted); background: white; font-weight: 800; white-space: nowrap; }
 .lesson-animation { position: relative; min-height: 230px; border-radius: 17px; overflow: hidden; color: white; background: #525d59; }
@@ -269,7 +269,8 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .lesson-driving-state span { padding: 5px 7px; border-radius: 7px; color: #dbe6e1; background: rgba(9,20,16,.82); font-size: .68rem; font-weight: 700; }
 .lesson-driving-state b { margin-left: 3px; color: white; }
 @keyframes lesson-danger-pulse { 50% { stroke-width: 6; fill: rgba(255,91,80,.3); } }
-.lesson-copy { align-self: center; display: flex; flex-direction: column; gap: 10px; word-break: keep-all; overflow-wrap: break-word; }
+.lesson-copy { min-width: 0; align-self: center; display: flex; flex-direction: column; gap: 10px; word-break: keep-all; overflow-wrap: anywhere; }
+.lesson-copy > * { min-width: 0; max-width: 100%; }
 .lesson-copy > span { color: var(--brand); font-size: .78rem; font-weight: 800; }
 .lesson-copy h2 { font-size: 1.65rem; }
 .lesson-copy p { margin: 0; color: var(--muted); line-height: 1.65; }

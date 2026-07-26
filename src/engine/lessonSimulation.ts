@@ -19,6 +19,10 @@ const DRIVER_SHOULDER_FROM_CENTER = 0.8
 const JUDGMENT_ENTRY_ANGLE = 25 * Math.PI / 180
 const FINAL_CENTER_Y = 9.75
 const CAMERA_CUE_APPROACH_MARGIN = 1
+const PARKING_BAY_PITCH = 2.7
+const TWO_BAY_REFERENCE_RADIUS = 5.95
+const TWO_BAY_ALIGNED_Y = 8.8
+const TWO_BAY_STEERING_ANGLE = Math.atan(DEFAULT_VEHICLE_CONFIG.wheelbase / TWO_BAY_REFERENCE_RADIUS)
 
 function stopped(state: VehicleState, changes: Partial<VehicleState> = {}): VehicleState {
   return { ...state, ...changes, speed: 0, braking: true }
@@ -122,6 +126,91 @@ export function buildLessonSimulation(runtime: ScenarioRuntime): LessonSimulatio
     toStage(straightReverse),
   ]
 
+  if (runtime.startSide !== 'right') return stages
+  return stages.map((stage) => toStage(stage.states.map(mirrorState)))
+}
+
+export function withTwoBayReferenceVehicle(runtime: ScenarioRuntime): ScenarioRuntime {
+  const referenceSide = runtime.startSide === 'right' ? 'left' : 'right'
+  const adjacent = runtime.parkedVehicles.find(({ side }) => side === referenceSide)
+  if (!adjacent) return runtime
+  const referenceVehicle = {
+    ...adjacent,
+    id: `lesson-second-${referenceSide}`,
+    x: adjacent.x + (referenceSide === 'right' ? PARKING_BAY_PITCH : -PARKING_BAY_PITCH),
+  }
+  return {
+    ...runtime,
+    parkedVehicles: [
+      ...runtime.parkedVehicles.filter(({ id }) => id !== referenceVehicle.id),
+      referenceVehicle,
+    ],
+  }
+}
+
+export function buildTwoBayShoulderSimulation(runtime: ScenarioRuntime): LessonSimulationStage[] {
+  const adjacentRightVehicle = runtime.parkedVehicles.find(({ side }) => side === 'right')!
+  const referenceLineX = adjacentRightVehicle.x + PARKING_BAY_PITCH * 1.5
+  const stopCenterX = referenceLineX - DRIVER_SHOULDER_FROM_CENTER
+  const approachY = TWO_BAY_ALIGNED_Y - TWO_BAY_REFERENCE_RADIUS
+  const initial = stopped({ ...INITIAL_VEHICLE_STATE, x: 5.5, y: approachY, heading: 0, gear: 'D' })
+
+  const wideApproach = simulateUntil(
+    initial,
+    { steeringDirection: 0 },
+    (state) => state.x >= stopCenterX - PARKING_BAY_PITCH,
+  )
+  const alignShoulder = simulateUntil(
+    wideApproach.at(-1)!,
+    { steeringDirection: 0 },
+    (state) => state.x >= stopCenterX,
+  )
+  alignShoulder[alignShoulder.length - 1] = stopped({
+    ...alignShoulder.at(-1)!,
+    x: stopCenterX,
+    steeringAngle: 0,
+  })
+
+  const prepareReverse = [
+    stopped(alignShoulder.at(-1)!, {
+      gear: 'R',
+      steeringAngle: TWO_BAY_STEERING_ANGLE,
+    }),
+  ]
+  const curvedReverse = simulateUntil(
+    prepareReverse[0],
+    { steeringDirection: 0 },
+    (state) => state.heading <= TARGET_PARKING_BAY.heading,
+  )
+  curvedReverse[curvedReverse.length - 1] = stopped(curvedReverse.at(-1)!)
+
+  const centerSteering = [
+    stopped(curvedReverse.at(-1)!, {
+      gear: 'R',
+      steeringAngle: 0,
+    }),
+  ]
+  const straightReverse = simulateUntil(
+    centerSteering[0],
+    { steeringDirection: 0 },
+    (state) => state.y >= TARGET_PARKING_BAY.center.y,
+  )
+  straightReverse[straightReverse.length - 1] = stopped({
+    ...straightReverse.at(-1)!,
+    x: TARGET_PARKING_BAY.center.x,
+    y: TARGET_PARKING_BAY.center.y,
+    heading: TARGET_PARKING_BAY.heading,
+    steeringAngle: 0,
+  })
+
+  const stages = [
+    toStage(wideApproach),
+    toStage(alignShoulder),
+    toStage(prepareReverse),
+    toStage(curvedReverse),
+    toStage(centerSteering),
+    toStage(straightReverse),
+  ]
   if (runtime.startSide !== 'right') return stages
   return stages.map((stage) => toStage(stage.states.map(mirrorState)))
 }

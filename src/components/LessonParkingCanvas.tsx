@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { buildLessonSimulation, buildNarrowAisleLessonSimulation, buildJudgmentReferenceSimulation, lessonDriverShoulder } from '../engine/lessonSimulation'
+import { buildLessonSimulation, buildNarrowAisleLessonSimulation, buildJudgmentReferenceSimulation, buildTwoBayShoulderSimulation, lessonDriverShoulder, withTwoBayReferenceVehicle } from '../engine/lessonSimulation'
 import { TARGET_PARKING_BAY } from '../engine/parkingEvaluation'
 import { renderParkingLot } from '../engine/parkingLotRenderer'
 import type { ScenarioRuntime } from '../types/practice'
@@ -9,6 +9,7 @@ export function LessonParkingCanvas({ runtime, stepIndex, methodId }: { runtime:
   const stages = useMemo(() => {
     if (runtime.scenarioId === 'narrow-aisle') return buildNarrowAisleLessonSimulation(runtime)
     if (methodId === '45-degree') return buildJudgmentReferenceSimulation(runtime)
+    if (methodId === '90-degree') return buildTwoBayShoulderSimulation(runtime)
     return buildLessonSimulation(runtime)
   }, [runtime, methodId])
   const stage = stages[stepIndex]
@@ -44,8 +45,9 @@ export function LessonParkingCanvas({ runtime, stepIndex, methodId }: { runtime:
       const vehicle = stage.states[Math.min(frame, stage.states.length - 1)]
       const first = stage.states[0]
       const last = stage.states.at(-1)!
+      const visualRuntime = methodId === '90-degree' ? withTwoBayReferenceVehicle(runtime) : runtime
       renderParkingLot(context, width, height, vehicle, {
-        runtime,
+        runtime: visualRuntime,
         directionLightStrength: .6,
         focus: { x: 15, y: 7.1, span: 14, heading: -Math.PI / 2 },
         candidatePaths: stage.path.length > 1
@@ -60,7 +62,9 @@ export function LessonParkingCanvas({ runtime, stepIndex, methodId }: { runtime:
           : undefined,
       })
 
-      const showShoulderLine = (runtime.scenarioId === 'narrow-aisle' && stepIndex === 1) || (methodId === '45-degree' && stepIndex === 0)
+      const showShoulderLine = (runtime.scenarioId === 'narrow-aisle' && stepIndex === 1)
+        || (methodId === '45-degree' && stepIndex === 0)
+        || (methodId === '90-degree' && stepIndex === 1)
       if (!showShoulderLine) return
       const shoulder = lessonDriverShoulder(last)
       const scale = Math.max(width, height) / 14
@@ -68,7 +72,9 @@ export function LessonParkingCanvas({ runtime, stepIndex, methodId }: { runtime:
       const worldTop = 7.1 - height / scale / 2
       const screenX = (shoulder.x - worldLeft) * scale
       const screenY = (shoulder.y - worldTop) * scale
-      const boundaryX = runtime.startSide === 'right' ? TARGET_PARKING_BAY.left : TARGET_PARKING_BAY.right
+      const boundaryX = methodId === '90-degree'
+        ? (runtime.startSide === 'right' ? 8.25 : 21.75)
+        : (runtime.startSide === 'right' ? TARGET_PARKING_BAY.left : TARGET_PARKING_BAY.right)
       const lineX = (boundaryX - worldLeft) * scale
       context.save()
       context.strokeStyle = '#ffe078'
@@ -85,7 +91,7 @@ export function LessonParkingCanvas({ runtime, stepIndex, methodId }: { runtime:
       context.fill()
       context.font = '800 11px sans-serif'
       context.textAlign = 'center'
-      context.fillText('운전자 어깨 ↔ 끝 선', lineX, Math.max(16, screenY - 54))
+      context.fillText(methodId === '90-degree' ? '어깨 ↔ 두 번째 차량 끝 선' : '운전자 어깨 ↔ 끝 선', lineX, Math.max(16, screenY - 54))
       context.restore()
     }
     const observer = new ResizeObserver(draw)

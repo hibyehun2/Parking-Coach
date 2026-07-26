@@ -3,7 +3,7 @@ import test from 'node:test'
 import { LESSON_TRAJECTORY_GEOMETRY, lessonDuration, lessons } from '../src/data/lessons.ts'
 import { DEFAULT_VEHICLE_CONFIG } from '../src/engine/vehiclePhysics.ts'
 
-test('기본 상황은 5단계, 좁은 통로는 7단계 미니 레슨이 있다', () => {
+test('기본 상황은 5단계, 양옆 차량의 두 칸 기준과 좁은 통로는 각각 6·7단계 안내가 있다', () => {
   assert.deepEqual(Object.keys(lessons).sort(), [
     'both-sides',
     'narrow-aisle',
@@ -13,7 +13,7 @@ test('기본 상황은 5단계, 좁은 통로는 7단계 미니 레슨이 있다
   ])
 
   for (const lesson of Object.values(lessons)) {
-    assert.equal(lesson.steps.length, lesson.scenarioId === 'narrow-aisle' ? 7 : 5)
+    assert.equal(lesson.steps.length, lesson.scenarioId === 'narrow-aisle' ? 7 : lesson.scenarioId === 'both-sides' ? 6 : 5)
     assert.ok(lesson.steps.every((step) => step.title && step.description && step.cue))
     if (lesson.scenarioId === 'tight-entry') {
       assert.deepEqual(lesson.steps.map((step) => step.gear), ['R', 'R', 'D', 'R', 'R'])
@@ -21,6 +21,12 @@ test('기본 상황은 5단계, 좁은 통로는 7단계 미니 레슨이 있다
     } else if (lesson.scenarioId === 'narrow-aisle') {
       assert.deepEqual(lesson.steps.map((step) => step.gear), ['D', 'D', 'D', 'R', 'R', 'D', 'R'])
       assert.match(lesson.steps.map((step) => step.description).join(' '), /벽.*정지.*전진.*재진입/)
+    } else if (lesson.scenarioId === 'both-sides') {
+      assert.deepEqual(lesson.steps.map((step) => step.gear), ['D', 'D', 'R', 'R', 'R', 'R'])
+      assert.deepEqual(lesson.steps.map((step) => step.steering), ['중앙', '중앙', '우측 약 25도', '우측 약 25도', '중앙', '중앙'])
+      const copy = lesson.steps.map((step) => `${step.title} ${step.description} ${step.cue}`).join(' ')
+      assert.match(copy, /두 번째 차량.*운전자 어깨.*25도.*평행/)
+      assert.match(copy, /뒤 모서리.*앞 모서리.*후방 화면/)
     } else {
       assert.deepEqual(lesson.steps.map((step) => step.gear), ['D', 'R', 'R', 'R', 'R'])
       assert.deepEqual(lesson.steps.map((step) => step.steering), ['중앙', '중앙', '우측 끝까지', '우측 끝까지', '중앙'])
