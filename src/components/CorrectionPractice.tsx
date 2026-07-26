@@ -99,6 +99,8 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
   const [attempts, setAttempts] = useState<CorrectionAttempt[]>([])
   const [reviewAttemptIndex, setReviewAttemptIndex] = useState<number | null>(null)
   const [history, setHistory] = useState<PracticeHistory | null>(null)
+  const [savingResult, setSavingResult] = useState(false)
+  const [saveError, setSaveError] = useState(false)
   
   useEffect(() => {
     let active = true
@@ -162,7 +164,8 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
     setPhase('guide')
   }
 
-  const complete = (firstTryCorrect: boolean, answer: JudgmentChoice, firstChoice: JudgmentChoice) => {
+  const complete = async (firstTryCorrect: boolean, answer: JudgmentChoice, firstChoice: JudgmentChoice) => {
+    if (savingResult) return
     const current = practiceItems[itemIndex]
     const nextScore = score + (firstTryCorrect ? 1 : 0)
     const nextAttempts = [...attempts, {
@@ -187,7 +190,14 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
       setItemIndex((value) => value + 1)
       return
     }
-    void recordCorrectionSessionDb(nextScore, practiceItems.length, runtime, new Date(), nextAttempts)
+    setSavingResult(true)
+    setSaveError(false)
+    const savedSession = await recordCorrectionSessionDb(nextScore, practiceItems.length, runtime, new Date(), nextAttempts)
+    if (!savedSession) {
+      setSavingResult(false)
+      setSaveError(true)
+      return
+    }
     navigate('/result?tab=current', {
       state: {
         challengeComplete: true,
@@ -309,6 +319,8 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
         <progress value={itemIndex + 1} max={practiceItems.length} />
       </div>
       <p className="page-description">{current.drill.description} 선택한 안전 동작의 결과가 다음 판단 단계로 이어집니다.</p>
+      {savingResult && <p className="practice-save-status" role="status">연습 기록을 저장하고 있습니다…</p>}
+      {saveError && <p className="practice-save-status save-error" role="alert">기록을 저장하지 못했습니다. 연습 결과 보기를 다시 눌러주세요.</p>}
       <JudgmentQuiz
         key={`${current.drill.id}-${current.step.id}`}
         scenario={current.step}

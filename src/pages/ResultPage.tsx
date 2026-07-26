@@ -304,7 +304,7 @@ export function ResultPage() {
       if (active) setHistory(hist)
     })
     return () => { active = false }
-  }, [])
+  }, [activeTab])
 
   useEffect(() => {
     if (!effectiveSelectedSessionId) return

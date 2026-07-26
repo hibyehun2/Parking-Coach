@@ -42,9 +42,11 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
   const sessionTrajectoryRef = useRef<{ recordedAt: number; vehicle: VehicleState }[]>([])
   const wheelStopContactRef = useRef(false)
   const wheelStopTimerRef = useRef<number | null>(null)
+  const sessionSaveRef = useRef<Promise<boolean> | null>(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [parkedResult, setParkedResult] = useState<ReturnType<typeof evaluateParking> | null>(null)
   const [wheelStopActive, setWheelStopActive] = useState(false)
+  const [saveError, setSaveError] = useState(false)
   const canUseFullscreen = !isIos && document.fullscreenEnabled
   const mobileDirectAssist = learningMode
     && window.matchMedia('(pointer: coarse), (hover: none)').matches
@@ -167,7 +169,9 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
   }
 
   const resetSimulation = () => {
+    sessionSaveRef.current = null
     setParkedResult(null)
+    setSaveError(false)
     setWheelStopActive(false)
     wheelStopContactRef.current = false
     reset()
@@ -185,33 +189,48 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
   }
 
   const finishSession = (result: ReturnType<typeof evaluateParking>) => {
-    if (parkedResult) return
+    if (sessionSaveRef.current) return sessionSaveRef.current
     setControlsLocked(true)
     setParkedResult(result)
-    replayRef.current.push({
-      id: 'finish',
-      elapsedSeconds: (Date.now() - sessionStartedAtRef.current) / 1000,
-      type: 'finish',
-      phase: 'finish',
-      label: result.success ? '주차 완료' : '미완료 상태로 연습 종료',
-      vehicle: cloneVehicleState(vehicle),
-      clip: sessionTrajectoryRef.current.slice(-18).map(({ vehicle: snapshot }) => snapshot),
-    })
-    void recordPracticeSessionDb(result, scenarioId, mode, new Date(), runtime, replayRef.current)
+    setSaveError(false)
+    if (!replayRef.current.some((event) => event.id === 'finish')) {
+      replayRef.current.push({
+        id: 'finish',
+        elapsedSeconds: (Date.now() - sessionStartedAtRef.current) / 1000,
+        type: 'finish',
+        phase: 'finish',
+        label: result.success ? '주차 완료' : '미완료 상태로 연습 종료',
+        vehicle: cloneVehicleState(vehicle),
+        clip: sessionTrajectoryRef.current.slice(-18).map(({ vehicle: snapshot }) => snapshot),
+      })
+    }
+    const savePromise = recordPracticeSessionDb(result, scenarioId, mode, new Date(), runtime, replayRef.current)
+      .then((session) => {
+        const saved = Boolean(session)
+        if (!saved) {
+          sessionSaveRef.current = null
+          setSaveError(true)
+        }
+        return saved
+      })
+    sessionSaveRef.current = savePromise
+    return savePromise
   }
 
   const completeParking = () => {
     if (!parkingEvaluation.success) return
-    finishSession(parkingEvaluation)
+    void finishSession(parkingEvaluation)
   }
 
-  const navigateToResult = (result: ReturnType<typeof evaluateParking>) => {
+  const navigateToResult = async (result: ReturnType<typeof evaluateParking>) => {
+    const saved = await (sessionSaveRef.current ?? finishSession(result))
+    if (!saved) return
     navigate('/result', { state: { result, scenarioId, mode, replay: replayRef.current, runtime } })
   }
 
-  const finishIncompletePractice = () => {
-    finishSession(parkingEvaluation)
-    navigateToResult(parkingEvaluation)
+  const finishIncompletePractice = async () => {
+    const saved = await finishSession(parkingEvaluation)
+    if (saved) await navigateToResult(parkingEvaluation)
   }
 
   const changeGear = (gear: Gear) => {
@@ -227,11 +246,11 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
 
   const showParkingResult = () => {
     if (!parkedResult) return
-    navigateToResult(parkedResult)
+    void navigateToResult(parkedResult)
   }
 
   return (
-    <div className="vehicle-simulator" onPointerUp={enterImmersiveMode}>
+    <div className={`vehicle-simulator${mobileDirectAssist ? ' touch-driving-ui' : ''}`} onPointerUp={enterImmersiveMode}>
       <div className="simulator-toolbar" aria-label="연습 도구">
         <div>
           <button type="button" className="lesson-replay-control" onClick={onShowLesson}>단계별 안내</button>
@@ -267,6 +286,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
           />
         </div>
       </ParkingLotCanvas>
+      {saveError && <div className="practice-save-toast" role="alert">기록을 저장하지 못했습니다. 연결을 확인한 뒤 결과 확인을 다시 눌러주세요.</div>}
       {canUseFullscreen && !isFullscreen && (
         <button
           type="button"
