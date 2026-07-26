@@ -3564,6 +3564,17 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .expanded-review-copy .safe-action ol { margin: 0; padding-left: 19px; display: grid; gap: 3px; }
 .expanded-review-copy .safe-action small { grid-column: 2; color: var(--muted); line-height: 1.4; }
 .expanded-review-copy .correction-memory { padding-top: 8px; border-top: 1px solid #dce7e2; }
+.expanded-review-copy .expanded-shared-note {
+  min-width: 0;
+  padding-top: 9px;
+  border-top: 1px solid #dce7e2;
+  white-space: pre-wrap;
+}
+.expanded-review-copy .expanded-shared-note > span {
+  min-width: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
 
 .review-topview-dialog h3,
 .review-topview-dialog p,
@@ -4185,8 +4196,22 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   grid-template-columns: minmax(180px, .85fr) minmax(0, 1.15fr);
 }
 
+.history-master-detail .history-detail,
+.history-master-detail .replay-moment-list,
+.history-master-detail .replay-moment-card {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.history-master-detail .replay-moment-card {
+  grid-template-columns: minmax(180px, .85fr) minmax(0, 1.15fr);
+}
+
 .result-detail-column .replay-moment-card > div,
 .result-detail-column .replay-moment-card > div > *,
+.history-master-detail .replay-moment-card > div,
+.history-master-detail .replay-moment-card > div > *,
 .history-master-detail .correction-review-copy,
 .history-master-detail .correction-review-copy > *,
 .history-master-detail .correction-review-copy p > *,
@@ -4197,6 +4222,9 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .result-detail-column .replay-moment-card strong,
 .result-detail-column .replay-moment-card p,
 .result-detail-column .replay-moment-card button,
+.history-master-detail .replay-moment-card strong,
+.history-master-detail .replay-moment-card p,
+.history-master-detail .replay-moment-card button,
 .history-master-detail .correction-review-copy,
 .history-master-detail .correction-review-copy p,
 .history-master-detail .correction-review-copy li,
@@ -4208,6 +4236,23 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 @container result-detail-pane (max-width: 560px) {
   .replay-moment-card {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .replay-moment-card canvas {
+    width: min(100%, 420px);
+    justify-self: center;
+  }
+
+  .replay-moment-card > div {
+    width: 100%;
+    align-self: start;
+  }
+}
+
+@container history-detail-pane (max-width: 640px) {
+  .replay-moment-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
   }
 
   .replay-moment-card canvas {
@@ -4350,6 +4395,43 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   overflow-wrap: anywhere;
 }
 
+.session-note-preview {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 13px 10px;
+  border: 0;
+  border-top: 1px solid #d9e8e1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 8px;
+  color: #41564d;
+  background: rgba(238,248,243,.82);
+  text-align: left;
+  cursor: pointer;
+}
+
+.session-note-preview:hover { background: rgba(228,245,237,.96); }
+.session-note-preview:focus-visible { position: relative; outline: 3px solid rgba(112,199,167,.35); outline-offset: -3px; }
+.session-note-preview span {
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: var(--brand);
+  background: white;
+  font-size: .64rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.session-note-preview p {
+  min-width: 0;
+  margin: 0;
+  font-size: .72rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
 .practice-note-backdrop {
   position: fixed;
   z-index: 130;
@@ -4452,6 +4534,40 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 }
 
 @media (orientation: landscape) and (max-height: 600px) {
+  .history-master-detail .replay-moment-card {
+    grid-template-columns: minmax(0, .42fr) minmax(0, .58fr);
+    gap: 10px;
+  }
+
+  .history-master-detail .replay-moment-card canvas {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .history-master-detail .replay-moment-card > div {
+    width: 100%;
+    min-width: 0;
+    align-self: center;
+  }
+
+  .history-master-detail .correction-review-card {
+    grid-template-columns: minmax(0, .42fr) minmax(0, .58fr);
+    gap: 10px;
+  }
+
+  .history-master-detail .correction-review-card > header {
+    grid-column: 1 / -1;
+  }
+
+  .history-master-detail .correction-review-card > .correction-path-comparison,
+  .history-master-detail .correction-review-card > .review-topview-unavailable {
+    grid-column: 1;
+  }
+
+  .history-master-detail .correction-review-card > .correction-review-copy {
+    grid-column: 2;
+  }
+
   .history-master .recent-practice .session-buttons {
     width: 68px;
     min-width: 68px;
@@ -4476,6 +4592,14 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
     min-height: 32px;
   }
 
+  .history-master .session-note-preview {
+    padding: 6px 8px 7px;
+    gap: 6px;
+  }
+
+  .history-master .session-note-preview span { font-size: .56rem; }
+  .history-master .session-note-preview p { font-size: .62rem; line-height: 1.35; }
+
   .practice-note-backdrop { padding: 8px; }
   .practice-note-dialog {
     width: min(620px, 88vw);
@@ -4488,6 +4612,40 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 }
 
 @media (orientation: landscape) and (min-width: 721px) and (max-width: 1366px) and (min-height: 600px) and (max-height: 1024px) and (max-aspect-ratio: 7 / 4) {
+  .history-master-detail .replay-moment-card {
+    grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr);
+    gap: clamp(10px, 1.2vw, 14px);
+  }
+
+  .history-master-detail .replay-moment-card canvas {
+    width: 100%;
+    justify-self: stretch;
+  }
+
+  .history-master-detail .replay-moment-card > div {
+    width: 100%;
+    min-width: 0;
+    align-self: center;
+  }
+
+  .history-master-detail .correction-review-card {
+    grid-template-columns: minmax(0, .86fr) minmax(0, 1.14fr);
+    gap: clamp(10px, 1.2vw, 14px);
+  }
+
+  .history-master-detail .correction-review-card > header {
+    grid-column: 1 / -1;
+  }
+
+  .history-master-detail .correction-review-card > .correction-path-comparison,
+  .history-master-detail .correction-review-card > .review-topview-unavailable {
+    grid-column: 1;
+  }
+
+  .history-master-detail .correction-review-card > .correction-review-copy {
+    grid-column: 2;
+  }
+
   .history-master .recent-practice .session-buttons {
     --tablet-landscape-control: clamp(40px, 3.8vw, 44px);
     width: 100%;

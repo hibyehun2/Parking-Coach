@@ -81,6 +81,7 @@ export function LearningCaseViewer({
             </figure>
             <div className="expanded-review-copy">
               <p className="correction-memory"><b>기억할 기준</b><span>{learningCase.takeaway}</span></p>
+              {learningCase.sharedNote && <p className="expanded-shared-note"><b>메모</b><span>{learningCase.sharedNote}</span></p>}
             </div>
           </section>
         </div>,

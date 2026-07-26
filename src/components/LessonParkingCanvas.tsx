@@ -92,7 +92,7 @@ export function LessonParkingCanvas({ runtime, stepIndex, methodId }: { runtime:
     observer.observe(canvas)
     draw()
     return () => observer.disconnect()
-  }, [frame, runtime, stage, stepIndex])
+  }, [frame, methodId, runtime, stage, stepIndex])
 
   return <canvas role="img" ref={canvasRef} aria-label={`${stepIndex + 1}단계 실제 주차화면 탑뷰 시뮬레이션`} />
 }
