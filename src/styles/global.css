@@ -3878,6 +3878,31 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
     gap: clamp(12px, 1.4vw, 18px);
   }
 
+  .history-master .correction-practice-cta,
+  .history-master .next-practice {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .history-master .correction-practice-cta > div,
+  .history-master .next-practice > div {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .history-master .correction-practice-cta .primary-button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .history-master .next-practice > a {
+    min-width: 0;
+    justify-self: start;
+    white-space: normal;
+  }
+
   .result-page {
     display: grid;
     grid-template-columns: minmax(280px, 1fr) minmax(360px, 46%);
