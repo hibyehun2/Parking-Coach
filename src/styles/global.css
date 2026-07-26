@@ -463,17 +463,6 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .expand-topview-button { padding: 4px 8px; border: none; border-radius: 6px; color: white; background: var(--brand); font-size: .65rem; font-weight: 850; cursor: pointer; transition: opacity .15s; display: flex; align-items: center; gap: 4px; }
 .expand-topview-button:hover { opacity: .85; }
 .expand-topview-button:active { opacity: .7; }
-.correction-review-actions .expand-topview-button {
-  flex: none;
-  min-height: 40px;
-  padding: 0 12px;
-  border: 1px solid rgba(15,105,76,.18);
-  border-radius: 10px;
-  background: linear-gradient(145deg, var(--brand), var(--brand-dark));
-  box-shadow: 0 5px 13px rgba(20,105,76,.18);
-  font-size: .72rem;
-}
-.correction-review-actions .expand-topview-button:focus-visible { outline: 3px solid rgba(42,166,122,.24); outline-offset: 2px; }
 .correction-review-card > header span { color: var(--brand); font-size: .7rem; font-weight: 850; }
 .correction-review-card > header small { flex: none; padding: 4px 8px; border-radius: 999px; color: #8a5314; background: #ffe7c2; font-weight: 850; }
 .correction-path-comparison { padding: 0 15px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
@@ -1896,7 +1885,28 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   }
   .recent-practice .session-row > div:first-child { grid-column: 1; }
   .recent-practice .session-measures { grid-column: 1; justify-content: flex-start; }
-  .recent-practice .session-buttons { grid-column: 2; grid-row: 1 / 3; }
+  .recent-practice .session-buttons {
+    width: 76px;
+    grid-column: 2;
+    grid-row: 1 / 3;
+    display: grid;
+    grid-template-columns: repeat(2, 36px);
+    gap: 4px;
+  }
+  .recent-practice .session-buttons .session-detail-button { grid-column: 1 / -1; grid-row: 1; }
+  .recent-practice .session-buttons .bookmark-button {
+    width: 36px;
+    min-height: 36px;
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .recent-practice .session-buttons .delete-session-button {
+    width: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    grid-column: 2;
+    grid-row: 2;
+  }
   .recent-practice .session-buttons button:not(.bookmark-button):not(.delete-session-button) {
     min-width: 72px;
     min-height: 44px;
@@ -2636,8 +2646,33 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .history-master .session-row > div:first-child span,
   .history-master .session-measures span { font-size: .68rem; }
   .history-master .session-measures { grid-column: 1; justify-content: flex-start; }
-  .history-master .session-buttons { grid-column: 2; grid-row: 1 / 3; }
-  .history-master .session-buttons button:not(.bookmark-button):not(.delete-session-button) { min-width: 66px; min-height: 44px; }
+  .history-master .session-buttons {
+    width: 70px;
+    grid-column: 2;
+    grid-row: 1 / 3;
+    display: grid;
+    grid-template-columns: repeat(2, 33px);
+    gap: 4px;
+  }
+  .history-master .session-buttons .session-detail-button {
+    min-width: 70px;
+    min-height: 34px;
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .history-master .session-buttons .bookmark-button {
+    width: 33px;
+    min-height: 33px;
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .history-master .session-buttons .delete-session-button {
+    width: 33px;
+    min-width: 33px;
+    min-height: 33px;
+    grid-column: 2;
+    grid-row: 2;
+  }
   .history-master-detail > .history-detail { margin: 0; padding: 0; border: 0; background: transparent; }
   .history-master-detail > .history-detail > header button { display: none; }
   .history-master-detail .history-detail > p { font-size: .75rem; line-height: 1.5; }
@@ -3499,6 +3534,18 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   }
   .history-master-detail .correction-path-comparison { grid-column: 1; }
   .history-master-detail .correction-review-copy { grid-column: 2; }
+  .history-master-detail .judgment-canvas-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: grid;
+    gap: 4px;
+  }
+  .history-master-detail .judgment-canvas-actions .quiz-replay-result,
+  .history-master-detail .judgment-canvas-actions .expand-topview-button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 6px;
+    white-space: nowrap;
+  }
   .review-topview-backdrop { padding: 8px; }
   .review-topview-dialog {
     width: min(780px, 94vw);

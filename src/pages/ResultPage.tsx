@@ -112,12 +112,13 @@ function CorrectionReviewCard({
         <div><span>{attempt.drillTitle}</span><strong>{attempt.stepTitle}</strong></div>
         <div className="correction-review-actions">
           <small>{attempt.firstTryCorrect ? '정확한 판단' : '우선 복기'}</small>
-          {hasTopView && <button type="button" className="expand-topview-button" aria-label="판단 기록 크게보기" onClick={() => openExpanded('safe')}>⛶ 크게보기</button>}
         </div>
       </header>
       {hasTopView && reviewScenario && runtime && firstChoice && correctChoice ? <div className="correction-path-comparison safe-preview-only">
         <figure className="safe-view">
-          <JudgmentCanvas scenario={reviewScenario} choice={correctChoice} correct runtime={runtime} />
+          <JudgmentCanvas scenario={reviewScenario} choice={correctChoice} correct runtime={runtime}>
+            <button type="button" className="expand-topview-button" aria-label="판단 기록 크게보기" onClick={() => openExpanded('safe')}>크게보기</button>
+          </JudgmentCanvas>
           <figcaption><span><i className="safe" />안전한 선택 결과</span></figcaption>
         </figure>
       </div> : <p className="review-topview-unavailable">이 기록은 탑뷰 저장 기능이 적용되기 전 기록입니다. 아래에서 당시 판단과 안전한 행동을 확인할 수 있습니다.</p>}
@@ -422,7 +423,7 @@ export function ResultPage() {
         </div>
         <div className="session-buttons">
           <button type="button" className={`bookmark-button${session.bookmarked ? ' bookmarked' : ''}`} aria-label={session.bookmarked ? '보관 및 공유 해제하기' : '이 기록 보관 및 공유하기'} aria-pressed={session.bookmarked} title={session.bookmarked ? '보관 및 공유 해제하기' : '보관하고 학습 사례로 공유하기'} onClick={() => toggleBookmark(session)}><BookmarkIcon filled={session.bookmarked} /></button>
-          <button type="button" aria-expanded={isSelected} aria-controls={detailId} onClick={() => setSelectedSessionId(isCompactLandscape ? session.id : isSelected ? null : session.id)}>{isCompactLandscape && isSelected ? '선택됨' : isSelected ? '상세 닫기' : session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 보기'}</button>
+          <button type="button" className="session-detail-button" aria-expanded={isSelected} aria-controls={detailId} onClick={() => setSelectedSessionId(isCompactLandscape ? session.id : isSelected ? null : session.id)}>{isCompactLandscape && isSelected ? '선택됨' : isSelected ? '상세 닫기' : session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 보기'}</button>
           <button type="button" className="delete-session-button" aria-label="연습 기록 삭제" title="연습 기록 삭제" onClick={() => setSessionToDelete(session)}><span aria-hidden="true">×</span></button>
         </div>
       </div>
