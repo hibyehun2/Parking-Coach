@@ -31,9 +31,8 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
             <section className="auth-sheet" role="dialog" aria-modal="true" aria-labelledby="login-required-title">
               <p className="auth-kicker">로그인 필요</p>
               <h2 id="login-required-title">로그인이 필요한 서비스입니다</h2>
-              <p>홈으로 이동한 뒤 아래 버튼을 찾아주세요.</p>
+              <p>홈으로 이동한 뒤 아래 버튼을 눌러주세요.</p>
               <div className="auth-practice-preview" aria-hidden="true">
-                <small>찾을 버튼</small>
                 <span>연습 시작하기 <b>→</b></span>
               </div>
               <button 
