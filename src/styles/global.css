@@ -4169,3 +4169,92 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
     margin-inline: auto;
   }
 }
+
+/* Keep tablet result explanations readable within the actual detail-pane width. */
+.result-detail-column {
+  container-name: result-detail-pane;
+  container-type: inline-size;
+}
+
+.history-master-detail {
+  container-name: history-detail-pane;
+  container-type: inline-size;
+}
+
+.result-detail-column .replay-moment-card {
+  grid-template-columns: minmax(180px, .85fr) minmax(0, 1.15fr);
+}
+
+.result-detail-column .replay-moment-card > div,
+.result-detail-column .replay-moment-card > div > *,
+.history-master-detail .correction-review-copy,
+.history-master-detail .correction-review-copy > *,
+.history-master-detail .correction-review-copy p > *,
+.history-master-detail .correction-review-copy .safe-action > * {
+  min-width: 0;
+}
+
+.result-detail-column .replay-moment-card strong,
+.result-detail-column .replay-moment-card p,
+.result-detail-column .replay-moment-card button,
+.history-master-detail .correction-review-copy,
+.history-master-detail .correction-review-copy p,
+.history-master-detail .correction-review-copy li,
+.history-master-detail .correction-review-copy small {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+@container result-detail-pane (max-width: 560px) {
+  .replay-moment-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .replay-moment-card canvas {
+    width: min(100%, 420px);
+    justify-self: center;
+  }
+
+  .replay-moment-card > div {
+    width: 100%;
+    align-self: start;
+  }
+}
+
+@container history-detail-pane (max-width: 600px) {
+  .correction-review-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .correction-review-card > header,
+  .correction-review-card > .correction-path-comparison,
+  .correction-review-card > .correction-review-copy,
+  .correction-review-card > .review-topview-unavailable {
+    grid-column: 1;
+  }
+
+  .correction-path-comparison {
+    grid-template-columns: minmax(0, 1fr);
+    padding-inline: 10px;
+  }
+
+  .correction-path-comparison figure {
+    width: min(100%, 420px);
+    margin-inline: auto;
+  }
+
+  .review-view-selector {
+    display: grid;
+  }
+
+  .correction-path-comparison.view-first .safe-view,
+  .correction-path-comparison.view-safe .first-view {
+    display: none;
+  }
+
+  .correction-review-copy {
+    width: 100%;
+    padding: 10px;
+  }
+}
