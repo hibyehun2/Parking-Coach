@@ -128,7 +128,21 @@ test('먼 쪽 간격 표시는 진입 방향에 맞는 사용자 차량의 뒤�
     const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
     const farSide = buildCorrectionDrills(runtime).find(({ id }) => id === 'far-side')!
     const expectedZone = runtime.startSide === 'left' ? 'rear-left' : 'rear-right'
-    for (const step of farSide.steps) assert.equal(step.focusZone, expectedZone)
+    assert.equal(farSide.steps[0].focusZone, expectedZone)
+    assert.equal(farSide.steps[1].focusZone, expectedZone)
+    assert.equal(farSide.steps[1].focusClearDistance, .5)
+    assert.equal(farSide.steps[2].focusZone, undefined)
+  }
+})
+
+test('가까운 쪽도 공간 회복 구간까지만 위험 모서리를 표시한다', () => {
+  for (const seed of [2, 3]) {
+    const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
+    const nearSide = buildCorrectionDrills(runtime).find(({ id }) => id === 'near-side')!
+    assert.ok(nearSide.steps[0].focusZone)
+    assert.ok(nearSide.steps[1].focusZone)
+    assert.equal(nearSide.steps[1].focusClearDistance, .5)
+    assert.equal(nearSide.steps[2].focusZone, undefined)
   }
 })
 

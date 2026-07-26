@@ -24,6 +24,14 @@ export function JudgmentCanvas({
     [choice, runtime, scenario],
   )
   const focusZone = scenario.focusZone ?? choice?.focusZone
+  const displayed = simulation.states[Math.min(frame, simulation.states.length - 1)] ?? scenario.vehicle
+  const focusDistance = Math.hypot(displayed.x - scenario.vehicle.x, displayed.y - scenario.vehicle.y)
+  const showFocusZone = Boolean(focusZone) && (
+    !choice
+    || !correct
+    || scenario.focusClearDistance === undefined
+    || focusDistance < scenario.focusClearDistance
+  )
 
   useEffect(() => {
     if (!choice || simulation.states.length < 2) return
@@ -52,7 +60,6 @@ export function JudgmentCanvas({
       const context = canvas.getContext('2d')
       if (!context) return
       context.setTransform(ratio, 0, 0, ratio, 0, 0)
-      const displayed = simulation.states[Math.min(frame, simulation.states.length - 1)] ?? scenario.vehicle
       renderParkingLot(context, width, height, displayed, {
         runtime,
         focus: { x: scenario.vehicle.x, y: scenario.vehicle.y, span: 14, heading: -Math.PI / 2 },
@@ -62,8 +69,8 @@ export function JudgmentCanvas({
         ghostVehicles: simulation.states.length > 1
           ? [{ vehicle: simulation.states[simulation.states.length - 1], color: correct ? '#31d38b' : '#ff6b62' }]
           : undefined,
-        highlightContactZone: focusZone,
-        highlightContactVehicle: scenario.vehicle,
+        highlightContactZone: showFocusZone ? focusZone : undefined,
+        highlightContactVehicle: displayed,
         showReverseGuide: false,
         directionLightStrength: 1,
       })
@@ -72,7 +79,7 @@ export function JudgmentCanvas({
     observer.observe(canvas)
     draw()
     return () => observer.disconnect()
-  }, [correct, frame, focusZone, runtime, scenario, simulation])
+  }, [correct, displayed, focusZone, runtime, scenario, showFocusZone, simulation])
 
   return (
     <div className="judgment-canvas-wrapper">

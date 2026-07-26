@@ -47,6 +47,7 @@ function pathStep(
   wrong: JudgmentChoice[],
   takeaway: string,
   focusZone?: JudgmentChoice['focusZone'],
+  focusClearDistance?: number,
 ): JudgmentScenario {
   return {
     id,
@@ -59,6 +60,7 @@ function pathStep(
     answer: answer.id,
     takeaway,
     focusZone,
+    focusClearDistance,
   }
 }
 
@@ -242,6 +244,7 @@ function buildEntryCorrectionCourse(
         ],
         kind === 'near' ? '가까운 쪽은 뒤로, 50cm~1m 이내로만 움직이세요.' : '먼 쪽은 앞으로, 50cm~1m 이내로만 움직이세요.',
         focusZone,
+        .5,
       ),
       pathStep(
         `${kind}-resume`,
@@ -277,7 +280,6 @@ function buildEntryCorrectionCourse(
           },
         ],
         `공간을 만든 뒤에는 핸들을 ${nearSide}으로 다시 최대 조향하세요.`,
-        focusZone,
       ),
     ],
   }

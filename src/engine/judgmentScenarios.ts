@@ -64,6 +64,7 @@ export type JudgmentScenario = {
   answer: string
   takeaway: string
   focusZone?: JudgmentChoice['focusZone']
+  focusClearDistance?: number
 }
 
 function stringSeed(value: string) {
