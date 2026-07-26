@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createScenarioRuntime } from '../src/data/scenarios.ts'
-import { buildResultCollisionQuiz } from '../src/engine/resultCollisionQuiz.ts'
+import { buildResultCollisionCorrectionQuiz } from '../src/engine/resultCollisionQuiz.ts'
 import type { ReplayEvent } from '../src/engine/sessionReplay.ts'
 
 function event(
@@ -34,21 +34,11 @@ function event(
   }
 }
 
-test('결과 퀴즈는 실제 충돌 모서리를 위험 지점 정답으로 사용한다', () => {
-  const runtime = createScenarioRuntime('both-sides', { seed: 2 })
-  for (const zone of ['front-left', 'front-right', 'rear-left', 'rear-right'] as const) {
-    const quiz = buildResultCollisionQuiz(event('R', zone), runtime)
-    assert.equal(quiz.risk.answer, zone)
-    assert.equal(quiz.risk.choices.length, 4)
-    assert.equal(new Set(quiz.risk.choices.map(({ id }) => id)).size, 4)
-  }
-})
-
 test('수정 정답은 계속 진행이 아니며 실제 배치에서 충돌하지 않는다', () => {
   for (const scenarioId of ['both-sides', 'narrow-aisle'] as const) {
     const runtime = createScenarioRuntime(scenarioId, { seed: 2 })
     for (const gear of ['D', 'R'] as const) {
-      const quiz = buildResultCollisionQuiz(event(gear, 'front-right'), runtime)
+      const quiz = buildResultCollisionCorrectionQuiz(event(gear, 'front-right'), runtime)
       assert.notEqual(quiz.correction.answer, 'continue')
       if (quiz.correction.answer === 'restart') continue
       assert.equal(quiz.correctionSimulations[quiz.correction.answer].collided, false)
@@ -58,7 +48,7 @@ test('수정 정답은 계속 진행이 아니며 실제 배치에서 충돌하�
 
 test('충돌 경로를 계속 진행하는 선택은 정답이 될 수 없다', () => {
   const runtime = createScenarioRuntime('both-sides', { seed: 2 })
-  const quiz = buildResultCollisionQuiz(event('R', 'rear-left'), runtime)
+  const quiz = buildResultCollisionCorrectionQuiz(event('R', 'rear-left'), runtime)
   const continueChoice = quiz.correction.choices.find(({ id }) => id === 'continue')
 
   assert.ok(continueChoice)

@@ -140,6 +140,7 @@ export function JudgmentQuiz({
   total,
   onComplete,
   onReviewPrevious,
+  completionLabel,
 }: {
   scenario: JudgmentScenario
   runtime: ScenarioRuntime
@@ -147,6 +148,7 @@ export function JudgmentQuiz({
   total: number
   onComplete: (firstTryCorrect: boolean, answer: JudgmentChoice, firstChoice: JudgmentChoice) => void
   onReviewPrevious?: () => void
+  completionLabel?: string
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [attempted, setAttempted] = useState(false)
@@ -214,7 +216,7 @@ export function JudgmentQuiz({
               selected,
               scenario.choices.find((choice) => choice.id === firstSelectedId) ?? selected,
             )}>
-              {questionNumber === total ? '연습 결과 보기' : '다음 판단 문제'}
+              {questionNumber === total ? completionLabel ?? '연습 결과 보기' : '다음 판단 문제'}
             </button>}
           </div>}
         </div>

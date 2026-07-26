@@ -4,26 +4,7 @@ import type { JudgmentChoice, JudgmentScenario } from './judgmentScenarios.ts'
 import { simulateJudgmentChoice } from './judgmentScenarios.ts'
 import type { ReplayEvent } from './sessionReplay.ts'
 
-const ZONES = [
-  'front-left', 'front-center', 'front-right', 
-  'right-side', 'rear-right', 'rear-center', 
-  'rear-left', 'left-side'
-] as const
-type ContactZone = typeof ZONES[number]
-
-const ZONE_LABELS: Record<ContactZone, string> = {
-  'front-left': '왼쪽 앞 모서리',
-  'front-center': '앞 범퍼 중앙',
-  'front-right': '오른쪽 앞 모서리',
-  'right-side': '오른쪽 측면',
-  'rear-right': '오른쪽 뒤 모서리',
-  'rear-center': '뒤 범퍼 중앙',
-  'rear-left': '왼쪽 뒤 모서리',
-  'left-side': '왼쪽 측면',
-}
-
-export type ResultCollisionQuiz = {
-  risk: JudgmentScenario
+export type ResultCollisionCorrectionQuiz = {
   correction: JudgmentScenario
   correctionSimulations: Record<string, ReturnType<typeof simulateJudgmentChoice>>
 }
@@ -44,20 +25,11 @@ function endClearance(choice: JudgmentChoice, event: ReplayEvent, runtime: Scena
   return { simulation, score: clearance * 2 + distanceGain, clearance, distanceGain }
 }
 
-export function buildResultCollisionQuiz(event: ReplayEvent, runtime: ScenarioRuntime): ResultCollisionQuiz {
+export function buildResultCollisionCorrectionQuiz(event: ReplayEvent, runtime: ScenarioRuntime): ResultCollisionCorrectionQuiz {
   const actualZone = event.collision?.contactZone ?? 'front-right'
   const movingGear = event.vehicle.gear
   const recoveryGear = movingGear === 'R' ? 'D' : 'R'
   const originalSteering = event.vehicle.steeringAngle
-  const riskChoices: JudgmentChoice[] = ZONES.map((zone) => ({
-    id: zone,
-    label: ZONE_LABELS[zone],
-    focusZone: zone,
-    feedback: zone === actualZone
-      ? `실제 기록에서 ${ZONE_LABELS[zone]}가 장애물에 가장 먼저 닿았습니다.`
-      : `실제 충돌 강조 위치와 비교하면 ${ZONE_LABELS[zone]}가 먼저 닿은 곳은 아닙니다.`,
-  }))
-
   const correctionChoices: JudgmentChoice[] = [
     {
       id: 'retrace',
@@ -105,21 +77,10 @@ export function buildResultCollisionQuiz(event: ReplayEvent, runtime: ScenarioRu
   }
 
   return {
-    risk: {
-      id: `result-risk-${event.id}`,
-      skill: 'hazard-prediction',
-      title: '1단계 · 위험 지점 찾기',
-      situation: '실제 충돌 약 0.7초 전의 위치입니다.',
-      question: '이대로 움직이면 가장 먼저 장애물에 닿는 곳은 어디일까요?',
-      vehicle: event.vehicle,
-      choices: riskChoices,
-      answer: actualZone,
-      takeaway: `실제 충돌 지점은 ${ZONE_LABELS[actualZone]}였습니다.`,
-    },
     correction: {
       id: `result-correction-${event.id}`,
       skill: 'first-correction',
-      title: '2단계 · 안전한 수정 선택',
+      title: '안전한 수정 선택',
       situation: '충돌 전에 완전히 정지했다고 가정하고 실제 주변 공간을 비교합니다.',
       question: '현재 배치에서 새로운 충돌 없이 간격을 가장 안정적으로 회복하는 행동은?',
       vehicle: event.vehicle,

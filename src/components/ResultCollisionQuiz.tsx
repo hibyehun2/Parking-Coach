@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { buildResultCollisionQuiz } from '../engine/resultCollisionQuiz'
+import { buildResultCollisionCorrectionQuiz } from '../engine/resultCollisionQuiz'
 import type { ReplayEvent } from '../engine/sessionReplay'
 import type { ScenarioRuntime } from '../types/practice'
 import { JudgmentQuiz } from './JudgmentQuiz'
@@ -13,34 +13,27 @@ export function ResultCollisionQuiz({
   runtime: ScenarioRuntime
   onRetry: () => void
 }) {
-  const quiz = useMemo(() => buildResultCollisionQuiz(event, runtime), [event, runtime])
-  const [stage, setStage] = useState<1 | 2 | 'complete'>(1)
+  const quiz = useMemo(() => buildResultCollisionCorrectionQuiz(event, runtime), [event, runtime])
+  const [complete, setComplete] = useState(false)
 
   return (
     <section id="collision-judgment-quiz" className="result-collision-quiz" aria-labelledby="result-collision-quiz-title">
       <div className="result-collision-quiz-heading">
-        <span>실제 충돌 장면 미니 퀴즈</span>
-        <h2 id="result-collision-quiz-title" tabIndex={-1}>위험을 찾고 안전한 수정 경로를 선택하세요</h2>
-        <p>저장된 차량 위치와 장애물 배치로 선택 결과를 다시 계산합니다.</p>
+        <span>실제 충돌 장면 판단 복기</span>
+        <h2 id="result-collision-quiz-title" tabIndex={-1}>충돌 전, 어떤 수정이 안전했을까요?</h2>
+        <p>실제 충돌 직전의 위치와 주변 공간을 기준으로 판단해보세요.</p>
       </div>
-      {stage === 1 && <JudgmentQuiz
-        key={quiz.risk.id}
-        scenario={quiz.risk}
-        runtime={runtime}
-        questionNumber={1}
-        total={2}
-        onComplete={() => setStage(2)}
-      />}
-      {stage === 2 && <JudgmentQuiz
+      {!complete && <JudgmentQuiz
         key={quiz.correction.id}
         scenario={quiz.correction}
         runtime={runtime}
-        questionNumber={2}
-        total={2}
-        onComplete={() => setStage('complete')}
+        questionNumber={1}
+        total={1}
+        completionLabel="복기 완료"
+        onComplete={() => setComplete(true)}
       />}
-      {stage === 'complete' && <div className="result-collision-quiz-complete">
-        <strong>실제 충돌 지점과 안전한 수정 경로를 확인했습니다.</strong>
+      {complete && <div className="result-collision-quiz-complete">
+        <strong>실제 충돌 장면에서 안전한 수정 경로를 확인했습니다.</strong>
         <p>{quiz.correction.takeaway}</p>
         <button type="button" className="primary-button" onClick={onRetry}>충돌 직전부터 직접 수정</button>
       </div>}

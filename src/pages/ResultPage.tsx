@@ -5,6 +5,7 @@ import { ReplayMomentCard } from '../components/ReplayMomentCard'
 import { AnimalAvatar } from '../components/AnimalAvatar'
 import { LearningCaseViewer } from '../components/LearningCaseViewer'
 import { JudgmentCanvas } from '../components/JudgmentQuiz'
+import { ResultCollisionQuiz } from '../components/ResultCollisionQuiz'
 import { buildCorrectionDrills } from '../engine/correctionDrills'
 import type { ParkingResult } from '../engine/parkingEvaluation'
 import { deletePracticeSessionDb, fetchPracticeHistory, MAX_BOOKMARKED_SESSIONS, MAX_PRACTICE_SESSIONS, recommendPractice, retryPracticeShareDb, togglePracticeBookmarkDb, type CorrectionAttempt, type PracticeHistory, type PracticeSession } from '../engine/practiceHistory'
@@ -25,6 +26,22 @@ function formatCompletedAt(value: string) {
 
 function useCompactLandscape() {
   const query = '(orientation: landscape) and (max-height: 600px)'
+  const [matches, setMatches] = useState(() => typeof window !== 'undefined' && window.matchMedia?.(query).matches === true)
+
+  useEffect(() => {
+    const media = window.matchMedia?.(query)
+    if (!media) return
+    const update = () => setMatches(media.matches)
+    update()
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+
+  return matches
+}
+
+function usePortraitMobile() {
+  const query = '(max-width: 720px) and (orientation: portrait)'
   const [matches, setMatches] = useState(() => typeof window !== 'undefined' && window.matchMedia?.(query).matches === true)
 
   useEffect(() => {
@@ -95,13 +112,12 @@ function CorrectionReviewCard({
         <div><span>{attempt.drillTitle}</span><strong>{attempt.stepTitle}</strong></div>
         <div className="correction-review-actions">
           <small>{attempt.firstTryCorrect ? '정확한 판단' : '우선 복기'}</small>
+          {hasTopView && <button type="button" className="expand-topview-button" aria-label="판단 기록 크게보기" onClick={() => openExpanded('safe')}>⛶ 크게보기</button>}
         </div>
       </header>
       {hasTopView && reviewScenario && runtime && firstChoice && correctChoice ? <div className="correction-path-comparison safe-preview-only">
         <figure className="safe-view">
-          <JudgmentCanvas scenario={reviewScenario} choice={correctChoice} correct runtime={runtime}>
-            <button type="button" className="expand-topview-button" onClick={() => openExpanded('safe')}>크게보기</button>
-          </JudgmentCanvas>
+          <JudgmentCanvas scenario={reviewScenario} choice={correctChoice} correct runtime={runtime} />
           <figcaption><span><i className="safe" />안전한 선택 결과</span></figcaption>
         </figure>
       </div> : <p className="review-topview-unavailable">이 기록은 탑뷰 저장 기능이 적용되기 전 기록입니다. 아래에서 당시 판단과 안전한 행동을 확인할 수 있습니다.</p>}
@@ -200,6 +216,7 @@ export function ResultPage() {
   const [initialState] = useState<ResultLocationState | null>(incomingState)
   const state = incomingState ?? initialState
   const isCompactLandscape = useCompactLandscape()
+  const isPortraitMobile = usePortraitMobile()
   const result = state?.result
   const challengeComplete = state?.challengeComplete === true
   const hasCurrentResult = Boolean(result || challengeComplete)
@@ -207,11 +224,15 @@ export function ResultPage() {
   const activeTab = requestedTab === 'community' ? 'community' : requestedTab === 'history' || !hasCurrentResult ? 'history' : 'current'
   const replay = state?.replay ?? []
   const collisionEvent = replay.filter((event) => event.type === 'collision').at(-1)
+  const collisionReview = state?.mode === 'learning' && collisionEvent && state.runtime
+    ? { event: collisionEvent, runtime: state.runtime }
+    : null
   const [history, setHistory] = useState<PracticeHistory | null>(null)
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [selectedCaseAuthorId, setSelectedCaseAuthorId] = useState<string | null>(null)
   const [learningCases, setLearningCases] = useState<LearningCase[]>([])
   const [nickname, setNickname] = useState(loadAnonymousNickname)
+  const [nicknameReady, setNicknameReady] = useState(false)
   const [sessionToDelete, setSessionToDelete] = useState<PracticeSession | null>(null)
 
   useEffect(() => {
@@ -219,10 +240,12 @@ export function ResultPage() {
     void loadSupabaseSession().then((session) => {
       if (!active) return
       setNickname(supabaseProfileNickname(session?.user ?? null) ?? loadAnonymousNickname())
+      setNicknameReady(true)
     })
     const unsubscribe = subscribeSupabaseAuth((nextUser) => {
       if (!active) return
       setNickname(supabaseProfileNickname(nextUser) ?? loadAnonymousNickname())
+      setNicknameReady(true)
     })
     return () => {
       active = false
@@ -233,6 +256,8 @@ export function ResultPage() {
     activeTab === 'community' ? 'loading' : 'idle',
   )
   const [selectedLearningCaseId, setSelectedLearningCaseId] = useState('')
+  const [expandedLearningCaseId, setExpandedLearningCaseId] = useState<string | null>(null)
+  const [visibleLearningCaseCount, setVisibleLearningCaseCount] = useState(5)
   const [pendingShareSession, setPendingShareSession] = useState<PracticeSession | null>(null)
   const effectiveSelectedSessionId = selectedSessionId ?? (isCompactLandscape && activeTab === 'history' ? history?.sessions[0]?.id ?? null : null)
   const bookmarkedSessions = history?.sessions.filter((session) => session.bookmarked) ?? []
@@ -290,6 +315,8 @@ export function ResultPage() {
         if (cancelled) return
         setLearningCases(cases)
         setSelectedLearningCaseId(cases[0]?.id ?? '')
+        setExpandedLearningCaseId(null)
+        setVisibleLearningCaseCount(5)
         setLearningCasesStatus('ready')
       })
       .catch(() => {
@@ -298,13 +325,13 @@ export function ResultPage() {
     return () => { cancelled = true }
   }, [activeTab, learningCasesStatus])
   useEffect(() => {
-    if (!configuredPracticeSharingGateway || !history || !history.sessions.some((session) => session.shareStatus === 'pending' || session.shareStatus === 'unpublishing')) return
+    if (!nicknameReady || !configuredPracticeSharingGateway || !history || !history.sessions.some((session) => session.shareStatus === 'pending' || session.shareStatus === 'unpublishing')) return
     let cancelled = false
     void syncPracticeSharing(history, nickname, configuredPracticeSharingGateway).then((synced) => {
       if (!cancelled) setHistory(synced)
     })
     return () => { cancelled = true }
-  }, [history])
+  }, [history, nickname, nicknameReady])
   const applyBookmarkChange = async (session: PracticeSession) => {
     await togglePracticeBookmarkDb(session.id, new Date(), { targetState: !session.bookmarked, shareWhenAdded: !session.bookmarked })
     const updatedHistory = await fetchPracticeHistory()
@@ -396,7 +423,7 @@ export function ResultPage() {
         <div className="session-buttons">
           <button type="button" className={`bookmark-button${session.bookmarked ? ' bookmarked' : ''}`} aria-label={session.bookmarked ? '보관 및 공유 해제하기' : '이 기록 보관 및 공유하기'} aria-pressed={session.bookmarked} title={session.bookmarked ? '보관 및 공유 해제하기' : '보관하고 학습 사례로 공유하기'} onClick={() => toggleBookmark(session)}><BookmarkIcon filled={session.bookmarked} /></button>
           <button type="button" aria-expanded={isSelected} aria-controls={detailId} onClick={() => setSelectedSessionId(isCompactLandscape ? session.id : isSelected ? null : session.id)}>{isCompactLandscape && isSelected ? '선택됨' : isSelected ? '상세 닫기' : session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 보기'}</button>
-          <button type="button" className="delete-session-button" aria-label="기록 삭제" onClick={() => setSessionToDelete(session)}>삭제</button>
+          <button type="button" className="delete-session-button" aria-label="연습 기록 삭제" title="연습 기록 삭제" onClick={() => setSessionToDelete(session)}><span aria-hidden="true">×</span></button>
         </div>
       </div>
       {isSelected && !isCompactLandscape && renderHistoryDetail(session)}
@@ -475,10 +502,12 @@ export function ResultPage() {
         </div>
 
         {isCompactLandscape && <div className="result-detail-column">
+          {collisionReview && <ResultCollisionQuiz key={collisionReview.event.id} event={collisionReview.event} runtime={collisionReview.runtime} onRetry={() => retryAtEvent(collisionReview.event)} />}
           {renderReplayTimeline(true)}
         </div>}
       </section>}
 
+      {activeTab === 'current' && !isCompactLandscape && collisionReview && <ResultCollisionQuiz key={collisionReview.event.id} event={collisionReview.event} runtime={collisionReview.runtime} onRetry={() => retryAtEvent(collisionReview.event)} />}
       {activeTab === 'current' && !isCompactLandscape && renderReplayTimeline()}
 
       {activeTab === 'community' && <section className="community-learning" aria-labelledby="community-learning-title">
@@ -517,6 +546,43 @@ export function ResultPage() {
               <LearningCaseViewer learningCase={selectedLearningCase} />
             </>}
           </aside>
+        </div> : isPortraitMobile ? <div className="learning-case-accordion" aria-label="공개 학습 사례">
+          {learningCases.slice(0, visibleLearningCaseCount).map((learningCase) => {
+            const expanded = expandedLearningCaseId === learningCase.id
+            const detailId = `learning-case-detail-${learningCase.id}`
+            return <article key={learningCase.id} className={`learning-case-card learning-case-accordion-card${expanded ? ' expanded' : ''}`}>
+              <header><button type="button" onClick={() => setSelectedCaseAuthorId(learningCase.authorId)}><AnimalAvatar nickname={learningCase.nickname} className="case-author-avatar" /><span className="case-author-name">{learningCase.nickname}</span></button><small>{learningCase.sharedLabel}</small></header>
+              <button
+                type="button"
+                className="learning-case-toggle"
+                aria-expanded={expanded}
+                aria-controls={detailId}
+                onClick={() => {
+                  const nextId = expanded ? null : learningCase.id
+                  setExpandedLearningCaseId(nextId)
+                  if (nextId) window.requestAnimationFrame(() => document.getElementById(`learning-case-${nextId}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }))
+                }}
+                id={`learning-case-${learningCase.id}`}
+              >
+                <span><small>{learningCase.scenario}</small><strong>{learningCase.title}</strong></span>
+                <i aria-hidden="true">⌄</i>
+              </button>
+              {expanded && <div id={detailId} className="learning-case-accordion-detail">
+                <p>{learningCase.summary}</p>
+                <small><b>기억할 기준</b>{learningCase.takeaway}</small>
+                <LearningCaseViewer learningCase={learningCase} />
+              </div>}
+            </article>
+          })}
+          {learningCases.length > 5 && <div className="learning-case-list-controls">
+            <small>공유 사례 {Math.min(visibleLearningCaseCount, learningCases.length)} / {learningCases.length}개 표시</small>
+            {visibleLearningCaseCount < learningCases.length
+              ? <button type="button" className="secondary-button" onClick={() => setVisibleLearningCaseCount((count) => Math.min(count + 5, learningCases.length))}>사례 더 보기</button>
+              : <button type="button" className="secondary-button" onClick={() => {
+                setVisibleLearningCaseCount(5)
+                if (expandedLearningCaseId && !learningCases.slice(0, 5).some(({ id }) => id === expandedLearningCaseId)) setExpandedLearningCaseId(null)
+              }}>처음 5개만 보기</button>}
+          </div>}
         </div> : <div className="learning-case-grid" aria-label="공개 학습 사례">
           {learningCases.map((learningCase) => <article key={learningCase.id} className="learning-case-card">
             <header><button type="button" onClick={() => setSelectedCaseAuthorId(learningCase.authorId)}><AnimalAvatar nickname={learningCase.nickname} className="case-author-avatar" /><span className="case-author-name">{learningCase.nickname}</span></button><small>{learningCase.sharedLabel}</small></header>
