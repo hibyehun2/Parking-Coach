@@ -1064,25 +1064,35 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .google-login-button { width: 100%; min-height: 50px; padding: 0 16px; border: 1px solid #d4dbd8; border-radius: 14px; display: grid; grid-template-columns: 28px 1fr 28px; align-items: center; color: #1c2521; background: white; box-shadow: 0 5px 16px rgba(22,40,32,.07); font-weight: 850; cursor: pointer; }
 .google-login-button span { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; color: #4285f4; background: #f4f7ff; font-size: 1rem; font-weight: 900; }
 .auth-sheet > small { margin-top: 13px; display: block; color: #718079; font-size: .72rem; }
-.auth-practice-preview { margin: -2px auto 0; display: grid; justify-items: center; gap: 7px; }
+.auth-practice-preview {
+  margin: -2px auto 0;
+  padding: 11px 16px 13px;
+  border: 1px solid #d9ebe3;
+  border-radius: 16px;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  background: #f5faf8;
+}
 .auth-practice-preview > span {
-  min-width: 190px;
-  min-height: 58px;
-  padding: 0 22px;
-  border-radius: 18px;
+  width: 150px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid #b9ddce;
+  border-radius: 13px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 28px;
-  color: white;
-  background: linear-gradient(180deg, #1c8d69, #116c50);
-  box-shadow: 0 10px 24px rgba(17,108,80,.24), inset 0 1px rgba(255,255,255,.25);
-  font-size: 1.02rem;
+  gap: 16px;
+  color: var(--brand-dark);
+  background: #e7f5ef;
+  box-shadow: inset 0 1px rgba(255,255,255,.72);
+  font-size: .82rem;
   font-weight: 800;
 }
 .auth-practice-preview > span b { font-size: 1.15em; }
-.auth-practice-preview > small { color: #718079; font-size: .7rem; font-weight: 750; }
-.auth-redirect-confirm { margin-top: 18px; }
+.auth-practice-preview > small { color: #62736b; font-size: .7rem; font-weight: 800; }
+.auth-redirect-confirm { width: 100%; margin-top: 18px; }
 .auth-error { margin: 12px 0 0; color: #a33e35; font-size: .78rem; font-weight: 750; }
 .nickname-sheet { width: min(440px, 100%); }
 .nickname-preview { margin: 18px 0 10px; padding: 15px; border: 1px solid rgba(255,255,255,.9); border-radius: 20px; display: flex; align-items: center; justify-content: center; gap: 13px; background: linear-gradient(145deg, #eef8f3, #fff); box-shadow: 0 10px 28px rgba(23,74,55,.09); }
