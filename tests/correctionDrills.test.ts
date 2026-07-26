@@ -139,8 +139,9 @@ test('가까운 쪽도 공간 회복 구간까지만 위험 모서리를 표시�
   for (const seed of [2, 3]) {
     const runtime = createScenarioRuntime('both-sides', { seed, firstSuccess: true })
     const nearSide = buildCorrectionDrills(runtime).find(({ id }) => id === 'near-side')!
-    assert.ok(nearSide.steps[0].focusZone)
-    assert.ok(nearSide.steps[1].focusZone)
+    const expectedZone = runtime.startSide === 'left' ? 'right-side' : 'left-side'
+    assert.equal(nearSide.steps[0].focusZone, expectedZone)
+    assert.equal(nearSide.steps[1].focusZone, expectedZone)
     assert.equal(nearSide.steps[1].focusClearDistance, .5)
     assert.equal(nearSide.steps[2].focusZone, undefined)
   }

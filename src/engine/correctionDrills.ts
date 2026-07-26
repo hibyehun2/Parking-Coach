@@ -174,7 +174,7 @@ function buildEntryCorrectionCourse(
     ? '직선 후진으로 가까운 쪽 공간 만들기'
     : '직선 전진으로 먼 쪽 공간 만들기'
   const focusZone = kind === 'near'
-    ? (leftEntry ? 'rear-right' as const : 'rear-left' as const)
+    ? (leftEntry ? 'right-side' as const : 'left-side' as const)
     : (leftEntry ? 'rear-left' as const : 'rear-right' as const)
 
   return {
