@@ -23,9 +23,9 @@ test('기본 상황은 5단계, 양옆 차량의 두 칸 기준과 좁은 통로
       assert.match(lesson.steps.map((step) => step.description).join(' '), /벽.*정지.*전진.*재진입/)
     } else if (lesson.scenarioId === 'both-sides') {
       assert.deepEqual(lesson.steps.map((step) => step.gear), ['D', 'D', 'R', 'R', 'R', 'R'])
-      assert.deepEqual(lesson.steps.map((step) => step.steering), ['중앙', '중앙', '우측 약 25도', '우측 약 25도', '중앙', '중앙'])
+      assert.deepEqual(lesson.steps.map((step) => step.steering), ['중앙', '중앙', '주차 방향 조향', '주차 방향 조향', '중앙', '중앙'])
       const copy = lesson.steps.map((step) => `${step.title} ${step.description} ${step.cue}`).join(' ')
-      assert.match(copy, /두 번째 차량.*운전자 어깨.*25도.*평행/)
+      assert.match(copy, /두 번째 차량.*운전자 어깨.*회전반경.*평행/)
       assert.match(copy, /뒤 모서리.*앞 모서리.*후방 화면/)
     } else {
       assert.deepEqual(lesson.steps.map((step) => step.gear), ['D', 'R', 'R', 'R', 'R'])

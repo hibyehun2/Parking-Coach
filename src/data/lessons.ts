@@ -6,7 +6,7 @@ export type LessonStep = {
   cue: string
   durationSeconds: number
   gear: 'D' | 'R'
-  steering: '중앙' | '좌측 끝까지' | '우측 끝까지' | '좌측 약 25도' | '우측 약 25도'
+  steering: '중앙' | '좌측 끝까지' | '우측 끝까지' | '주차 방향 조향'
   check: string
 }
 
@@ -55,12 +55,12 @@ const TWO_BAY_SHOULDER_STEPS: LessonStep[] = [
   },
   {
     title: 'R로 바꾸고 주차 방향으로 조향',
-    description: '브레이크를 유지한 채 R로 바꾸고, 주차할 방향으로 핸들을 약 25도 돌립니다.',
-    cue: '최대 조향이 아니라 탑뷰에 표시된 조향각을 맞춘 뒤 천천히 출발하세요.',
+    description: '브레이크를 유지한 채 R로 바꿉니다. 천천히 후진을 시작하며 주차 방향으로 조향합니다.',
+    cue: '차량마다 회전반경이 다르므로 고정된 각도보다 실제 이동 경로와 양쪽 간격을 우선하세요.',
     durationSeconds: 7,
     gear: 'R',
-    steering: '우측 약 25도',
-    check: 'R 기어 · 약 25도 조향 · 완전 정지',
+    steering: '주차 방향 조향',
+    check: 'R 기어 · 주차 방향 · 이동 경로 · 양쪽 간격',
   },
   {
     title: '양쪽 모서리를 보며 곡선 후진',
@@ -68,7 +68,7 @@ const TWO_BAY_SHOULDER_STEPS: LessonStep[] = [
     cue: '한쪽 간격이 빠르게 줄면 계속 움직이지 말고 먼저 정지하세요.',
     durationSeconds: 13,
     gear: 'R',
-    steering: '우측 약 25도',
+    steering: '주차 방향 조향',
     check: '안쪽 뒤 모서리 · 바깥쪽 앞 모서리 · 양옆 간격',
   },
   {
