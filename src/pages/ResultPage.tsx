@@ -25,7 +25,7 @@ function formatCompletedAt(value: string) {
 }
 
 function useCompactLandscape() {
-  const query = '(orientation: landscape) and (max-height: 600px), (orientation: landscape) and (max-width: 1180px) and (max-height: 900px), (orientation: landscape) and (max-width: 1366px) and (max-height: 1024px) and (any-pointer: coarse)'
+  const query = '(orientation: landscape) and (max-height: 600px), (orientation: landscape) and (min-width: 721px) and (max-width: 1180px) and (min-height: 600px) and (max-height: 900px) and (max-aspect-ratio: 7/4), (orientation: landscape) and (min-width: 1181px) and (max-width: 1366px) and (min-height: 600px) and (max-height: 1024px) and (max-aspect-ratio: 7/4) and (any-pointer: coarse)'
   const [matches, setMatches] = useState(() => typeof window !== 'undefined' && window.matchMedia?.(query).matches === true)
 
   useEffect(() => {
