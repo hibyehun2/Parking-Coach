@@ -4258,3 +4258,274 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
     padding: 10px;
   }
 }
+
+/* Practice-note entry stays in the record actions so history copy keeps its width. */
+.recent-practice .session-buttons {
+  width: 94px;
+  min-width: 94px;
+  max-width: 94px;
+  display: grid;
+  grid-template-columns: repeat(2, 44px);
+  gap: 6px;
+}
+
+.recent-practice .session-buttons .session-detail-button,
+.recent-practice .session-buttons .session-note-button {
+  width: 94px;
+  min-width: 0;
+  max-width: 94px;
+  min-height: 40px;
+  padding-inline: 6px;
+  grid-column: 1 / -1;
+  white-space: nowrap;
+}
+
+.recent-practice .session-buttons .session-detail-button { grid-row: 1; }
+.recent-practice .session-buttons .session-note-button {
+  position: relative;
+  grid-row: 2;
+  border-color: #bed9ce;
+  color: var(--brand-dark);
+  background: #f3faf7;
+}
+
+.recent-practice .session-buttons .session-note-button.has-note {
+  border-color: #86c9af;
+  background: #eaf8f2;
+}
+
+.recent-practice .session-buttons .session-note-button.has-note::after {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  content: "";
+  background: var(--brand);
+}
+
+.recent-practice .session-buttons .bookmark-button {
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  grid-column: 1;
+  grid-row: 3;
+}
+
+.recent-practice .session-buttons .delete-session-button {
+  width: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.practice-note-summary {
+  width: 100%;
+  min-width: 0;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid #c9dfd6;
+  border-radius: 13px;
+  display: grid;
+  gap: 4px;
+  background: rgba(244,250,247,.82);
+}
+
+.practice-note-summary span {
+  color: var(--brand);
+  font-size: .7rem;
+  font-weight: 900;
+}
+
+.practice-note-summary p {
+  min-width: 0;
+  margin: 0;
+  color: #41564d;
+  font-size: .8rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.practice-note-backdrop {
+  position: fixed;
+  z-index: 130;
+  inset: 0;
+  padding: 18px;
+  display: grid;
+  place-items: center;
+  background: rgba(13,28,23,.58);
+  backdrop-filter: blur(9px);
+}
+
+.practice-note-dialog {
+  width: min(440px, 100%);
+  max-height: calc(100dvh - 36px);
+  padding: 22px;
+  border: 1px solid rgba(255,255,255,.86);
+  border-radius: 22px;
+  display: grid;
+  gap: 11px;
+  background: #f7faf8;
+  box-shadow: 0 24px 70px rgba(18,35,29,.3);
+  overflow: auto;
+}
+
+.practice-note-dialog > header {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.practice-note-dialog > header > div { min-width: 0; }
+.practice-note-dialog > header span { color: var(--brand); font-size: .7rem; font-weight: 900; }
+.practice-note-dialog h2 { margin: 3px 0 0; font-size: 1.3rem; }
+.practice-note-dialog > header small { flex: none; color: var(--muted); font-size: .72rem; white-space: nowrap; }
+.practice-note-dialog > p,
+.practice-note-dialog > small { margin: 0; color: var(--muted); font-size: .76rem; line-height: 1.45; word-break: keep-all; overflow-wrap: anywhere; }
+
+.practice-note-dialog textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 92px;
+  padding: 11px 12px;
+  border: 1px solid #c9d9d2;
+  border-radius: 12px;
+  color: #263e33;
+  background: white;
+  font: inherit;
+  font-size: .86rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.practice-note-dialog textarea:focus {
+  outline: 3px solid rgba(131,208,181,.45);
+  border-color: #70c7a7;
+}
+
+.practice-note-dialog > div:last-child {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.practice-note-dialog > div:last-child button { min-height: 44px; }
+
+@media (max-width: 1024px) and (orientation: portrait) {
+  .recent-practice .session-buttons {
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+    grid-template-columns: repeat(2, 38px);
+    gap: 4px;
+  }
+
+  .recent-practice .session-buttons .session-detail-button,
+  .recent-practice .session-buttons .session-note-button {
+    width: 80px;
+    max-width: 80px;
+    min-height: 38px;
+  }
+
+  .recent-practice .session-buttons .bookmark-button,
+  .recent-practice .session-buttons .delete-session-button {
+    width: 38px;
+    min-width: 38px;
+    min-height: 38px;
+  }
+
+  .practice-note-backdrop {
+    padding: 10px 10px max(10px, env(safe-area-inset-bottom));
+    place-items: end center;
+  }
+
+  .practice-note-dialog {
+    padding: 19px 16px;
+    border-radius: 22px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .history-master .recent-practice .session-buttons {
+    width: 68px;
+    min-width: 68px;
+    max-width: 68px;
+    grid-template-columns: repeat(2, 32px);
+    gap: 4px;
+  }
+
+  .history-master .recent-practice .session-buttons .session-detail-button,
+  .history-master .recent-practice .session-buttons .session-note-button {
+    width: 68px;
+    max-width: 68px;
+    min-height: 32px;
+    padding-inline: 3px;
+    font-size: .62rem;
+  }
+
+  .history-master .recent-practice .session-buttons .bookmark-button,
+  .history-master .recent-practice .session-buttons .delete-session-button {
+    width: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .practice-note-backdrop { padding: 8px; }
+  .practice-note-dialog {
+    width: min(620px, 88vw);
+    max-height: calc(100dvh - 16px);
+    padding: 13px 15px;
+    gap: 7px;
+    border-radius: 18px;
+  }
+  .practice-note-dialog textarea { min-height: 66px; }
+}
+
+@media (orientation: landscape) and (min-width: 721px) and (max-width: 1366px) and (min-height: 600px) and (max-height: 1024px) and (max-aspect-ratio: 7 / 4) {
+  .history-master .recent-practice .session-buttons {
+    --tablet-landscape-control: clamp(40px, 3.8vw, 44px);
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    grid-template-columns: var(--tablet-landscape-control) minmax(0, 1fr) minmax(64px, .72fr) var(--tablet-landscape-control);
+    gap: 8px;
+  }
+
+  .history-master .recent-practice .session-buttons .bookmark-button {
+    width: var(--tablet-landscape-control);
+    min-width: var(--tablet-landscape-control);
+    min-height: var(--tablet-landscape-control);
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .history-master .recent-practice .session-buttons .session-detail-button {
+    width: 100%;
+    max-width: none;
+    min-height: var(--tablet-landscape-control);
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .history-master .recent-practice .session-buttons .session-note-button {
+    width: 100%;
+    max-width: none;
+    min-height: var(--tablet-landscape-control);
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .history-master .recent-practice .session-buttons .delete-session-button {
+    width: var(--tablet-landscape-control);
+    min-width: var(--tablet-landscape-control);
+    min-height: var(--tablet-landscape-control);
+    grid-column: 4;
+    grid-row: 1;
+  }
+}

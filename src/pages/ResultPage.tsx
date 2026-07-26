@@ -235,6 +235,7 @@ export function ResultPage() {
   const [nickname, setNickname] = useState(loadAnonymousNickname)
   const [nicknameReady, setNicknameReady] = useState(false)
   const [sessionToDelete, setSessionToDelete] = useState<PracticeSession | null>(null)
+  const [noteSession, setNoteSession] = useState<PracticeSession | null>(null)
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({})
   const [noteSavingId, setNoteSavingId] = useState<string | null>(null)
 
@@ -360,6 +361,10 @@ export function ResultPage() {
     const updatedHistory = await fetchPracticeHistory()
     setHistory(updatedHistory)
   }
+  const openNoteDialog = (session: PracticeSession) => {
+    setNoteDrafts((current) => ({ ...current, [session.id]: session.note ?? '' }))
+    setNoteSession(session)
+  }
   const saveNote = async (session: PracticeSession) => {
     const draft = noteDrafts[session.id] ?? session.note ?? ''
     setNoteSavingId(session.id)
@@ -368,6 +373,7 @@ export function ResultPage() {
     const savedNote = updatedHistory.sessions.find(({ id }) => id === session.id)?.note ?? ''
     setNoteDrafts((current) => ({ ...current, [session.id]: savedNote }))
     setNoteSavingId(null)
+    setNoteSession(null)
   }
   const sharingFailureMessage = (session: PracticeSession) => {
     const code = session.shareError?.split(':').at(-1)
@@ -417,26 +423,7 @@ export function ResultPage() {
         <div className="replay-moment-list">{session.moments.map((event) => <ReplayMomentCard key={event.id} event={event} runtime={session.runtime} />)}</div>
         {session.moments.find((event) => event.type === 'collision') && <p>과거 기록은 장면 복기용으로 표시합니다. 새로운 판단 문제는 판단 연습에서 서로 다른 상황으로 연습할 수 있습니다.</p>}
       </>}
-      <aside className="practice-note-editor">
-        <header><div><span>메모</span><strong>다음 연습에서 기억할 내용을 남겨보세요</strong></div><small>{(noteDrafts[session.id] ?? session.note ?? '').length} / {MAX_PRACTICE_NOTE_LENGTH}</small></header>
-        <textarea
-          rows={2}
-          maxLength={MAX_PRACTICE_NOTE_LENGTH}
-          value={noteDrafts[session.id] ?? session.note ?? ''}
-          placeholder="예: 진입 전에 오른쪽 간격부터 확인하기"
-          aria-label="연습 기록 메모"
-          onChange={(event) => setNoteDrafts((current) => ({ ...current, [session.id]: event.target.value }))}
-        />
-        <div className="practice-note-actions">
-          <small>{session.bookmarked ? '저장한 메모는 학습 사례에도 함께 반영됩니다.' : '이 기록을 보관하면 메모도 학습 사례에 함께 공유됩니다.'}</small>
-          <button
-            type="button"
-            className="secondary-button"
-            disabled={noteSavingId === session.id || normalizePracticeNote(noteDrafts[session.id] ?? session.note ?? '') === (session.note ?? '')}
-            onClick={() => void saveNote(session)}
-          >{noteSavingId === session.id ? '저장 중…' : '메모 저장'}</button>
-        </div>
-      </aside>
+      {session.note && <aside className="practice-note-summary"><span>메모</span><p>{session.note}</p></aside>}
       {session.bookmarked && <aside className="share-case-preparation">
         <div><strong>{session.shareStatus === 'shared' ? '학습 사례 공유됨' : session.shareStatus === 'pending' ? '학습 사례 공유 대기' : session.shareStatus === 'publish-failed' ? '공유하지 못함' : session.shareStatus === 'unpublishing' ? '공개 중단 대기' : session.shareStatus === 'unpublish-failed' ? '공개 중단 확인 필요' : '비공개로 보관됨'}</strong><p>{session.shareStatus === 'private' ? '공유 동의 전에 보관한 기존 기록은 비공개 상태로 유지됩니다.' : '학습에 필요한 결과만 공개 닉네임으로 공유하며, 서버에서 소유권과 동의 이력을 확인합니다.'}</p></div>
         {session.shareStatus === 'publish-failed' || session.shareStatus === 'unpublish-failed'
@@ -457,6 +444,7 @@ export function ResultPage() {
         <div className="session-buttons">
           <button type="button" className={`bookmark-button${session.bookmarked ? ' bookmarked' : ''}`} aria-label={session.bookmarked ? '보관 및 공유 해제하기' : '이 기록 보관 및 공유하기'} aria-pressed={session.bookmarked} title={session.bookmarked ? '보관 및 공유 해제하기' : '보관하고 학습 사례로 공유하기'} onClick={() => toggleBookmark(session)}><BookmarkIcon filled={session.bookmarked} /></button>
           <button type="button" className="session-detail-button" aria-expanded={isSelected} aria-controls={detailId} onClick={() => setSelectedSessionId(isCompactLandscape ? session.id : isSelected ? null : session.id)}>{isCompactLandscape && isSelected ? '선택됨' : isSelected ? '상세 닫기' : session.moments?.length || session.correctionAttempts?.length ? '상세 보기' : '요약 보기'}</button>
+          <button type="button" className={`session-note-button${session.note ? ' has-note' : ''}`} aria-label={session.note ? '메모 확인 및 수정' : '메모 작성'} aria-haspopup="dialog" title={session.note ? '메모 확인 및 수정' : '메모 작성'} onClick={() => openNoteDialog(session)}>메모</button>
           <button type="button" className="delete-session-button" aria-label="연습 기록 삭제" title="연습 기록 삭제" onClick={() => setSessionToDelete(session)}><span aria-hidden="true">×</span></button>
         </div>
       </div>
@@ -675,6 +663,36 @@ export function ResultPage() {
           <h3 id="delete-consent-title">이 기록을 삭제하시겠습니까?</h3>
           <p>삭제된 기록은 되돌릴 수 없습니다.<br />{sessionToDelete.shareStatus === 'shared' && '공유된 학습 사례도 함께 삭제됩니다.'}</p>
           <div><button type="button" className="secondary-button" onClick={() => setSessionToDelete(null)}>취소</button><button type="button" className="primary-button danger-button" onClick={() => void confirmDeleteSession()}>삭제하기</button></div>
+        </section>
+      </div>, document.body)}
+      {noteSession && createPortal(<div className="practice-note-backdrop" role="presentation" onMouseDown={(event) => {
+        if (event.target === event.currentTarget && noteSavingId !== noteSession.id) setNoteSession(null)
+      }}>
+        <section className="practice-note-dialog" role="dialog" aria-modal="true" aria-labelledby="practice-note-title">
+          <header>
+            <div><span>연습 기록</span><h2 id="practice-note-title">메모</h2></div>
+            <small>{(noteDrafts[noteSession.id] ?? '').length} / {MAX_PRACTICE_NOTE_LENGTH}</small>
+          </header>
+          <p>다음 연습에서 기억할 내용을 짧게 남겨보세요.</p>
+          <textarea
+            autoFocus
+            rows={3}
+            maxLength={MAX_PRACTICE_NOTE_LENGTH}
+            value={noteDrafts[noteSession.id] ?? ''}
+            placeholder="예: 진입 전에 오른쪽 간격부터 확인하기"
+            aria-label="연습 기록 메모"
+            onChange={(event) => setNoteDrafts((current) => ({ ...current, [noteSession.id]: event.target.value }))}
+          />
+          <small>{noteSession.bookmarked ? '저장한 메모는 학습 사례에도 함께 반영됩니다.' : '이 기록을 보관하면 메모도 학습 사례에 함께 공유됩니다.'}</small>
+          <div>
+            <button type="button" className="secondary-button" disabled={noteSavingId === noteSession.id} onClick={() => setNoteSession(null)}>취소</button>
+            <button
+              type="button"
+              className="primary-button"
+              disabled={noteSavingId === noteSession.id || normalizePracticeNote(noteDrafts[noteSession.id] ?? '') === (noteSession.note ?? '')}
+              onClick={() => void saveNote(noteSession)}
+            >{noteSavingId === noteSession.id ? '저장 중…' : '저장'}</button>
+          </div>
         </section>
       </div>, document.body)}
       {pendingShareSession && createPortal(<div className="share-consent-backdrop" role="presentation" onMouseDown={(event) => {
