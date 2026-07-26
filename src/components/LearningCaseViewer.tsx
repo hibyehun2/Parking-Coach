@@ -38,6 +38,8 @@ export function LearningCaseViewer({
           heading: -Math.PI / 2,
         },
         candidatePaths: [{ points: [vehicle], color: learningCase.title.includes('안전 주차') || learningCase.title.includes('연습 완료') ? '#32a8ff' : '#ff5d52' }],
+        reverseGuideOpacity: .24,
+        directionLightStrength: 1,
       })
     }
     

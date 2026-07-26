@@ -2,8 +2,9 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { createScenarioRuntime } from '../src/data/scenarios.ts'
 import { buildCorrectionDrills } from '../src/engine/correctionDrills.ts'
+import { simulateJudgmentChoice } from '../src/engine/judgmentScenarios.ts'
 import type { PracticeSession } from '../src/engine/practiceHistory.ts'
-import { buildPublicLearningCase, resolveLearningCaseVehicleSnapshot } from '../src/engine/practiceSharing.ts'
+import { buildPublicLearningCase, resolveLearningCasePoints, resolveLearningCaseVehicleSnapshot } from '../src/engine/practiceSharing.ts'
 
 const consent = { version: 1, acceptedAt: '2026-07-26T09:00:00.000Z' }
 
@@ -66,6 +67,47 @@ test('이전 판단 기록은 문제 식별자로 차량 상태를 재구성한�
 
   assert.ok(resolveLearningCaseVehicleSnapshot(judgmentSession))
   assert.ok(buildPublicLearningCase(judgmentSession, '차분한수달', consent).vehicleSnapshot)
+})
+
+test('사례 공유 문구와 탑뷰는 같은 최초 오답을 기준으로 만든다', () => {
+  const runtime = createScenarioRuntime('both-sides', { seed: 2, firstSuccess: true })
+  const drill = buildCorrectionDrills(runtime).find(({ id }) => id === 'near-side')!
+  const correctStep = drill.steps[0]
+  const wrongStep = drill.steps[1]
+  const correctChoice = correctStep.choices.find((choice) => choice.id === correctStep.answer)!
+  const wrongChoice = wrongStep.choices.find((choice) => choice.id === 'wrong-direction')!
+  const safeChoice = wrongStep.choices.find((choice) => choice.id === wrongStep.answer)!
+  const judgmentSession = session({
+    mode: 'practice',
+    runtime,
+    correctionAttempts: [{
+      drillId: drill.id,
+      drillTitle: drill.title,
+      stepId: correctStep.id,
+      stepTitle: correctStep.title,
+      firstTryCorrect: true,
+      firstChoiceLabel: correctChoice.label,
+      correctChoiceLabel: correctChoice.label,
+      takeaway: correctStep.takeaway,
+      reviewSnapshot: { scenario: correctStep, firstChoice: correctChoice, correctChoice },
+    }, {
+      drillId: drill.id,
+      drillTitle: drill.title,
+      stepId: wrongStep.id,
+      stepTitle: wrongStep.title,
+      firstTryCorrect: false,
+      firstChoiceLabel: wrongChoice.label,
+      correctChoiceLabel: safeChoice.label,
+      takeaway: wrongStep.takeaway,
+      reviewSnapshot: { scenario: wrongStep, firstChoice: wrongChoice, correctChoice: safeChoice },
+    }],
+  })
+
+  const expectedVehicle = simulateJudgmentChoice(wrongStep.vehicle, wrongChoice, runtime).states.at(-1)
+  const points = resolveLearningCasePoints(judgmentSession)
+  assert.deepEqual(resolveLearningCaseVehicleSnapshot(judgmentSession), expectedVehicle)
+  assert.match(points[0], /가까운 쪽 수정은 중앙 조향 후 짧은 후진/)
+  assert.match(points[0], /50cm~1m.*후진/)
 })
 
 test('탑뷰를 복구할 수 없는 이전 기록은 공개하지 않는다', () => {

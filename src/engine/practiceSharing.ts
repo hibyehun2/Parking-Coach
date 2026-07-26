@@ -7,6 +7,7 @@ import { supabase } from './supabaseClient.ts'
 import type { ScenarioRuntime } from '../types/practice.ts'
 import type { VehicleState } from './vehiclePhysics.ts'
 import { buildCorrectionDrills } from './correctionDrills.ts'
+import { simulateJudgmentChoice, type JudgmentChoice, type JudgmentScenario } from './judgmentScenarios.ts'
 
 export type PublicLearningCasePayload = {
   clientShareId: string
@@ -33,27 +34,61 @@ export interface PracticeSharingGateway {
   updateNickname(nickname: string): Promise<void>
 }
 
+function salientCorrectionAttempt(session: PracticeSession) {
+  const attempts = session.correctionAttempts ?? []
+  return attempts.find((attempt) => !attempt.firstTryCorrect) ?? attempts[0]
+}
+
+function resolveCorrectionReview(
+  session: PracticeSession,
+): { scenario: JudgmentScenario; firstChoice: JudgmentChoice } | undefined {
+  const attempt = salientCorrectionAttempt(session)
+  if (!attempt) return undefined
+  const savedScenario = attempt.reviewSnapshot?.scenario
+  const savedChoice = attempt.reviewSnapshot?.firstChoice
+  if (savedScenario && savedChoice) return { scenario: savedScenario, firstChoice: savedChoice }
+  if (!session.runtime) return undefined
+
+  const scenario = buildCorrectionDrills(session.runtime)
+    .find((drill) => drill.id === attempt.drillId)
+    ?.steps.find((step) => step.id === attempt.stepId)
+  const firstChoice = scenario?.choices.find((choice) => choice.label === attempt.firstChoiceLabel)
+  return scenario && firstChoice ? { scenario, firstChoice } : undefined
+}
+
+function correctionCourseSummary(drillId: string) {
+  if (drillId === 'near-side') {
+    return '핸들을 중앙으로 풀고 50cm~1m 정도 짧게 후진해 가까운 쪽 공간을 만든 뒤 다시 진입하세요.'
+  }
+  if (drillId === 'far-side') {
+    return '핸들을 중앙으로 풀고 50cm~1m 정도 짧게 전진해 먼 쪽 공간을 만든 뒤 다시 진입하세요.'
+  }
+  return undefined
+}
+
+export function resolveLearningCasePoints(session: PracticeSession) {
+  const attempts = session.correctionAttempts ?? []
+  const salientAttempt = salientCorrectionAttempt(session)
+  if (!salientAttempt) return []
+
+  const summary = correctionCourseSummary(salientAttempt.drillId) ?? salientAttempt.takeaway
+  const review = resolveCorrectionReview(session)
+  const primary = !salientAttempt.firstTryCorrect && review?.firstChoice.feedback
+    ? `${review.firstChoice.feedback} ${summary}`
+    : summary
+
+  return [...new Set([primary, ...attempts.map((attempt) => attempt.takeaway)].filter(Boolean))].slice(0, 5)
+}
+
 export function resolveLearningCaseVehicleSnapshot(session: PracticeSession): VehicleState | undefined {
   const savedMoment = session.moments?.at(-1)?.vehicle
   if (savedMoment) return { ...savedMoment }
 
-  const attempts = session.correctionAttempts ?? []
-  const salientAttempt = attempts.find((attempt) => !attempt.firstTryCorrect) ?? attempts[0]
-  const savedScenario = salientAttempt?.reviewSnapshot?.scenario
-  const savedChoice = salientAttempt?.reviewSnapshot?.firstChoice
-  const savedPreview = savedChoice?.previewStates?.at(-1)
-  if (savedPreview) return { ...savedPreview }
-  if (savedScenario?.vehicle) return { ...savedScenario.vehicle }
-
-  if (!session.runtime || !salientAttempt) return undefined
-  const reconstructedScenario = buildCorrectionDrills(session.runtime)
-    .find((drill) => drill.id === salientAttempt.drillId)
-    ?.steps.find((step) => step.id === salientAttempt.stepId)
-  const reconstructedChoice = reconstructedScenario?.choices
-    .find((choice) => choice.label === salientAttempt.firstChoiceLabel)
-  const reconstructedPreview = reconstructedChoice?.previewStates?.at(-1)
-  if (reconstructedPreview) return { ...reconstructedPreview }
-  return reconstructedScenario?.vehicle ? { ...reconstructedScenario.vehicle } : undefined
+  const review = resolveCorrectionReview(session)
+  if (!review || !session.runtime) return undefined
+  const simulation = simulateJudgmentChoice(review.scenario.vehicle, review.firstChoice, session.runtime)
+  const finalState = simulation.states.at(-1)
+  return finalState ? { ...finalState } : { ...review.scenario.vehicle }
 }
 
 export function buildPublicLearningCase(
@@ -83,7 +118,7 @@ export function buildPublicLearningCase(
     quiz: typeof session.quizScore === 'number' && typeof session.quizTotal === 'number'
       ? { score: session.quizScore, total: session.quizTotal }
       : undefined,
-    learningPoints: [...new Set(session.correctionAttempts?.map((attempt) => attempt.takeaway) ?? [])].slice(0, 5),
+    learningPoints: resolveLearningCasePoints(session),
     sharedNote: session.note || undefined,
     runtime: session.runtime,
     vehicleSnapshot,
