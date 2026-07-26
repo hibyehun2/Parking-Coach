@@ -7,6 +7,7 @@ import { supabase } from './supabaseClient.ts'
 
 export const MAX_PRACTICE_SESSIONS = 20
 export const MAX_BOOKMARKED_SESSIONS = 3
+export const MAX_PRACTICE_NOTE_LENGTH = 50
 
 export type MistakeType = 'collision'
 export type PracticeShareStatus = 'private' | 'pending' | 'shared' | 'publish-failed' | 'unpublishing' | 'unpublish-failed'
@@ -45,6 +46,7 @@ export type PracticeSession = {
   quizScore?: number
   quizTotal?: number
   correctionAttempts?: CorrectionAttempt[]
+  note?: string
   bookmarked: boolean
   bookmarkedAt?: string
   shareStatus: PracticeShareStatus
@@ -58,6 +60,15 @@ export type PracticeHistory = { version: 5; sessions: PracticeSession[] }
 export type PracticeTrend = 'insufficient' | 'improving' | 'steady' | 'needs-focus'
 
 export const EMPTY_HISTORY: PracticeHistory = { version: 5, sessions: [] }
+
+export function normalizePracticeNote(value: string) {
+  return value
+    .replace(/\r\n?/g, '\n')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+    .slice(0, MAX_PRACTICE_NOTE_LENGTH)
+}
 
 export function createPracticeShareId(randomUUID = globalThis.crypto?.randomUUID?.bind(globalThis.crypto)) {
   if (randomUUID) return randomUUID()
@@ -97,6 +108,7 @@ export async function fetchPracticeHistory(): Promise<PracticeHistory> {
     quizScore: item.quiz_score,
     quizTotal: item.quiz_total,
     correctionAttempts: item.correction_attempts,
+    note: typeof item.review_note === 'string' ? item.review_note : undefined,
     bookmarked: item.bookmarked,
     bookmarkedAt: item.bookmarked_at,
     shareStatus: item.share_status as PracticeShareStatus,
@@ -207,6 +219,40 @@ export async function deletePracticeSessionDb(sessionId: string): Promise<Practi
     console.error('Failed to delete session:', error)
   }
 
+  return await fetchPracticeHistory()
+}
+
+export async function updatePracticeSessionNoteDb(
+  sessionId: string,
+  value: string,
+  now = new Date(),
+): Promise<PracticeHistory> {
+  if (!supabase) return EMPTY_HISTORY
+  const { data: userResp } = await supabase.auth.getUser()
+  if (!userResp?.user) return await fetchPracticeHistory()
+
+  const note = normalizePracticeNote(value)
+  const { data: session } = await supabase
+    .from('practice_sessions')
+    .select('bookmarked, share_status')
+    .eq('id', sessionId)
+    .eq('owner_id', userResp.user.id)
+    .single()
+  if (!session) return await fetchPracticeHistory()
+
+  const updateData: Record<string, unknown> = { review_note: note || null }
+  if (session.bookmarked && ['pending', 'shared', 'publish-failed'].includes(session.share_status)) {
+    updateData.share_status = 'pending'
+    updateData.share_requested_at = now.toISOString()
+    updateData.share_error = null
+  }
+
+  const { error } = await supabase
+    .from('practice_sessions')
+    .update(updateData)
+    .eq('id', sessionId)
+    .eq('owner_id', userResp.user.id)
+  if (error) console.error('Failed to update practice note:', error)
   return await fetchPracticeHistory()
 }
 

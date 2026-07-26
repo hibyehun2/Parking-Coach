@@ -21,6 +21,7 @@ export type PublicLearningCasePayload = {
   collisionZones: string[]
   quiz?: { score: number; total: number }
   learningPoints: string[]
+  sharedNote?: string
   runtime?: ScenarioRuntime
   vehicleSnapshot?: VehicleState
 }
@@ -83,6 +84,7 @@ export function buildPublicLearningCase(
       ? { score: session.quizScore, total: session.quizTotal }
       : undefined,
     learningPoints: [...new Set(session.correctionAttempts?.map((attempt) => attempt.takeaway) ?? [])].slice(0, 5),
+    sharedNote: session.note || undefined,
     runtime: session.runtime,
     vehicleSnapshot,
   }
@@ -193,6 +195,7 @@ export function createSupabasePracticeSharingGateway(client: SupabaseClient): Pr
         quiz_score: payload.quiz?.score,
         quiz_total: payload.quiz?.total,
         learning_points: payload.learningPoints,
+        shared_note: payload.sharedNote,
         runtime: payload.runtime,
         vehicle_snapshot: payload.vehicleSnapshot,
       }

@@ -10,6 +10,7 @@ export type LearningCase = {
   title: string
   summary: string
   takeaway: string
+  sharedNote?: string
   sharedLabel: string
   runtime?: ScenarioRuntime
   vehicleSnapshot?: VehicleState
@@ -24,6 +25,7 @@ type LearningCaseRow = {
   outcome: '안전 완료' | '안전 주차' | '연습 완료' | '복기 필요'
   collision_count: number
   learning_points: string[]
+  shared_note?: string
   runtime?: ScenarioRuntime
   vehicle_snapshot?: VehicleState
 }
@@ -51,6 +53,7 @@ function toLearningCase(row: LearningCaseRow): LearningCase {
     title: `${row.scenario_title} · ${row.outcome === '안전 완료' ? '안전 주차' : row.outcome}`,
     summary: collisionSummary,
     takeaway: learningPoints[0] ?? '연습 결과를 살펴보고 내 주차 판단에 적용해보세요.',
+    sharedNote: typeof row.shared_note === 'string' && row.shared_note.trim() ? row.shared_note.trim() : undefined,
     sharedLabel: formatSharedDate(row.completed_date),
     runtime: row.runtime,
     vehicleSnapshot: row.vehicle_snapshot,
@@ -61,7 +64,7 @@ export async function loadLearningCases(): Promise<LearningCase[]> {
   if (!supabase) return []
   const { data, error } = await supabase
     .from('learning_cases')
-    .select('id,nickname,completed_date,scenario_title,practice_type,outcome,collision_count,learning_points,runtime,vehicle_snapshot')
+    .select('id,nickname,completed_date,scenario_title,practice_type,outcome,collision_count,learning_points,shared_note,runtime,vehicle_snapshot')
     .not('runtime', 'is', null)
     .not('vehicle_snapshot', 'is', null)
     .order('created_at', { ascending: false })

@@ -452,6 +452,46 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .history-detail > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .history-detail > header span { color: var(--brand); font-size: .72rem; font-weight: 850; }
 .history-detail > p { color: var(--muted); line-height: 1.55; }
+.practice-note-editor {
+  width: 100%;
+  min-width: 0;
+  margin-top: 14px;
+  padding: 13px;
+  border: 1px solid rgba(117,166,147,.45);
+  border-radius: 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 9px;
+  background: rgba(244,250,247,.82);
+}
+.practice-note-editor > header { min-width: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.practice-note-editor > header > div { min-width: 0; display: grid; gap: 2px; }
+.practice-note-editor > header span { color: var(--brand); font-size: .7rem; font-weight: 900; }
+.practice-note-editor > header strong { font-size: .86rem; line-height: 1.4; word-break: keep-all; overflow-wrap: anywhere; }
+.practice-note-editor > header small { flex: none; color: var(--muted); font-size: .68rem; white-space: nowrap; }
+.practice-note-editor textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 68px;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  box-sizing: border-box;
+  color: inherit;
+  background: white;
+  font: inherit;
+  font-size: .82rem;
+  line-height: 1.45;
+  resize: vertical;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.practice-note-editor textarea:focus { outline: 3px solid rgba(131,208,181,.45); border-color: #70c7a7; }
+.practice-note-actions { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; }
+.practice-note-actions > small { min-width: 0; color: var(--muted); font-size: .68rem; line-height: 1.4; word-break: keep-all; overflow-wrap: anywhere; }
+.practice-note-actions > button { min-width: 88px; min-height: 38px; padding-inline: 12px; white-space: nowrap; }
+.shared-practice-note { word-break: keep-all; overflow-wrap: anywhere; white-space: pre-wrap; }
+.shared-practice-note b { display: block; margin-bottom: 3px; color: var(--brand); font-size: .65rem; }
 .correction-history-detail { margin-top: 14px; display: grid; gap: 12px; }
 .correction-history-summary { padding: 13px 15px; border-radius: 13px; background: var(--brand-soft); }
 .correction-history-summary p { margin: 4px 0 0; color: var(--muted); font-size: .78rem; }
@@ -1746,6 +1786,8 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .result-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .result-overview-card { padding: 17px; border-radius: 20px; }
   .result-recommendation-copy { padding: 11px 12px; }
+  .practice-note-actions { grid-template-columns: minmax(0, 1fr); }
+  .practice-note-actions > button { width: 100%; }
 }
 
 @media (orientation: landscape) and (max-height: 600px) {
@@ -1781,6 +1823,10 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .current-result-dashboard .result-more-actions { gap: 10px; }
   .current-result-dashboard .result-more-actions a { min-height: 24px; padding: 0; font-size: .62rem; }
   .recent-practice .session-buttons .bookmark-button { width: 44px; min-height: 44px; }
+  .practice-note-editor { margin-top: 8px; padding: 9px; gap: 6px; }
+  .practice-note-editor textarea { min-height: 58px; padding: 7px 8px; font-size: .72rem; }
+  .practice-note-actions { grid-template-columns: minmax(0, 1fr); }
+  .practice-note-actions > button { width: 100%; min-height: 36px; }
 }
 
 /* Result history and community cards */
