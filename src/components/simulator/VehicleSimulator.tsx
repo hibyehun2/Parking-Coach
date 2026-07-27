@@ -43,10 +43,12 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
   const wheelStopContactRef = useRef(false)
   const wheelStopTimerRef = useRef<number | null>(null)
   const sessionSaveRef = useRef<Promise<boolean> | null>(null)
+  const keyboardPulseTimersRef = useRef<Record<string, number>>({})
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [parkedResult, setParkedResult] = useState<ReturnType<typeof evaluateParking> | null>(null)
   const [wheelStopActive, setWheelStopActive] = useState(false)
   const [saveError, setSaveError] = useState(false)
+  const [pressedKeyboardControls, setPressedKeyboardControls] = useState<Set<string>>(() => new Set())
   const canUseFullscreen = !isIos && document.fullscreenEnabled
   const mobileDirectAssist = learningMode
     && window.matchMedia('(pointer: coarse), (hover: none)').matches
@@ -71,6 +73,53 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
 
   useEffect(() => {
     sessionStartedAtRef.current = Date.now()
+  }, [])
+
+  useEffect(() => {
+    const controlForCode = (code: string) => {
+      if (code === 'ArrowLeft') return 'steering-left'
+      if (code === 'ArrowRight') return 'steering-right'
+      if (code === 'Space' || code === 'KeyS') return 'brake'
+      if (code === 'KeyR') return 'reverse'
+      if (code === 'KeyD' || code === 'KeyF') return 'drive'
+      if (code === 'KeyC') return 'center'
+      return null
+    }
+    const heldControls = new Set(['steering-left', 'steering-right', 'brake'])
+    const setControlPressed = (control: string, pressed: boolean) => {
+      setPressedKeyboardControls((current) => {
+        const next = new Set(current)
+        if (pressed) next.add(control)
+        else next.delete(control)
+        return next
+      })
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const control = controlForCode(event.code)
+      if (!control || event.repeat) return
+      setControlPressed(control, true)
+      if (heldControls.has(control)) return
+      window.clearTimeout(keyboardPulseTimersRef.current[control])
+      keyboardPulseTimersRef.current[control] = window.setTimeout(() => {
+        setControlPressed(control, false)
+        delete keyboardPulseTimersRef.current[control]
+      }, 520)
+    }
+    const handleKeyUp = (event: KeyboardEvent) => {
+      const control = controlForCode(event.code)
+      if (control && heldControls.has(control)) setControlPressed(control, false)
+    }
+    const clearPressedControls = () => setPressedKeyboardControls(new Set())
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    window.addEventListener('blur', clearPressedControls)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+      window.removeEventListener('blur', clearPressedControls)
+      Object.values(keyboardPulseTimersRef.current).forEach((timer) => window.clearTimeout(timer))
+      keyboardPulseTimersRef.current = {}
+    }
   }, [])
 
   useEffect(() => {
@@ -318,12 +367,22 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
           <span className={!braking ? 'active' : ''}><i>3</i><b>브레이크 클릭</b><small>해제 후 출발</small></span>
         </div>
         <div className="pc-keyboard-shortcuts" aria-label="키보드 단축키">
-          <span><kbd>←</kbd><kbd>→</kbd><small>조향</small></span>
-          <span><kbd>Space</kbd><small>브레이크</small></span>
-          <span><kbd>R</kbd><small>후진</small></span>
-          <span><kbd>D</kbd><small>전진</small></span>
-          <span><kbd>C</kbd><small>핸들 중앙</small></span>
-          <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><small>화면</small></span>
+          <span className={`keyboard-tile steering-tile${pressedKeyboardControls.has('steering-left') || pressedKeyboardControls.has('steering-right') ? ' is-pressed' : ''}`}>
+            <span><kbd className={pressedKeyboardControls.has('steering-left') ? 'is-pressed' : ''}>←</kbd><kbd className={pressedKeyboardControls.has('steering-right') ? 'is-pressed' : ''}>→</kbd></span>
+            <small>조향</small>
+          </span>
+          <span className={`keyboard-tile brake-tile${pressedKeyboardControls.has('brake') ? ' is-pressed' : ''}`}>
+            <kbd>Space</kbd><small>브레이크</small>
+          </span>
+          <span className={`keyboard-tile${pressedKeyboardControls.has('reverse') ? ' is-pressed' : ''}${vehicle.gear === 'R' ? ' is-selected' : ''}`}>
+            <kbd>R</kbd><small>후진</small>
+          </span>
+          <span className={`keyboard-tile${pressedKeyboardControls.has('drive') ? ' is-pressed' : ''}${vehicle.gear === 'D' ? ' is-selected' : ''}`}>
+            <kbd>D</kbd><small>전진</small>
+          </span>
+          <span className={`keyboard-tile center-tile${pressedKeyboardControls.has('center') ? ' is-pressed' : ''}`}>
+            <kbd>C</kbd><small>핸들 중앙</small>
+          </span>
         </div>
       </aside>
     </div>

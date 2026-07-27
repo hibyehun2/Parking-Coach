@@ -321,16 +321,22 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
   .pc-control-sequence b { align-self: end; font-size: .68rem; white-space: nowrap; }
   .pc-control-sequence small { color: var(--muted); font-size: .58rem; }
   .pc-control-sequence em { color: #9aaba4; font-size: 1rem; font-style: normal; }
-  .pc-keyboard-shortcuts { flex-wrap: wrap; justify-content: flex-end; gap: 5px 8px; }
-  .pc-keyboard-shortcuts > span { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+  .pc-keyboard-shortcuts { min-width: 430px; display: grid; grid-template-columns: 1.15fr 1.2fr .78fr .78fr 1.18fr; gap: 6px; }
+  .pc-keyboard-shortcuts .keyboard-tile { min-width: 0; min-height: 54px; padding: 6px 7px; border: 1px solid rgba(99,119,111,.16); border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 5px; color: #43574e; background: rgba(248,251,249,.76); box-shadow: inset 0 1px rgba(255,255,255,.85); white-space: nowrap; transition: border-color 150ms ease, background 150ms ease, box-shadow 150ms ease, transform 150ms ease; }
+  .pc-keyboard-shortcuts .keyboard-tile.is-selected { border-color: rgba(48,166,123,.5); box-shadow: inset 0 0 0 1px rgba(48,166,123,.16), 0 4px 10px rgba(32,116,85,.07); }
+  .pc-keyboard-shortcuts .keyboard-tile.is-pressed { border-color: rgba(36,174,124,.72); color: var(--brand-dark); background: rgba(218,247,234,.98); box-shadow: inset 0 1px rgba(255,255,255,.9), 0 0 0 2px rgba(47,190,137,.13), 0 7px 18px rgba(25,132,93,.16); transform: translateY(-1px); }
+  .pc-keyboard-shortcuts .steering-tile > span { display: flex; gap: 4px; }
   .pc-keyboard-shortcuts kbd { min-width: 23px; height: 23px; padding: 0 5px; border: 1px solid rgba(99,119,111,.22); border-bottom-width: 2px; border-radius: 6px; display: inline-grid; place-items: center; color: #30443c; background: rgba(255,255,255,.92); box-shadow: 0 2px 4px rgba(25,45,37,.07); font: 800 .62rem/1 system-ui, sans-serif; }
+  .pc-keyboard-shortcuts kbd.is-pressed,
+  .pc-keyboard-shortcuts .keyboard-tile.is-pressed kbd { color: #075f43; border-color: rgba(27,151,106,.48); background: #effcf6; box-shadow: inset 0 1px rgba(255,255,255,.9), 0 2px 6px rgba(21,119,83,.12); }
+  .pc-keyboard-shortcuts .brake-tile kbd { min-width: 48px; }
   .pc-keyboard-shortcuts small { color: var(--muted); font-size: .62rem; font-weight: 750; }
 }
 @media (hover: hover) and (pointer: fine) and (max-width: 1100px) {
   .pc-control-guide { flex-wrap: wrap; }
   .pc-control-guide > header { flex: 1; }
   .pc-control-sequence { flex: 2; justify-content: flex-end; }
-  .pc-keyboard-shortcuts { width: 100%; justify-content: center; padding-top: 8px; border-top: 1px solid rgba(104,128,118,.12); }
+  .pc-keyboard-shortcuts { width: 100%; min-width: 0; padding-top: 8px; border-top: 1px solid rgba(104,128,118,.12); }
 }
 .driving-console { position: absolute; z-index: 5; right: 12px; bottom: 12px; left: 12px; min-height: 250px; padding: 16px 4px; border: 1px solid rgba(255,255,255,.22); border-radius: 24px; display: grid; grid-template-columns: auto 1fr auto; align-items: end; gap: 24px; color: #edf6f2; background: linear-gradient(150deg, rgba(38,51,46,.94), rgba(18,26,23,.94)); box-shadow: 0 16px 34px rgba(20,35,30,.3); touch-action: none; overscroll-behavior: contain; }
 .driving-console.separate-console { position: absolute; right: 12px; bottom: 10px; left: 12px; min-height: 190px; margin: 0; border-color: transparent; background: transparent; box-shadow: none; backdrop-filter: none; }
