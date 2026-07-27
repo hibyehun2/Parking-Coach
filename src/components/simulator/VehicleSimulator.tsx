@@ -297,10 +297,35 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
           ⛶ 전체화면
         </button>
       )}
-      <p className="driving-help">
-        핸들을 손가락으로 원을 그리듯 돌리세요. 브레이크를 작동한 뒤 기어를 선택하고, 브레이크를 해제하면 천천히 움직입니다.
-      </p>
-      <p className="keyboard-help">키보드: ←/A · →/D 조향, Space/S 브레이크, F 전진, R 후진, C 중앙 · 1/2/3 미러·카메라</p>
+      <aside className="pc-control-guide" aria-label="PC 운전 조작 가이드">
+        <header>
+          <div><span>PC 조작</span><strong>운전 조작 가이드</strong></div>
+          <p aria-live="polite">
+            {parkedResult
+              ? '연습이 종료되었습니다'
+              : braking
+                ? canShift
+                  ? '브레이크 작동 중 · R 또는 D를 선택할 수 있습니다'
+                  : '브레이크 작동 중 · 완전히 멈추면 기어를 바꿀 수 있습니다'
+                : `${vehicle.gear} 기어 이동 중 · 브레이크를 클릭하면 정지합니다`}
+          </p>
+        </header>
+        <div className="pc-control-sequence" aria-label="마우스 조작 순서">
+          <span className={braking ? 'active' : ''}><i>1</i><b>브레이크 클릭</b><small>작동 유지</small></span>
+          <em aria-hidden="true">›</em>
+          <span className={braking && canShift ? 'active' : ''}><i>2</i><b>R · D 선택</b><small>이동 방향</small></span>
+          <em aria-hidden="true">›</em>
+          <span className={!braking ? 'active' : ''}><i>3</i><b>브레이크 클릭</b><small>해제 후 출발</small></span>
+        </div>
+        <div className="pc-keyboard-shortcuts" aria-label="키보드 단축키">
+          <span><kbd>←</kbd><kbd>→</kbd><small>조향</small></span>
+          <span><kbd>Space</kbd><small>브레이크</small></span>
+          <span><kbd>R</kbd><small>후진</small></span>
+          <span><kbd>D</kbd><small>전진</small></span>
+          <span><kbd>C</kbd><small>핸들 중앙</small></span>
+          <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><small>화면</small></span>
+        </div>
+      </aside>
     </div>
   )
 }

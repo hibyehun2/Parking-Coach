@@ -69,7 +69,7 @@ export function GearSelector({
         >
           <strong>BRAKE</strong>
           <span aria-hidden="true">●</span>
-          <small>{braking ? '작동 중' : '브레이크'}</small>
+          <small>{braking ? '작동 중' : '해제됨'}</small>
         </button>
         <div className="gear-gate" role="group" aria-label="기어 선택">
           <span className={`gear-lever gear-${gear.toLowerCase()}`} aria-hidden="true" />

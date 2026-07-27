@@ -301,6 +301,37 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .brake-control.active { color: #7d2d27; border-color: #e6bbb7; background: #f8dcda; }
 .reset-control { align-self: end; color: var(--brand-dark); }
 .keyboard-help { margin: 10px 4px 0; color: var(--muted); font-size: .78rem; text-align: right; }
+.pc-control-guide { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .pc-control-guide { margin-top: 12px; padding: 13px 14px; border: 1px solid rgba(255,255,255,.9); border-radius: 18px; gap: 12px; background: rgba(255,255,255,.68); box-shadow: 0 12px 32px rgba(31,54,45,.09), inset 0 1px rgba(255,255,255,.8); backdrop-filter: blur(22px) saturate(1.25); }
+  .pc-control-guide,
+  .pc-control-guide > header,
+  .pc-control-sequence,
+  .pc-keyboard-shortcuts { align-items: center; display: flex; }
+  .pc-control-guide > header { min-width: 210px; align-items: flex-start; flex-direction: column; gap: 3px; }
+  .pc-control-guide > header > div { display: flex; align-items: baseline; gap: 7px; }
+  .pc-control-guide > header span { color: var(--brand); font-size: .66rem; font-weight: 900; }
+  .pc-control-guide > header strong { font-size: .86rem; }
+  .pc-control-guide > header p { margin: 0; color: var(--muted); font-size: .7rem; line-height: 1.35; }
+  .pc-control-sequence { flex: 1; justify-content: center; gap: 7px; }
+  .pc-control-sequence > span { min-width: 104px; padding: 7px 9px; border: 1px solid rgba(117,139,130,.16); border-radius: 12px; display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 1px 5px; color: #53665e; background: rgba(244,248,246,.8); }
+  .pc-control-sequence > span.active { color: var(--brand-dark); border-color: rgba(44,177,129,.4); background: rgba(229,248,239,.95); box-shadow: 0 5px 14px rgba(28,126,91,.1); }
+  .pc-control-sequence i { width: 20px; height: 20px; grid-row: 1 / 3; border-radius: 50%; display: grid; place-items: center; color: white; background: #879991; font-size: .62rem; font-style: normal; font-weight: 900; }
+  .pc-control-sequence .active i { background: var(--brand); }
+  .pc-control-sequence b { align-self: end; font-size: .68rem; white-space: nowrap; }
+  .pc-control-sequence small { color: var(--muted); font-size: .58rem; }
+  .pc-control-sequence em { color: #9aaba4; font-size: 1rem; font-style: normal; }
+  .pc-keyboard-shortcuts { flex-wrap: wrap; justify-content: flex-end; gap: 5px 8px; }
+  .pc-keyboard-shortcuts > span { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+  .pc-keyboard-shortcuts kbd { min-width: 23px; height: 23px; padding: 0 5px; border: 1px solid rgba(99,119,111,.22); border-bottom-width: 2px; border-radius: 6px; display: inline-grid; place-items: center; color: #30443c; background: rgba(255,255,255,.92); box-shadow: 0 2px 4px rgba(25,45,37,.07); font: 800 .62rem/1 system-ui, sans-serif; }
+  .pc-keyboard-shortcuts small { color: var(--muted); font-size: .62rem; font-weight: 750; }
+}
+@media (hover: hover) and (pointer: fine) and (max-width: 1100px) {
+  .pc-control-guide { flex-wrap: wrap; }
+  .pc-control-guide > header { flex: 1; }
+  .pc-control-sequence { flex: 2; justify-content: flex-end; }
+  .pc-keyboard-shortcuts { width: 100%; justify-content: center; padding-top: 8px; border-top: 1px solid rgba(104,128,118,.12); }
+}
 .driving-console { position: absolute; z-index: 5; right: 12px; bottom: 12px; left: 12px; min-height: 250px; padding: 16px 4px; border: 1px solid rgba(255,255,255,.22); border-radius: 24px; display: grid; grid-template-columns: auto 1fr auto; align-items: end; gap: 24px; color: #edf6f2; background: linear-gradient(150deg, rgba(38,51,46,.94), rgba(18,26,23,.94)); box-shadow: 0 16px 34px rgba(20,35,30,.3); touch-action: none; overscroll-behavior: contain; }
 .driving-console.separate-console { position: absolute; right: 12px; bottom: 10px; left: 12px; min-height: 190px; margin: 0; border-color: transparent; background: transparent; box-shadow: none; backdrop-filter: none; }
 .separate-console .steering-module, .separate-console .instrument-panel, .separate-console .gear-module { border-radius: 0; background: transparent; }

@@ -115,20 +115,19 @@ export function useVehicleSimulation(
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.repeat && ['KeyR', 'KeyF', 'KeyC'].includes(event.code)) return
+      if (event.repeat && ['KeyR', 'KeyD', 'KeyF', 'KeyC'].includes(event.code)) return
       if (['ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) event.preventDefault()
 
-      if (event.code === 'ArrowLeft' || event.code === 'KeyA') setSteeringDirection(-1)
-      if (event.code === 'ArrowRight' || event.code === 'KeyD') setSteeringDirection(1)
+      if (event.code === 'ArrowLeft') setSteeringDirection(-1)
+      if (event.code === 'ArrowRight') setSteeringDirection(1)
       if (event.code === 'Space' || event.code === 'KeyS') setBraking(true)
       if (event.code === 'KeyR') setGear('R')
-      if (event.code === 'KeyF') setGear('D')
+      if (event.code === 'KeyD' || event.code === 'KeyF') setGear('D')
       if (event.code === 'KeyC') centerSteering()
     }
 
     const handleKeyUp = (event: KeyboardEvent) => {
-      if (event.code === 'ArrowLeft' || event.code === 'KeyA') setSteeringDirection(0)
-      if (event.code === 'ArrowRight' || event.code === 'KeyD') setSteeringDirection(0)
+      if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') setSteeringDirection(0)
       if (event.code === 'Space' || event.code === 'KeyS') setBraking(false)
     }
 
