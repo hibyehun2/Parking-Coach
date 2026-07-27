@@ -85,7 +85,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
       if (code === 'KeyC') return 'center'
       return null
     }
-    const heldControls = new Set(['steering-left', 'steering-right', 'brake'])
+    const heldControls = new Set(['steering-left', 'steering-right'])
     const setControlPressed = (control: string, pressed: boolean) => {
       setPressedKeyboardControls((current) => {
         const next = new Set(current)
@@ -371,7 +371,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
             <span><kbd className={pressedKeyboardControls.has('steering-left') ? 'is-pressed' : ''}>←</kbd><kbd className={pressedKeyboardControls.has('steering-right') ? 'is-pressed' : ''}>→</kbd></span>
             <small>조향</small>
           </span>
-          <span className={`keyboard-tile brake-tile${pressedKeyboardControls.has('brake') ? ' is-pressed' : ''}`}>
+          <span className={`keyboard-tile brake-tile${pressedKeyboardControls.has('brake') ? ' is-pressed' : ''}${braking ? ' is-selected' : ''}`}>
             <kbd>Space</kbd><small>브레이크</small>
           </span>
           <span className={`keyboard-tile${pressedKeyboardControls.has('reverse') ? ' is-pressed' : ''}${vehicle.gear === 'R' ? ' is-selected' : ''}`}>
