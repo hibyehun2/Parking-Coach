@@ -114,9 +114,17 @@ export function useVehicleSimulation(
   }, [])
 
   useEffect(() => {
+    const hasInteractiveTarget = (event: KeyboardEvent) => {
+      const target = event.target
+      return target instanceof HTMLElement && (
+        target.isContentEditable
+        || target.matches('button, input, textarea, select, a[href]')
+      )
+    }
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.repeat && ['Space', 'KeyS', 'KeyR', 'KeyD', 'KeyF', 'KeyC'].includes(event.code)) return
+      if (hasInteractiveTarget(event)) return
       if (['ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) event.preventDefault()
+      if (event.repeat && ['Space', 'KeyS', 'KeyR', 'KeyD', 'KeyF', 'KeyC'].includes(event.code)) return
 
       if (event.code === 'ArrowLeft') setSteeringDirection(-1)
       if (event.code === 'ArrowRight') setSteeringDirection(1)
@@ -127,6 +135,8 @@ export function useVehicleSimulation(
     }
 
     const handleKeyUp = (event: KeyboardEvent) => {
+      if (hasInteractiveTarget(event)) return
+      if (['ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) event.preventDefault()
       if (event.code === 'ArrowLeft' || event.code === 'ArrowRight') setSteeringDirection(0)
     }
 

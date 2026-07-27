@@ -88,6 +88,13 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
       return null
     }
     const heldControls = new Set(['steering-left', 'steering-right'])
+    const hasInteractiveTarget = (event: KeyboardEvent) => {
+      const target = event.target
+      return target instanceof HTMLElement && (
+        target.isContentEditable
+        || target.matches('button, input, textarea, select, a[href]')
+      )
+    }
     const setControlPressed = (control: string, pressed: boolean) => {
       setPressedKeyboardControls((current) => {
         const next = new Set(current)
@@ -97,6 +104,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
       })
     }
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (hasInteractiveTarget(event)) return
       const control = controlForCode(event.code)
       if (!control || event.repeat) return
       setControlPressed(control, true)
@@ -108,6 +116,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
       }, 520)
     }
     const handleKeyUp = (event: KeyboardEvent) => {
+      if (hasInteractiveTarget(event)) return
       const control = controlForCode(event.code)
       if (control && heldControls.has(control)) setControlPressed(control, false)
     }
