@@ -369,9 +369,29 @@ export function ResultPage() {
     const draft = noteDrafts[session.id] ?? session.note ?? ''
     setNoteSavingId(session.id)
     const updatedHistory = await updatePracticeSessionNoteDb(session.id, draft)
-    setHistory(updatedHistory)
-    const savedNote = updatedHistory.sessions.find(({ id }) => id === session.id)?.note ?? ''
+    const updatedSession = updatedHistory.sessions.find(({ id }) => id === session.id)
+    const shouldRefreshSharedCase = Boolean(
+      configuredPracticeSharingGateway
+      && nicknameReady
+      && updatedSession?.bookmarked
+      && updatedSession.shareStatus === 'pending',
+    )
+    const syncedHistory = shouldRefreshSharedCase
+      ? await syncPracticeSharing(updatedHistory, nickname, configuredPracticeSharingGateway!)
+      : updatedHistory
+    setHistory(syncedHistory)
+    const savedNote = syncedHistory.sessions.find(({ id }) => id === session.id)?.note ?? ''
     setNoteDrafts((current) => ({ ...current, [session.id]: savedNote }))
+    if (shouldRefreshSharedCase) {
+      try {
+        const cases = await loadLearningCases()
+        setLearningCases(cases)
+        setSelectedLearningCaseId((current) => cases.some(({ id }) => id === current) ? current : cases[0]?.id ?? '')
+        setLearningCasesStatus('ready')
+      } catch {
+        setLearningCasesStatus('error')
+      }
+    }
     setNoteSavingId(null)
     setNoteSession(null)
   }
@@ -683,7 +703,7 @@ export function ResultPage() {
             aria-label="연습 기록 메모"
             onChange={(event) => setNoteDrafts((current) => ({ ...current, [noteSession.id]: event.target.value }))}
           />
-          <small>{noteSession.bookmarked ? '저장한 메모는 학습 사례에도 함께 반영됩니다.' : '이 기록을 보관하면 메모도 학습 사례에 함께 공유됩니다.'}</small>
+          <small>{noteSession.bookmarked ? '저장한 메모를 기존 학습 사례에도 바로 반영합니다.' : '이 기록을 보관하면 메모도 학습 사례에 함께 공유됩니다.'}</small>
           <div>
             <button type="button" className="secondary-button" disabled={noteSavingId === noteSession.id} onClick={() => setNoteSession(null)}>취소</button>
             <button
@@ -691,7 +711,7 @@ export function ResultPage() {
               className="primary-button"
               disabled={noteSavingId === noteSession.id || normalizePracticeNote(noteDrafts[noteSession.id] ?? '') === (noteSession.note ?? '')}
               onClick={() => void saveNote(noteSession)}
-            >{noteSavingId === noteSession.id ? '저장 중…' : '저장'}</button>
+            >{noteSavingId === noteSession.id ? noteSession.bookmarked ? '저장 및 반영 중…' : '저장 중…' : '저장'}</button>
           </div>
         </section>
       </div>, document.body)}
