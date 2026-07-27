@@ -30,6 +30,17 @@ test('첫 성공 이후 출발 방향이 시드에 따라 달라진다', () => {
   assert.equal(createScenarioRuntime('both-sides', { seed: 3, firstSuccess: true }).startSide, 'right')
 })
 
+test('판단 연습은 직접 연습 성공 여부와 관계없이 진입 방향을 지정할 수 있다', () => {
+  const left = createScenarioRuntime('both-sides', { seed: 2, firstSuccess: false, practiceMode: 'practice', startSide: 'left' })
+  const right = createScenarioRuntime('both-sides', { seed: 2, firstSuccess: false, practiceMode: 'practice', startSide: 'right' })
+  assert.equal(left.startSide, 'left')
+  assert.equal(left.variant, 'left')
+  assert.equal(left.initialVehicle.heading, 0)
+  assert.equal(right.startSide, 'right')
+  assert.equal(right.variant, 'right')
+  assert.equal(right.initialVehicle.heading, Math.PI)
+})
+
 test('후방 화면 기준 진입 차선은 직접 연습에만 적용된다', () => {
   assert.equal(createScenarioRuntime('both-sides', { seed: 2, practiceMode: 'learning' }).initialVehicle.y, 5.2)
   assert.equal(createScenarioRuntime('both-sides', { seed: 2, practiceMode: 'practice' }).initialVehicle.y, 4)

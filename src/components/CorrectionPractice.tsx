@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { createScenarioRuntime } from '../data/scenarios'
 import { buildCorrectionDrills, type CorrectionDrill } from '../engine/correctionDrills'
 import {
   buildJudgmentGuide,
@@ -90,9 +91,10 @@ function CourseIcon({ course }: { course: CorrectionDrill['id'] }) {
   return <svg viewBox="0 0 20 20" aria-hidden="true">{paths[course]}</svg>
 }
 
-export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
+export function CorrectionPractice({ runtime: initialRuntime }: { runtime: ScenarioRuntime }) {
   const navigate = useNavigate()
   const [phase, setPhase] = useState<'select' | 'guide' | 'practice'>('select')
+  const [directionMode, setDirectionMode] = useState<'auto' | 'left' | 'right'>('auto')
   const [practiceItems, setPracticeItems] = useState<PracticeItem[]>([])
   const [itemIndex, setItemIndex] = useState(0)
   const [score, setScore] = useState(0)
@@ -110,6 +112,28 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
     return () => { active = false }
   }, [])
 
+  const latestPracticeSide = history?.sessions.find(
+    (session) => session.mode === 'practice'
+      && session.scenarioId === initialRuntime.scenarioId
+      && session.runtime?.startSide,
+  )?.runtime?.startSide
+  const automaticSide = latestPracticeSide === 'left'
+    ? 'right'
+    : latestPracticeSide === 'right'
+      ? 'left'
+      : initialRuntime.startSide
+  const selectedSide = directionMode === 'auto' ? automaticSide : directionMode
+  const runtime = useMemo(
+    () => initialRuntime.startSide === selectedSide
+      ? initialRuntime
+      : createScenarioRuntime(initialRuntime.scenarioId, {
+        seed: initialRuntime.seed,
+        firstSuccess: true,
+        practiceMode: 'practice',
+        startSide: selectedSide,
+      }),
+    [initialRuntime, selectedSide],
+  )
   const guide = useMemo(() => buildJudgmentGuide(runtime), [runtime])
   const drills = useMemo(() => buildCorrectionDrills(runtime), [runtime])
   const pastAttempts = useMemo(
@@ -223,6 +247,17 @@ export function CorrectionPractice({ runtime }: { runtime: ScenarioRuntime }) {
           <div><span>판단 연습</span><h2 id="judgment-skill-title">어떤 수정 과정을 연습할까요?</h2></div>
           <p>한 상황의 판단과 움직임을 처음부터 끝까지 이어서 연습해요.</p>
         </header>
+        <div className="judgment-direction-picker">
+          <div>
+            <strong>진입 방향</strong>
+            <span>현재 · {selectedSide === 'left' ? '왼쪽에서 진입' : '오른쪽에서 진입'}</span>
+          </div>
+          <div role="group" aria-label="판단 연습 진입 방향">
+            <button type="button" aria-pressed={directionMode === 'auto'} onClick={() => setDirectionMode('auto')}>반대 방향 우선</button>
+            <button type="button" aria-pressed={directionMode === 'left'} onClick={() => setDirectionMode('left')}>왼쪽</button>
+            <button type="button" aria-pressed={directionMode === 'right'} onClick={() => setDirectionMode('right')}>오른쪽</button>
+          </div>
+        </div>
         <div className="judgment-picker-options">
           <div className="judgment-picker-lead">
             <button type="button" className="recommended-practice" onClick={() => recommendedCourse && start(recommendedCourse)}>

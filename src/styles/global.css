@@ -544,6 +544,13 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .judgment-skill-picker > header span { color: var(--brand); font-size: .73rem; font-weight: 900; }
 .judgment-skill-picker > header h2 { margin: 4px 0 0; font-size: clamp(1.45rem, 3vw, 2rem); }
 .judgment-skill-picker > header p { max-width: 470px; margin: 0; color: var(--muted); line-height: 1.55; }
+.judgment-direction-picker { padding: 8px 10px; border: 1px solid rgba(105,163,141,.22); border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: rgba(255,255,255,.58); }
+.judgment-direction-picker > div:first-child { min-width: 0; display: flex; align-items: baseline; gap: 8px; }
+.judgment-direction-picker strong { font-size: .78rem; }
+.judgment-direction-picker span { color: var(--brand-dark); font-size: .72rem; font-weight: 800; }
+.judgment-direction-picker [role="group"] { flex: none; padding: 3px; border-radius: 11px; display: flex; gap: 3px; background: rgba(102,125,116,.1); }
+.judgment-direction-picker button { min-height: 34px; padding: 0 10px; border: 0; border-radius: 8px; color: var(--muted); background: transparent; font-size: .72rem; font-weight: 850; cursor: pointer; }
+.judgment-direction-picker button[aria-pressed="true"] { color: white; background: var(--brand); box-shadow: 0 4px 10px rgba(15,112,79,.2); }
 .judgment-picker-options { display: grid; gap: 16px; }
 .judgment-picker-lead { min-width: 0; display: grid; gap: 10px; }
 .recommended-practice { position: relative; width: 100%; min-height: 130px; padding: 17px 150px 17px 19px; border: 1px solid #70c7a7; border-radius: 17px; display: grid; align-content: center; gap: 4px; text-align: left; color: var(--brand-dark); background: linear-gradient(135deg, #e9faf3, #fff); box-shadow: 0 10px 24px rgba(24,98,70,.09); cursor: pointer; }
@@ -1706,6 +1713,9 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 
   .judgment-skill-picker > header { gap: 5px; }
   .judgment-skill-picker > header h2 { font-size: 1.45rem; }
+  .judgment-direction-picker { align-items: stretch; flex-direction: column; gap: 6px; }
+  .judgment-direction-picker [role="group"] { width: 100%; }
+  .judgment-direction-picker button { min-width: 0; flex: 1; padding-inline: 5px; }
   .recommended-practice { min-height: 116px; padding: 15px 108px 15px 15px; }
   .recommended-practice > b { right: 13px; bottom: 13px; padding: 8px 10px; }
   .judgment-example-card { min-height: 76px; }
@@ -1723,6 +1733,7 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
     width: min(100% - 12px, 1120px);
     height: 100%;
     margin: 0 auto;
+    grid-template-rows: auto auto minmax(0, 1fr);
     gap: 6px;
   }
 
@@ -1733,6 +1744,8 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 
   .correction-shell .judgment-skill-picker > header h2 { font-size: clamp(1.05rem, 4vh, 1.35rem); }
   .correction-shell .judgment-skill-picker > header p { max-width: 420px; font-size: clamp(.66rem, 2.2vh, .76rem); }
+  .correction-shell .judgment-direction-picker { min-height: 38px; padding: 3px 6px 3px 9px; border-radius: 11px; }
+  .correction-shell .judgment-direction-picker button { min-height: 30px; padding: 0 8px; font-size: .65rem; }
   .correction-shell .judgment-picker-options {
     min-height: 0;
     flex: 1;

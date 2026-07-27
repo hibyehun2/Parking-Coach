@@ -51,12 +51,17 @@ export function markFirstSuccess(scenarioId: ScenarioId, storage: Storage | null
 
 export function createScenarioRuntime(
   scenarioId: ScenarioId,
-  options: { seed?: number; firstSuccess?: boolean; practiceMode?: 'learning' | 'practice' } = {},
+  options: {
+    seed?: number
+    firstSuccess?: boolean
+    practiceMode?: 'learning' | 'practice'
+    startSide?: 'left' | 'right'
+  } = {},
 ): ScenarioRuntime {
   const seed = options.seed ?? Math.floor(Math.random() * 0x7fffffff)
-  const randomSide: 'left' | 'right' = seed % 2 === 0 ? 'left' : 'right'
-  const startSide = options.firstSuccess ? randomSide : 'left'
-  let variant: ScenarioRuntime['variant'] = options.firstSuccess ? randomSide : 'fixed'
+  const randomSide: 'left' | 'right' = options.startSide ?? (seed % 2 === 0 ? 'left' : 'right')
+  const startSide = options.startSide ?? (options.firstSuccess ? randomSide : 'left')
+  let variant: ScenarioRuntime['variant'] = options.startSide ?? (options.firstSuccess ? randomSide : 'fixed')
   let parkedVehicles: ScenarioParkedVehicle[] = [LEFT_CAR, RIGHT_CAR]
   let walls: ScenarioWall[] = [...WALLS]
   const laneY = options.practiceMode === 'learning' ? 5.2 : 4
