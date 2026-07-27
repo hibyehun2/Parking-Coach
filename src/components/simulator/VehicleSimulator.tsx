@@ -49,9 +49,11 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
   const [wheelStopActive, setWheelStopActive] = useState(false)
   const [saveError, setSaveError] = useState(false)
   const [pressedKeyboardControls, setPressedKeyboardControls] = useState<Set<string>>(() => new Set())
+  const [confirmFinish, setConfirmFinish] = useState(false)
   const canUseFullscreen = !isIos && document.fullscreenEnabled
   const mobileDirectAssist = learningMode
     && window.matchMedia('(pointer: coarse), (hover: none)').matches
+  const pcDirectControls = window.matchMedia('(hover: hover) and (pointer: fine)').matches
   const speedProfile = useMemo(
     () => mobileDirectAssist ? directPracticeSpeedProfile(runtime) : undefined,
     [mobileDirectAssist, runtime],
@@ -219,6 +221,7 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
 
   const resetSimulation = () => {
     sessionSaveRef.current = null
+    setConfirmFinish(false)
     setParkedResult(null)
     setSaveError(false)
     setWheelStopActive(false)
@@ -278,8 +281,17 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
   }
 
   const finishIncompletePractice = async () => {
+    setConfirmFinish(false)
     const saved = await finishSession(parkingEvaluation)
     if (saved) await navigateToResult(parkingEvaluation)
+  }
+
+  const requestFinishIncompletePractice = () => {
+    if (pcDirectControls && Math.abs(vehicle.speed) >= .05) {
+      setConfirmFinish(true)
+      return
+    }
+    void finishIncompletePractice()
   }
 
   const changeGear = (gear: Gear) => {
@@ -307,10 +319,20 @@ export function VehicleSimulator({ learningMode, scenarioId, mode, initialVehicl
         <div>
           <button type="button" className="reset-control top-reset-control" onClick={resetSimulation}>↺ 처음 위치</button>
           {!parkedResult && (
-            <button type="button" className="finish-practice-control" onClick={finishIncompletePractice}>연습 종료</button>
+            <button type="button" className="finish-practice-control" onClick={requestFinishIncompletePractice}>연습 종료</button>
           )}
         </div>
       </div>
+      {confirmFinish && (
+        <section className="finish-practice-confirm" role="dialog" aria-modal="false" aria-labelledby="finish-practice-confirm-title">
+          <strong id="finish-practice-confirm-title">주행 중 연습을 종료할까요?</strong>
+          <p>현재 위치까지 기록하고 결과 화면으로 이동합니다.</p>
+          <div>
+            <button type="button" className="secondary-button" onClick={() => setConfirmFinish(false)}>계속 연습</button>
+            <button type="button" className="finish-practice-confirm-action" onClick={() => void finishIncompletePractice()}>종료하기</button>
+          </div>
+        </section>
+      )}
       <ParkingLotCanvas vehicle={vehicle} danger={danger} collisions={collisions} wheelStopActive={wheelStopActive} runtime={runtime} precisionAssist={mobileDirectAssist}>
         <CornerAssistance vehicle={vehicle} runtime={runtime} />
         {learningMode && <LearningHintPanel vehicle={vehicle} scenarioId={scenarioId} runtime={runtime} />}

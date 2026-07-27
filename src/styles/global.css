@@ -397,6 +397,23 @@ h2 { font-size: clamp(1.75rem, 3vw, 2.6rem); line-height: 1.2; }
 .simulator-toolbar > div { display: flex; gap: 8px; }
 .top-reset-control, .lesson-replay-control, .finish-practice-control { min-height: 40px; padding: 0 14px; border: 1px solid var(--border); border-radius: 11px; color: var(--brand-dark); background: rgba(255,255,255,.9); font-size: .76rem; font-weight: 800; cursor: pointer; }
 .finish-practice-control { border-color: #e2b5b0; color: #973d35; background: #fff8f7; }
+.finish-practice-confirm { position: absolute; z-index: 14; top: 70px; left: 50%; width: min(330px, calc(100% - 24px)); padding: 14px; border: 1px solid rgba(255,255,255,.42); border-radius: 16px; color: #f7fffb; background: rgba(24,34,30,.94); box-shadow: 0 18px 48px rgba(7,18,14,.34); backdrop-filter: blur(20px) saturate(1.2); transform: translateX(-50%); }
+.finish-practice-confirm strong { font-size: .88rem; }
+.finish-practice-confirm p { margin: 5px 0 12px; color: #cbd8d3; font-size: .72rem; line-height: 1.4; }
+.finish-practice-confirm > div { display: flex; justify-content: flex-end; gap: 7px; }
+.finish-practice-confirm button { min-height: 36px; padding: 0 11px; border-radius: 9px; font-size: .72rem; font-weight: 850; cursor: pointer; }
+.finish-practice-confirm .secondary-button { color: #e3ece8; border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.08); }
+.finish-practice-confirm-action { color: #fff; border: 1px solid #c9655d; background: #a7433b; }
+
+@media (hover: hover) and (pointer: fine) and (min-width: 721px) {
+  .vehicle-simulator:not(.touch-driving-ui) { position: relative; }
+  .vehicle-simulator:not(.touch-driving-ui) .simulator-toolbar { position: absolute; z-index: 9; top: 12px; right: auto; left: 50%; width: max-content; min-height: 0; margin: 0; padding: 5px; justify-content: center; gap: 5px; border: 1px solid rgba(255,255,255,.22); border-radius: 15px; background: rgba(20,29,25,.72); box-shadow: 0 10px 28px rgba(7,18,14,.24); backdrop-filter: blur(18px) saturate(1.2); transform: translateX(-50%); }
+  .vehicle-simulator:not(.touch-driving-ui) .simulator-toolbar > div { gap: 5px; }
+  .vehicle-simulator:not(.touch-driving-ui) .simulator-toolbar button { min-height: 42px; padding: 0 12px; color: #f2fbf7; border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.09); }
+  .vehicle-simulator:not(.touch-driving-ui) .simulator-toolbar button:hover { border-color: rgba(143,222,193,.48); background: rgba(255,255,255,.16); }
+  .vehicle-simulator:not(.touch-driving-ui) .simulator-toolbar .finish-practice-control { color: #ffc5bf; border-color: rgba(231,125,115,.34); background: rgba(125,43,36,.26); }
+  .vehicle-simulator:not(.touch-driving-ui) .learning-hint { top: 72px; }
+}
 
 .gear-control-cluster { display: flex; align-items: stretch; gap: 9px; }
 .integrated-brake { width: 72px; border: 1px solid #71423e; border-radius: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; color: #ffc7c1; background: rgba(130,49,42,.22); cursor: pointer; touch-action: none; }
